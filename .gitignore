@@ -1,0 +1,5 @@
+inventory
+venv
+tmp
+.git
+*.swp
