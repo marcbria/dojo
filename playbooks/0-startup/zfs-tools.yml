@@ -23,7 +23,16 @@
         path: /tmp/sanoid"
         state: absent
 
-    - name: Build and install Sanoid Debian package
+    # - name: Get list of packages to check if sanoid is installed
+    #   ansible.builtin.package_facts:
+    #     manager: auto
+    #   register: package_facts
+
+    - name: Get list of packages to check if sanoid is installed
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Build and install Sanoid Debian package (if not installed)
       shell: |
         cd /tmp
         git clone https://github.com/jimsalterjrs/sanoid.git
@@ -32,9 +41,10 @@
         ln -s packages/debian .
         dpkg-buildpackage -uc -us
         sudo apt install ../sanoid_*_all.deb
-        rm /tmp/sanoid
+        rm /tmp/sanoid* -Rf
       args:
         executable: /bin/bash
+      when: "'sanoid' not in ansible_facts.packages"
 
     - name: Copy Sanoid config's file
       copy:
