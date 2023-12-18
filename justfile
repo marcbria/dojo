@@ -22,10 +22,11 @@ ansible-install:
     ansible-galaxy install -r requirements.yml
     git init && git add . && git commit -m "Initial commit"
 
+# Commits everything to the local repository with an "Auto commit..." comment.
 ansible-commit:
     git add . && git commit -m "Auto commit..."
 
-# Installs ilatest stable docker & docker-compose and adds marc user to docker group.
+# Installs latest stable docker & docker-compose and adds the runner user to docker group.
 docker-install host:
     ansible-playbook -i {{host}}, ./playbooks/0-startup/docker-install.yml -K
 
