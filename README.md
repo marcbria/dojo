@@ -8,7 +8,10 @@ Playbooks used to setup a brand new Debian server with:
 - Traefik as the reverse proxy.
 - Extra tooling to make your life easier: git, just, tldr...
 
-You need to create your own inventory/hosts.yml to make it work and then, you can call the initial playbooks with just as follows:
+First you need to create your own [inventory/hosts.yml](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/yaml_inventory.html#examples).
+Then you will need to install ansible and the playbooks.
+
+I setup some "[just](https://github.com/casey/just#packages)" scripts to make this work easier:
 
 ```
 $ just ansible-install
@@ -32,6 +35,7 @@ Other actions are:
     ping                 # Ping all hosts
     ps host              # PS command over host
 
+Review "[justfile](https://github.com/marcbria/ansible/blob/main/justfile)" if you like to run the actions without any helper.
 
 # ToDo
 
