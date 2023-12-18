@@ -1,0 +1,12 @@
+---
+- hosts: all
+  become: yes
+  connection: ssh
+
+  tasks:
+    - name: debuging module
+      shell: ps aux
+      register: output
+
+    - name: show the value of output
+      debug: var=output

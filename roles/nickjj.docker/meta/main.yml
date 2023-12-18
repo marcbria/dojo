@@ -1,0 +1,28 @@
+---
+
+galaxy_info:
+  namespace: "nickjj"
+  role_name: "docker"
+  author: "Nick Janetakis"
+  description: "Install and configure Docker / Docker Compose."
+  license: "MIT"
+  min_ansible_version: "2.10.0"
+
+  platforms:
+    - name: "Ubuntu"
+      versions:
+        - "focal"
+        - "jammy"
+    - name: "Debian"
+      versions:
+        - "bullseye"
+        - "bookworm"
+
+  galaxy_tags:
+    - "containers"
+    - "compose"
+    - "docker"
+    - "packaging"
+    - "system"
+
+dependencies: []

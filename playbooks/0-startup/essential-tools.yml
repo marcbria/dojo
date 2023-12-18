@@ -1,0 +1,33 @@
+---
+- name: Instalar y configurar tmux, vim, tree, tldr y pip.
+  hosts: all
+  become: yes  # Para ejecutar como superusuario
+
+  tasks:
+    - name: Actualizar la caché de paquetes
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'  # Si estás en un sistema basado en Debian
+
+    - name: Instalar tmux, vim, tree, tldr y pip.
+      apt:
+        name:
+          - tmux
+          - vim
+          - tree
+          - tldr
+          - python3-pip
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    # Configurar Vim
+    - name: Copiar archivo de configuración de Vim
+      copy:
+        src: ../configs/vimrc
+        dest: ~/.vimrc
+      become: yes
+
+    # Actualizar TLDR
+    - name: Actualizar TLDR
+      command: tldr --update
+      when: ansible_os_family == 'Debian'  # Puedes ajustar esto según la distribución

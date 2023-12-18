@@ -1,0 +1,11 @@
+" Configuración para usar tabs de 4 espacios
+set tabstop=4
+set shiftwidth=4
+set expandtab
+
+" Permitir el pegado sin identación automática
+set paste
+
+" Desactiva el uso del ratón para facilitar el cut&paste
+set mouse-=a
+

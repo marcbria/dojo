@@ -1,0 +1,43 @@
+---
+- name: Install and configure Sanoid
+  hosts: all
+  become: true  # Run tasks as sudo
+
+  tasks:
+    - name: Install prerequisite software
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - debhelper
+        - libcapture-tiny-perl
+        - libconfig-inifiles-perl
+        - pv
+        - lzop
+        - mbuffer
+        - build-essential
+        - git
+
+    - name: Remove the cloned folder (if was created in former execution)
+      ansible.builtin.file:
+        path: /tmp/sanoid"
+        state: absent
+
+    - name: Build and install Sanoid Debian package
+      shell: |
+        cd /tmp
+        git clone https://github.com/jimsalterjrs/sanoid.git
+        cd sanoid
+        git checkout $(git tag | grep "^v" | tail -n 1)
+        ln -s packages/debian .
+        dpkg-buildpackage -uc -us
+        sudo apt install ../sanoid_*_all.deb
+        rm /tmp/sanoid
+      args:
+        executable: /bin/bash
+
+    - name: Enable and start the sanoid timer
+      systemd:
+        name: sanoid.timer
+        enabled: yes
+        state: started

@@ -1,0 +1,29 @@
+---
+# -*- coding: utf-8 -*-
+
+language: python
+sudo: false
+cache: pip
+python:
+  - "3.6"
+
+install:
+  - pip install --upgrade ansible ansible-lint yamllint
+
+before_script:
+  - git clone https://github.com/adfinis-sygroup/ansible-lint-rules ../lint-rules
+  - ansible --version
+  - ansible-lint --version
+  - yamllint --version
+  - ERRORS=0
+
+script:
+  - ansible-lint -R -r ../lint-rules . || let ERRORS+=1 ;
+  - yamllint -c .testenv/yamllint.yml "$dir" || let ERRORS+=1 ;
+  - exit $ERRORS
+
+notifications:
+  webhooks:
+    - 'https://galaxy.ansible.com/api/v1/notifications/'
+
+# vim: set ts=2 sw=2 tw=2 :

@@ -1,0 +1,24 @@
+---
+
+- name: upgrade debian based systems
+  apt:
+    update_cache: yes  # yamllint disable-line rule:truthy
+    upgrade: dist
+  tags:
+    - 'role::upgrade'
+    - 'role::upgrade:install'
+  when: ansible_os_family == 'Debian' and
+        dist_upgrade is defined and dist_upgrade
+  notify: reboot_machine
+
+- name: upgrade redhat based systems
+  yum:
+    name: '*'
+    state: latest
+  tags:
+    - 'role::upgrade'
+    - 'role::upgrade:install'
+    - 'skip_ansible_lint'
+  when: ansible_os_family == 'RedHat' and
+        dist_upgrade is defined and dist_upgrade
+  notify: reboot_machine

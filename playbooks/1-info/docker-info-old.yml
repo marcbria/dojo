@@ -1,0 +1,12 @@
+---
+- hosts: all
+  become: yes
+  connection: ssh
+
+  tasks:
+    - name: Show versions
+      shell: docker -v && docker-compose -v && cat /etc/issue
+      register: output
+
+    - name: show the value of output
+      debug: var=output.stdout_lines

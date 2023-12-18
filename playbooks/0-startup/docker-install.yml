@@ -1,0 +1,14 @@
+---
+- name: Instalar Docker y Docker Compose utilizando el rol ansible-docker
+  hosts: all
+  become: yes
+
+  vars:
+    docker__channel: ["stable"]
+    docker__state: "latest"
+    docker__compose_v2_version: ""
+    docker__users: ["marc"]
+
+  roles:
+    - name: nickjj.docker
+
