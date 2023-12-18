@@ -20,6 +20,7 @@ ansible-install:
     bash -c "source venv/bin/activate"
     sudo apt install ansible git
     ansible-galaxy install -r requirements.yml
+    ansible-galaxy collection install community.general
     git init && git add . && git commit -m "Initial commit"
 
 # Commits everything to the local repository with an "Auto commit..." comment.
