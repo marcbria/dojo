@@ -36,6 +36,12 @@
       args:
         executable: /bin/bash
 
+    - name: Copy Sanoid config's file
+      copy:
+        src: ../configs/sanoid.conf
+        dest: /etc/sanoid/sanoid.conf
+      become: yes
+
     - name: Enable and start the sanoid timer
       systemd:
         name: sanoid.timer
