@@ -1,0 +1,47 @@
+---
+- name: Listar snapshots en un pool ZFS
+  hosts: all
+  become: yes
+
+  tasks:
+#    - name: Obtener información sobre los snapshots
+#      community.general.zfs_snapshot_facts:
+#        dataset: /srv
+#      register: snapshot_info
+#
+#    - name: Mostrar información sobre los snapshots
+#      debug:
+#        var: snapshot_info.snapshots
+
+
+    - name: Gather facts about ZFS dataset srv
+      community.general.zfs_facts:
+        dataset: srv
+
+    - name: Report space usage on ZFS filesystems under srv
+      community.general.zfs_facts:
+        name: srv/volumes
+        recurse: true
+        type: snapshot
+      register: srv_volumes_facts
+
+    - name: Report snapshot space usage on ZFS filesystems under srv/volumes
+      ansible.builtin.debug:
+        msg: |
+          ZFS dataset {{ item.name }} has {{ item.snapshots | length }} snapshots. Total snapshots: {{ total_snapshots }}
+          {% for snapshot in item.snapshots %}
+            - Name: {{ snapshot.name }}
+              Used: {{ snapshot.used }}
+              Creation Time: {{ snapshot.creation }}
+              Referenced: {{ snapshot.referenced }}
+              Dedup Ratio: {{ snapshot.dedupratio }}
+              Compression Ratio: {{ snapshot.compressionratio }}
+              # Agrega más campos según sea necesario
+          {% endfor %}
+      with_items: '{{ srv_volumes_facts.zfs_datasets }}'
+      loop_control:
+        loop_var: item
+      vars:
+        total_snapshots: "{{ srv_volumes_facts.zfs_datasets | map(attribute='snapshots') | map('length') | sum }}"
+      when: srv_volumes_facts.zfs_datasets is defined and srv_volumes_facts.zfs_datasets | length > 0
+

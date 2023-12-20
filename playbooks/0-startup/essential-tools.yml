@@ -1,5 +1,5 @@
 ---
-- name: Instalar y configurar tmux, vim, tree, tldr y pip.
+- name: Instalar y configurar tmux, vim, rsync, tree, tldr y pip.
   hosts: all
   become: yes  # Para ejecutar como superusuario
 
@@ -9,11 +9,12 @@
         update_cache: yes
       when: ansible_os_family == 'Debian'  # Si estás en un sistema basado en Debian
 
-    - name: Instalar tmux, vim, tree, tldr y pip.
+    - name: Instalar tmux, vim, rsync, tree, tldr y pip.
       apt:
         name:
           - tmux
           - vim
+          - rsync
           - tree
           - tldr
           - python3-pip
