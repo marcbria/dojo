@@ -48,7 +48,7 @@
 
     - name: Copy Sanoid config's file
       copy:
-        src: ../configs/sanoid.conf
+        src: ../../configs/sanoid.conf
         dest: /etc/sanoid/sanoid.conf
       become: yes
 

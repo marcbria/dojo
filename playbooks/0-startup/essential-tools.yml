@@ -24,7 +24,7 @@
     # Configurar Vim
     - name: Copiar archivo de configuración de Vim
       copy:
-        src: ../configs/vimrc
+        src: ../../configs/vimrc
         dest: ~/.vimrc
       become: yes
 
