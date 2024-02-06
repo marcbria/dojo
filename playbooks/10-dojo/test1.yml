@@ -1,0 +1,22 @@
+---
+- name: Crear archivo desde template y cargar variables .env
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Cargar variables .env
+      ansible.builtin.shell: |
+        set -a
+        source /home/dojo/sites/{{ JOURNAL }}/.env
+        set +a
+      args:
+        executable: /bin/bash
+      environment:
+        ANSIBLE_LOAD_VARS_FROM: "/home/dojo/sites/{{ JOURNAL }}/.env"
+
+    - name: Crear archivo a partir de template Jinja2
+      ansible.builtin.template:
+        src: ../../configs/templates/test.j2
+        dest: "/tmp/testing.output"
+      notify: Sobreescribir archivo
+

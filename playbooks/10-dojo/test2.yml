@@ -1,0 +1,30 @@
+---
+- name: Crear archivo desde template y cargar variables .env
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Cargar variables .env
+      ansible.builtin.shell: |
+        set -a
+        source /home/dojo/sites/{{ JOURNAL }}/.env
+        set +a
+      args:
+        executable: /bin/bash
+      environment:
+        ANSIBLE_LOAD_VARS_FROM: "/home/dojo/sites/{{ JOURNAL }}/.env"
+
+    - name: Imprimir múltiples variables con saltos de línea
+      ansible.builtin.debug:
+        msg: |
+          JOURNAL: {{ JOURNAL }}
+          PROJECT_DOMAIN: {{ lookup('env', 'PROJECT_DOMAIN') }}
+          SERVERNAME: {{ lookup('env', 'SERVERNAME') }}
+          Special chars: {{ lookup('env', 'SPECIAL') }}
+
+    - name: Crear archivo a partir de template Jinja2
+      ansible.builtin.template:
+        src: ../../configs/templates/test2.j2
+        dest: "/tmp/testing.output"
+      environment:
+        ANSIBLE_LOAD_VARS_FROM: "/home/dojo/sites/{{ JOURNAL }}/.env"

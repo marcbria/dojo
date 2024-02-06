@@ -1,0 +1,33 @@
+dojo:
+  id: periodicum
+  tool: ojs
+  version: "stable-3_3_0"
+  versionFamily: "3_3_0"
+
+database:
+  host: db
+  user: ojs
+  name: ojs
+  driver: mysqli
+
+pkp:
+  general:
+    installed: On
+    base_url: "https://periodicumada.precarietat.net"
+    scheduled_tasks: On
+  database:
+    host: "{{ database.host }}"
+    user: "{{ database.user }}"
+    driver: "{{ database.driver }}"
+  cache:
+  i18n:
+  files:
+  security:
+  email:
+  search:
+  interface:
+  captcha:
+  cli:
+  proxy:
+  debug:
+  curl:

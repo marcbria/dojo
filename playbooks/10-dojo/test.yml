@@ -1,0 +1,25 @@
+---
+- name: Cargar variables de entorno desde el archivo .env
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Leer contenido del archivo .env
+      command: cat /home/dojo/sites/dag/.env
+      register: env_content
+
+    - name: Procesar variables de entorno
+      set_fact:
+        env_vars: "{{ env_content.stdout_lines | map('regex_replace', '(.+?)=(.*)$', {'key': '\\1', 'value': '\\2'}) | combine({}, default({})) }}"
+
+- name: Write hostname
+  hosts: all
+  tasks:
+  - name: write hostname using jinja2
+    ansible.builtin.template:
+       src: ../../configs/templates/test.j2
+       dest: /tmp/hostname.template
+       force: yes
+    vars:
+       PROJECT_DOMAIN: "{{ env_vars.PROJECT_DOMAIN }}"
+       SERVERNAME: "{{ env_vars.SERVERNAME }}"
+       SPECIAL: "{{ env_vars.SPECIAL }}"

@@ -1,0 +1,40 @@
+---
+- name: Cargar variables .env y mostar por pantalla
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Cargar variables .env
+      ansible.builtin.shell: |
+        set -a
+        source /home/dojo/sites/{{ JOURNAL }}/.env
+        set +a
+      args:
+        executable: /bin/bash
+      environment:
+        ANSIBLE_LOAD_VARS_FROM: "/home/dojo/sites/{{ JOURNAL }}/.env"
+
+    - name: Debug: Imprimir variables de entorno
+      ansible.builtin.debug:
+        var: lookup('env', None, 'server')
+
+    - name: Debug: Imprimir contenido de .env
+      ansible.builtin.shell: cat /home/dojo/sites/{{ JOURNAL }}/.env
+      register: env_content
+
+    - name: Debug: Imprimir contenido de .env
+      ansible.builtin.debug:
+        var: env_content.stdout_lines
+
+    - name: Debug: Imprimir ruta del archivo .env
+      ansible.builtin.debug:
+        var: "/home/dojo/sites/{{ JOURNAL }}/.env"
+
+    - name: Imprimir múltiples variables con saltos de línea
+      ansible.builtin.debug:
+        msg: |
+          JOURNAL: {{ JOURNAL }}
+          PROJECT_DOMAIN: {{ lookup('env', 'PROJECT_DOMAIN') }}
+          SERVERNAME: {{ lookup('env', 'SERVERNAME') }}
+          Special chars: {{ lookup('env', 'SPECIAL') }}
+

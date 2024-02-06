@@ -1,3 +1,5 @@
+configs/.vault.key
+secrets
 inventory
 venv
 tmp

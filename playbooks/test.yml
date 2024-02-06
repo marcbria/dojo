@@ -1,0 +1,9 @@
+- name: Ejemplo de playbook con variables cifradas
+  hosts: all
+  vars_files:
+    - ../configs/secret.yml
+  tasks:
+    - name: Imprimir la variable de contraseña de la base de datos
+      debug:
+        msg: "La contraseña de la base de datos es {{ MYSQL_ROOT_PASSWORD }}"
+
