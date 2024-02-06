@@ -1,5 +1,5 @@
 dojo:
-  id: periodicum
+  id: periodicumada
   tool: ojs
   version: "stable-3_3_0"
   versionFamily: "3_3_0"
@@ -13,7 +13,7 @@ database:
 pkp:
   general:
     installed: On
-    base_url: "https://periodicumada.precarietat.net"
+    base_url: "https://{{ dojo.id }}.precarietat.net"
     scheduled_tasks: On
   database:
     host: "{{ database.host }}"
