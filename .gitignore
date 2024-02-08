@@ -1,5 +1,5 @@
+*.key
 .vault.key
-secrets/.vault.key
 secrets
 inventory
 venv
