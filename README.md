@@ -1,56 +1,90 @@
 # Dojo: Ansible playbooks for a PKP server
 
-| **WARNING:** This is a work in progress project. |
-|:--:|
+| **WARNING:** This is an ongoing project. |
+|:--|
 | Features could change, be inestable or not even tested. |
 | Final version is planned to be released at the end of March. |
 
-The aim of this project is to provide a standardised way to install and manage PKP applications.
+TL;DR; The aim of this project is to offer the PKP community a way to host its applications (OJS, OMP...) on-premises, in a simple, standardised and resilient way.
 
-The project is divided in 3 parts:
-- Infrastructure: Installation of all the software needed to support the service (basically: docker).
-- Service: Installation of the containers needed to maintain the service (reverse proxy, backup, monitoring...).
-- Dojo: Scripts to install and maintain the PKP apps (journals and books).
+To do this, the project offer a set of tools to convert a brand new Debian (or another DebianA based distro), to and dedicated server able to host, maintain and upgrade any PKP application and also to include all the additional tools to manage the service.
 
-To make this possible, two proven and recognised technologies have been used:
-- Ansible: The installation and maintenance scripts have been developed on top of ansible, which makes them easy to understand and portable.
-- Docker: The applications run as docker containers, using docker-compose for deployment.
+Project is created with the following pillars in mind:
+- **Standarization:** All decisions regarding to tecnologies and development are taken thinking in stadards first. When there is no standard to apply, the decisions are homogeneous.
+- **Resilence**: Based on gitOps aproach, the infrastrucutre is build over declarative descriptions, stored under control version system and full-automatized.
+- **Simplicity**: Main design principle is KISS. Once a feature is stabilized, will be simplified with a set of self-explicative scripts.
 
-This is not mandatory, as it is possible to run the ansible playbooks directly, but to avoid having to memorise the calls and to avoid errors, is recommended to use the set of justfile scripts (see [just](https://github.com/casey/just#packages)) is also provided.
+All this is build based on two proven and well recognised technologies as:
+- **Ansible:** For the installation and maintenance of the service, which makes it easy to understand and portable.
+- **Docker:** To keep applications issolated and make them easy to upgrade and also with docker-compose to help with the deployments.
 
-So, in short, this project offers all the necessary tools so that, starting from a clean Debian (or another Debian based distro), you end up with a server capable of hosting and maintaining and upgrade any PKP application by creating an standard structure as following:
+The full project and the scripts are divided in 3 parts:
+- **Infrastructure:** To install all the underlaying software required to support the service (ie: docker...).
+- **Service:** To install all the containers needed to maintain the service (ie: reverse proxy...).
+- **Dojo:** To install and maintain the PKP apps and the helpers (ie: journals and books).
+
+To "Keep It Simple Stupid", and to avoid errors during calls, I recommend to use the set of justfile scripts (see [just](https://github.com/casey/just#packages)) provided, but is also possible to run the ansible playbooks directly if you like.
+
+As far as code is quite self-explanatory, the documentation is still rather sparse, but I hope to improve it as time goes by and as questions arise.
+
+New ideas about new needs or improvements and PRs are really welcome.
+
+## Structure
+
+The model is based on the usage of containers with images for both, PKP apps and aditional services.
+The benefits of this are multiple and will be detailed in future, but in short, this will make the OS simplier and easier to maintain, will reduce the dependences and isolate the web-apps that could be upgrades, monitorized, replaced, moved and backup independently from the rest of the platform.
+
+After running a few installation scripts (and setup some configuration), you will be able to transform a clean Debian (or another Debian based distro), to an specialized server capable of hosting and maintaining and upgrade any PKP application under the following structure:
 
 ```
-                                    +---------+     +-------+
-                            +-------|  OJS 1  |-----| DB j1 |
-                            |       +---------+     +-------+
-                            |          ...
-                            |       +---------+     +-------+
-                            +-------|  OJS N  |-----| DB jN |
-                            |       +---------+     +-------+
-                            |
-                            |       +---------+     +-------+
-                            +-------|  OMP 1  |-----| DB m1 |
-                            |       +---------+     +-------+
-                            |          ...
-80/443  +--------------+    |       +---------+     +-------+
---------|    Traefik   |----+-------|  OMP N  |-----| DB mN |
-        +--------------+    |       +---------+     +-------+
-                            |
-                            |       +---------+
-                            +-------| Monitor |
-                            |       +---------+
-                            |       +---------+
-                            +-------| Backup  |
-                            |       +---------+
-                            |       +---------+
-                            +-------| Others  |
-                                    +---------+
+                                     +---------+     +-------+
+                             +-------|  OJS 1  |-----| DB j1 |
+                             |       +---------+     +-------+
+                          S  |          ...
+                          I  |       +---------+     +-------+
+                          T  +-------|  OJS N  |-----| DB jN |
+                          E  |       +---------+     +-------+
+                          S  |
+                             |       +---------+     +-------+
+                             +-------|  OMP 1  |-----| DB m1 |
+                             |       +---------+     +-------+
+                             |          ...
+80/443  +---------------+    |       +---------+     +-------+
+--------| Reverse Proxy |----+-------|  OMP N  |-----| DB mN |
+        +---------------+    |       +---------+     +-------+
+                             |
+                             |
+                          S  |       +---------+
+                          E  +-------| Monitor |
+                          R  |       +---------+
+                          V  |       +---------+
+                          I  +-------| Backup  |
+                          C  |       +---------+
+                          E  |          ...
+                             |       +---------+
+                             +-------| Others  |
+                                     +---------+
 ```
+
+Each box is a container that will be stored in the proper folder acording to it's usage (`service` or `site`) and with the project name (ie: `journalTag` or `proxy`).
+Each folder will include, at least, the following structure:
+
+- `docker-compose.yml`: With common description about how to deploy the app.
+- `docker-compose.override.yml`: With specific description about how to deploy.
+- `.env`: with environment variables required by the containers.
+- `volumes`: with the persistent data
+        - config: All configuration files (like config.inc.php or certificates)
+        - db: The database files.
+        - public: Public files.
+        - private: Private files.
+
+It's up to you to decide what parts of the project you like to use. For instance, if you have a k8s server, you will probably only need the docker images. If you like to run this in the Cloud, your won't probably need the backup and monitoring part.
+
+Again, it's not mandatory, but this project uses git as a **single source of truth** so all this site structrue will be created (and recreated at any time) based on an ansible-dictionary file ([example for a journal](https://github.com/marcbria/ansible/blob/main/sites/periodicum.yml)) that includes all the required variables and configuration information. Private information will be encrypted and also stored in git with ansible-vault.
 
 ## Installation
 
-(This is how it will work, but not implemented yet)
+(This is how it will work, but not full implemented yet)
  
 1. In your server, install a clean Debian (or Debian based) distribution and ensure you have ssh access.
 2. Clone this repository:
@@ -105,6 +139,7 @@ just dojo-create <journalTag>
 | Books          | OMP                                     | Container   | Optional        |
 | Monitor        | UptimeKuma                              | Container   | Optional        |
 | Backup         | Duplicati                               | Container   | Optional        |
+| Statistics     | Plausible				   | Container   | Optional	   |
 | Snapshots      | zfs + sanoid                            | Host        | Optional        |
 | Extras         | just, tldr, zsh                         | Host        | Optional        |
 
@@ -112,7 +147,11 @@ just dojo-create <journalTag>
 ### Accions
 
 The justfile is divided into the 3 blocks mentioned above:
+- Infrastructure
+- Service
+- Dojo
 
+TBD...
 
 If you prefer to run accions without any helper, or you like to adapt it, review the "[justfile](https://github.com/marcbria/ansible/blob/main/justfile)" and the modules in the '/scripts' folder.
 
