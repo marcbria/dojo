@@ -1,0 +1,38 @@
+# Justfile with dojo actions: 
+
+# Default values
+vaultPath := './configs/secret01.yaml'
+vaultKey  := '.vault01.key'
+
+# Syntax and examples
+dojo-info:
+    # README DOJO
+    # To get a list of actions use "just -l"
+    @# TBD
+    #
+
+# Creates an ansible vault with default. Actions are:
+# - create: Vault is saved at "configs/secrets.yml" with the password passed and stored at .vault.key (check your permissions).
+# - edit:   Edits the deault vault in "configs/secrets.yml" with the password stored at .vault.key:
+dojo-vault action:
+    @if [[ "${action}" == "create" ]]; then \
+        echo "${2}" >> ${vaultKey}; \
+        ansible-vault create --vault-password-file=${vaultKey} ${vaultPath} \
+    elif [[ "${create}" == "edit" ]]; then \
+        ansible-vault edit --vault-password-file=${vaultKey} ${vaultPath} \
+    else \
+        echo "Unknown action"; \
+    fi
+
+# Create a config.inc.php based on the specified dictionary name (ie: periodicum). Vault need to be created first.
+# Crea un fichero en "/tmp/>name>.config.inc.php" con la plantilla de /templates/<site>.yml y las variables del diccionario "/sites/<name>.yml"
+dojo-site action name:
+    #!/bin/bash
+    case ${action} in
+        create-config)
+            ansible-playbook -i host, --vault-password-file .vault.key ./playbooks/10-dojo/pkp-config.yml -e "site={{ name }}"
+        ;;
+        create-all)
+            echo "Create ALL: {{action}} - {{name}}"
+        ;;
+    esac

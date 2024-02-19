@@ -1,54 +1,36 @@
 # Justfile
+# This script is a helper to run all the playbooks of this project.
+# You can use the playbooks without just but it will make your life easier.
+# If you like to use it, is required to install: https://github.com/casey/just
+# Actions are divided in 3 parts:
+# - Infrastructure: To setup and maintain your underlaying system (OS + docker).
+# - Service: To setup and maintain essential or collateral services.
+# - Dojo: To setup and maintain your PKP apps (journals and books).
+
+# General settings
+set allow-duplicate-recipes
+set positional-arguments
 
 # Default values
-host := 'kalimero'        # Testing host
+host := 'kalimero'
 
-# Syntax and examples
-info:
-    # README
-    # To get a list of actions use "just -l"
-    @# TBD
-    #
+# Imports
+import 'scripts/test.just'
+import 'scripts/infra.just'
+import 'scripts/service.just'
+import 'scripts/dojo.just'
 
-    # Playbooks
-    @tree playbooks
+default:
+    just -l
 
-# Installs ansible and it's roles
-ansible-install:
-    sudo python3 -m venv venv
-    # Activa el entorno virtual (en sistemas Unix/Linux)
-    bash -c "source venv/bin/activate"
-    sudo apt install ansible git
-    ansible-galaxy install -r requirements.yml
-    ansible-galaxy collection install community.general
-    git init && git add . && git commit -m "Initial commit"
+test:
+    just -f "scripts/test.just" -l
 
-# Commits everything to the local repository with an "Auto commit..." comment.
-ansible-commit:
-    git add . && git commit -m "Auto commit..."
+infra:
+    just -f "scripts/infra.just" -l
 
-# Installs latest stable docker & docker-compose and adds the runner user to docker group.
-docker-install host:
-    ansible-playbook -i {{host}}, ./playbooks/0-startup/docker-install.yml -K
+service:
+    just -f "scripts/service.just" -l
 
-# Installs essential tooling (tmux, vim and tldr)
-essential-tools host:
-    ansible-playbook -i {{host}}, ./playbooks/0-startup/essential-tools.yml -K
-
-# Shows docker and docker-compose version information
-docker-info host:
-    ansible-playbook -i {{host}}, ./playbooks/1-info/docker-info.yml -K
-
-# Ping all hosts
-ping:
-    ansible-playbook -i all, ./playbooks/1-info/ping.yml -K
-
-# PS command over host
-ps host:
-    ansible-playbook -i {{host}}, ./playbooks/1-info/ps.yml -K
-
-# Runs a dist-upgrade, remove unused dependences and reboot.
-dist-upgrade host:
-    ansible-playbook -i {{host}}, ./playbooks/9-maintenance/dist-upgrade.yml -K
-
-default: info 
+dojo:
+    just -f "scripts/dojo.just" -l
