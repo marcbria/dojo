@@ -1,6 +1,9 @@
-# Ansible playbooks to hold all PKP server
+# Dojo: Ansible playbooks for a PKP server
 
-**WARNING:** This is a work in progress project.
+| **WARNING:** This is a work in progress project. |
+|:--:|
+| Features could change, be inestable or not even tested. |
+| Final version is planned to be released at the end of March. |
 
 The aim of this project is to provide a standardised way to install and manage PKP applications.
 
