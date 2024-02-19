@@ -22,6 +22,7 @@ infra-install-ansible:
     sudo apt install ansible git
     ansible-galaxy install -r requirements.yml
     ansible-galaxy collection install community.general
+    # Keep changes under version control
     git init && git add . && git commit -m "Initial commit"
 
 # Commits everything to the local repository with an "Auto commit..." comment.
