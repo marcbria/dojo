@@ -1,4 +1,4 @@
-# Dojo: Ansible playbooks for a PKP server
+# dojo: Ansible playbooks for a full automated PKP server
 
 | **WARNING:** This is an ongoing project. |
 |:--|
@@ -166,3 +166,13 @@ Add more playbooks:
 - [ ] To install and configure monitor tooling.
 - [ ] To install and configure backup tool.
 
+
+#### Why dojo?
+
+Well... long story short? Because technology evolves.
+
+If you like acronyms you can think it cames from "Docker Open Journal Operations" or even from  "DO JOurnals".
+If you like oriental philosophy you can think it all it's a metaphor where journal/site is a "dojo" where we teach different martial arts.
+If you like the long story, all started sooo long ago when I created an script to manage multiple OJS journals called "[mojo](https://github.com/marcbria/mojo)" (Multiple OJs Operations). Some years after docker apears and I start playing with it creating [docker4ojs](https://github.com/marcbria/docker4ojs) but the initial bash script becomes beast very difficult to manage and test, and I realized first we need good docker images for OJS and OMP... so now that OJS images are stable enough I though was time to move forward and introduce a gitOps approach and ansible to the game... so "dojo" sounds like a romantic name that let me remember the beginings.
+
+At the end, it's just a name that sounds nice.
