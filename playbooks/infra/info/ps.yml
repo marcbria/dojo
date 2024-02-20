@@ -1,5 +1,6 @@
 ---
-- hosts: all
+- name: Show ps aux
+  hosts: all
   become: yes
   connection: ssh
 

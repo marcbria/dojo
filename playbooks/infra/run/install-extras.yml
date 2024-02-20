@@ -1,15 +1,15 @@
 ---
-- name: Instalar y configurar tmux, vim, rsync, tree, tldr y pip.
+- name: Installs and config tmux, vim, rsync, tree, tldr and pip.
   hosts: all
-  become: yes  # Para ejecutar como superusuario
+  become: yes 
 
   tasks:
-    - name: Actualizar la caché de paquetes
+    - name: Update the repository cache
       apt:
         update_cache: yes
-      when: ansible_os_family == 'Debian'  # Si estás en un sistema basado en Debian
+      when: ansible_os_family == 'Debian'  # Check if the system is debian based.
 
-    - name: Instalar tmux, vim, rsync, tree, tldr y pip.
+    - name: Installs tmux, vim, rsync, tree, tldr and pip.
       apt:
         name:
           - tmux
@@ -22,13 +22,13 @@
       when: ansible_os_family == 'Debian'
 
     # Configurar Vim
-    - name: Copiar archivo de configuración de Vim
+    - name: Copies the vim config file.
       copy:
         src: ../../configs/vimrc
         dest: ~/.vimrc
       become: yes
 
     # Actualizar TLDR
-    - name: Actualizar TLDR
+    - name: Updates TLDR
       command: tldr --update
       when: ansible_os_family == 'Debian'  # Puedes ajustar esto según la distribución

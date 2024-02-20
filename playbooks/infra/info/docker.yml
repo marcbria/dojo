@@ -1,5 +1,6 @@
 ---
-- hosts: all
+- name: Show docker and docker compose versions.
+  hosts: all
   become: yes
   connection: ssh
 

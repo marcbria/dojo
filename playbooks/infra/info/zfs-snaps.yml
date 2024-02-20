@@ -1,5 +1,5 @@
 ---
-- name: Listar snapshots en un pool ZFS
+- name: List snapshots in the ZFS pool
   hosts: all
   become: yes
 

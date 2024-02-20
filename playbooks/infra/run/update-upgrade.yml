@@ -1,0 +1,23 @@
+---
+- name: Update and upgrade Debian packages and get summary
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update package list
+      apt:
+        update_cache: yes
+
+    - name: Run apt upgrade and capture output
+      command: apt upgrade -y
+      register: upgrade_output
+      changed_when: upgrade_output.stdout != ""
+
+    - name: Get summary from upgrade output
+      set_fact:
+        upgrade_summary: "{{ upgrade_output.stdout_lines[-1] }}"
+      when: upgrade_output.changed
+
+    - name: Display upgrade summary
+      debug:
+        msg: "{{ upgrade_summary }}"
+      when: upgrade_output.changed

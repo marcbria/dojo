@@ -1,5 +1,5 @@
 ---
-- name: Instalar Docker y Docker Compose utilizando el rol ansible-docker
+- name: Installs Docker and Docker Compose using the rol ansible-docker
   hosts: all
   become: yes
 

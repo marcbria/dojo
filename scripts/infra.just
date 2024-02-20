@@ -1,20 +1,13 @@
 # Justfile
 
-infra-info:
-    # README Infrastructure
-    # To setup your infrastructure you only need a clean Debian (or Ubuntu) server.
-    # This set of playbooks and helpers will help you install and maintain your
-    # infrastructure with basic and additional tools (ansible, docker, sanoid...).
-    # To get a list of all possible actions use "just -l".
-    @# To be extended
-    #
-
-    # Playbooks
-    @tree playbooks/0-startup
-    @tree playbooks/1-info
+# Shows how to use the script.
+infra-help:
+    @cat README.md
+    @tree playbooks/infra/run
+    @tree playbooks/infra/info
 
 
-# Installs ansible and it's roles
+# Installs ansible and it's roles in your laptop.
 infra-install-ansible:
     sudo python3 -m venv venv
     # Activa el entorno virtual (en sistemas Unix/Linux)
@@ -25,33 +18,14 @@ infra-install-ansible:
     # Keep changes under version control
     git init && git add . && git commit -m "Initial commit"
 
-# Commits everything to the local repository with an "Auto commit..." comment.
-infra-commit:
-    git add . && git commit -m "Auto commit..."
+# Runs a playbook as root. Parameter includes the path (info/ or run/) and the playbook name.
+infra-play playbook host:
+    ansible-playbook -i {{host}}, ./playbooks/infra/{{playbook}}.yml -K
 
-# Installs latest stable docker & docker-compose and adds the runner user to docker group.
-infra-install-docker host:
-    ansible-playbook -i {{host}}, ./playbooks/0-startup/docker-install.yml -K
-
-# Installs essential tooling (tmux, vim and tldr)
-infra-install-essential host:
-    ansible-playbook -i {{host}}, ./playbooks/0-startup/essential-tools.yml -K
-
-# Shows docker and docker-compose version information
-infra-info-docker host:
-    ansible-playbook -i {{host}}, ./playbooks/1-info/docker-info.yml -K
-
-# Ping all hosts
-infra-ping:
-    ansible-playbook -i all, ./playbooks/1-info/ping.yml -K
-
-# PS command over host
-infra-ps host:
-    ansible-playbook -i {{host}}, ./playbooks/1-info/ps.yml -K
-
-infra-test infra-args:
-    echo "TEST: ${infra-args}
+# Shows the description of the specified playbook
+infra-show playbook:
+    cat ./playbooks/infra/{{playbook}}.yml | grep name
 
 # Runs a dist-upgrade, remove unused dependences and reboot.
 infra-dist-upgrade host:
-    ansible-playbook -i {{host}}, ./playbooks/9-maintenance/dist-upgrade.yml -K
+    ansible-playbook -i {{host}}, ./playbooks/infra/run/dist-upgrade.yml -K

@@ -1,5 +1,6 @@
 ---
-- hosts: all
+- name: Show docker and docker-compose versions (for outdated versions)
+  hosts: all
   become: yes
   connection: ssh
 
@@ -8,5 +9,5 @@
       shell: docker -v && docker-compose -v && cat /etc/issue
       register: output
 
-    - name: show the value of output
+    - name: Show the value of output
       debug: var=output.stdout_lines
