@@ -1,11 +1,19 @@
-# Justfile
+# Justfile for infra
+
+# Variables
+runPath := '/home/marc/workspace/dojo/playbooks/infra'
+
+# This list of actions.
+infra:
+    just -l
 
 # Shows how to use the script.
 infra-help:
-    @cat README.md
-    @tree playbooks/infra/run
-    @tree playbooks/infra/info
+    @cat {{runPath}}/README.md
 
+    # Full list of infrastructure playbooks is:
+    @tree --noreport {{runPath}}/run
+    @tree --noreport {{runPath}}/info
 
 # Installs ansible and it's roles in your laptop.
 infra-install-ansible:
@@ -28,4 +36,8 @@ infra-show playbook:
 
 # Runs a dist-upgrade, remove unused dependences and reboot.
 infra-dist-upgrade host:
-    ansible-playbook -i {{host}}, ./playbooks/infra/run/dist-upgrade.yml -K
+    ansible-playbook -i {{host}}, run/dist-upgrade.yml -K
+
+# Runs an "apt update" and "apt ugrade" and show the result.
+infra-update-upgrade host:
+    ansible-playbook -i {{host}}, run/update-upgrade.yml -K

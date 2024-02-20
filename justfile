@@ -15,22 +15,22 @@ set positional-arguments
 host := 'kalimero'
 
 # Imports
-import 'scripts/test.just'
-import 'scripts/infra.just'
-import 'scripts/service.just'
-import 'scripts/dojo.just'
+import 'playbooks/test/justfile'
+import 'playbooks/infra/justfile'
+import 'playbooks/service/justfile'
+import 'playbooks/dojo/justfile'
 
 default:
     just -l
 
 test:
-    just -f "scripts/test.just" -l
+    just -f "playbooks/test/justfile" -l
 
 infra:
-    just -f "scripts/infra.just" -l
+    just -f "playbooks/infra/justfile" -l
 
 service:
-    just -f "scripts/service.just" -l
+    just -f "playbooks/service/justfile" -l
 
 dojo:
-    just -f "scripts/dojo.just" -l
+    just -f "playbooks/dojo/justfile" -l
