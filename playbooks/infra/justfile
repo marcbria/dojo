@@ -1,7 +1,8 @@
 # Justfile for infra
 
 # Variables
-runPath := '/home/marc/workspace/dojo/playbooks/infra'
+rootPath := '/home/marc/workspace/dojo'
+justPath := rootPath / 'playbooks/infra'
 
 # This list of actions.
 infra:
@@ -9,26 +10,26 @@ infra:
 
 # Shows how to use the script.
 infra-help:
-    @cat {{runPath}}/README.md
+    @cat {{justPath}}/README.md
 
     # Full list of infrastructure playbooks is:
-    @tree --noreport {{runPath}}/run
-    @tree --noreport {{runPath}}/info
+    @tree --noreport {{justPath}}/run
+    @tree --noreport {{justPath}}/info
 
 # Installs ansible and it's roles in your laptop.
 infra-install-ansible:
+    sudo apt install ansible git
     sudo python3 -m venv venv
     # Activa el entorno virtual (en sistemas Unix/Linux)
     bash -c "source venv/bin/activate"
-    sudo apt install ansible git
     ansible-galaxy install -r requirements.yml
     ansible-galaxy collection install community.general
     # Keep changes under version control
     git init && git add . && git commit -m "Initial commit"
 
-# Runs a playbook as root. Parameter includes the path (info/ or run/) and the playbook name.
-infra-play playbook host:
-    ansible-playbook -i {{host}}, ./playbooks/infra/{{playbook}}.yml -K
+# Runs a playbook as root. Parameter includes the action (info/ or run/) and the playbook name.
+infra-play action playbook host:
+    ansible-playbook -i {{host}}, {{justPath}}/{{action}}/{{playbook}}.yml -K
 
 # Shows the description of the specified playbook
 infra-show playbook:

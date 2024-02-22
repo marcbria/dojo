@@ -24,7 +24,7 @@
     # Configurar Vim
     - name: Copies the vim config file.
       copy:
-        src: ../../configs/vimrc
+        src: ./configs/vimrc
         dest: ~/.vimrc
       become: yes
 

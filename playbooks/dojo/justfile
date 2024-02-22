@@ -1,13 +1,14 @@
 # Justfile with dojo actions: 
 
 # Default values
-vaultPath := './configs/secret01.yaml'
-vaultKey  := '.vault01.key'
+vaultPath := './configs/secret.yml'
+vaultKey  := './configs/.vault.key'
+runPath   := '/home/marc/workspace/dojo'
 
 # Syntax and examples
 dojo-info:
     # README DOJO
-    # To get a list of actions use "just -l"
+    # To get a list of actions use "just dojo"
     @# TBD
     #
 
@@ -19,7 +20,7 @@ dojo-vault action:
         echo "${2}" >> ${vaultKey}; \
         ansible-vault create --vault-password-file=${vaultKey} ${vaultPath} \
     elif [[ "${create}" == "edit" ]]; then \
-        ansible-vault edit --vault-password-file=${vaultKey} ${vaultPath} \
+        ansible-vault edit --vault-password-file={{vaultKey}} {{vaultPath}} \
     else \
         echo "Unknown action"; \
     fi
@@ -28,11 +29,12 @@ dojo-vault action:
 # Crea un fichero en "/tmp/>name>.config.inc.php" con la plantilla de /templates/<site>.yml y las variables del diccionario "/sites/<name>.yml"
 dojo-site action name:
     #!/bin/bash
-    case ${action} in
-        create-config)
-            ansible-playbook -i host, --vault-password-file .vault.key ./playbooks/10-dojo/pkp-config.yml -e "site={{ name }}"
-        ;;
-        create-all)
-            echo "Create ALL: {{action}} - {{name}}"
-        ;;
+    echo "{{action}} - {{name}}"
+    case ${action} in \
+        create-config) \
+            ansible-playbook -i host, --vault-password-file {{vaultKey}} ./pkp-config.yml -e "site={{ name }}" \
+        ;; \
+        create-all) \
+            echo "Create ALL: {{action}} - {{name}}" \
+        ;; \
     esac
