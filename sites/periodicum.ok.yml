@@ -3,19 +3,12 @@ dojo:
   tool: ojs
   version: "stable-3_3_0"
   versionFamily: "3_3_0"
-  domains: "`periodicumada.precarietat.net`,`periodicumada`"
 
 database:
-  tool: mariadb
-  version: "10.2"
   host: db
   user: ojs
   name: ojs
   driver: mysqli
-
-images:
-  db: "{{ database.tool }}:{{ dababase.version }}"
-  app: "pkpofficial/{{ dojo.tool }}:{{ dojo.version }}"
 
 pkp:
   general:
@@ -23,8 +16,8 @@ pkp:
     base_url: "https://{{ dojo.id }}.precarietat.net"
     scheduled_tasks: On
   database:
-    host:   "{{ database.host }}"
-    user:   "{{ database.user }}"
+    host: "{{ database.host }}"
+    user: "{{ database.user }}"
     driver: "{{ database.driver }}"
   cache:
   i18n:

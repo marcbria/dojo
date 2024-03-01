@@ -1,0 +1,16 @@
+---
+- name: Create PKP docker-compose files from the site's diccionary vars.
+  hosts: all
+  gather_facts: no
+  vars:
+    siteParam: "{{ site }}"
+  tasks:
+    - name: Include tool variables (aka. sites)
+      include_vars:
+        file: "../../sites/{{ site }}.yml"
+    
+    - name: Generate docker-compose.yml file from template and dojo vars.
+      template:
+        src: "../../templates/{{ dojo.tool }}/docker-compose-{{ dojo.versionFamily }}.j2"
+        dest: "/tmp/{{ dojo.id }}.docker-compose.yml"
+

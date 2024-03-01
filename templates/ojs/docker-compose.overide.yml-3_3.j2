@@ -1,0 +1,31 @@
+# File: docker-compose.override.yml
+#
+# Site:    {{ site }}
+# Tool:    {{ dojo.tool }}
+# Version: {{ dojo.version }}
+#
+
+version: "3.8"
+
+services:
+  app:
+    labels:
+      # Enable traefik for this stack:
+      - "traefik.enable=true"
+
+      # HTTPS routers:
+      - "traefik.http.routers.{{ dojo.id }}-secure.rule=Host({{ dojo.domains }})"
+      - "traefik.http.routers.{{ dojo.id }}-secure.entrypoints=websecure"
+      - "traefik.http.routers.{{ dojo.id }}-secure.tls=true"
+      - "traefik.http.routers.{{ dojo.id }}-secure.tls.certresolver=leresolver"
+
+      # Redirect Scheme HTTP -> HTTPS:
+      # - "traefik.http.middlewares.{{ dojo.id }}-redirect.redirectscheme.scheme=https"
+      # - "traefik.http.middlewares.{{ dojo.id }}-redirect.redirectscheme.permanent=true"
+
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
