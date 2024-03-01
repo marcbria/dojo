@@ -4,11 +4,9 @@
   gather_facts: no
   vars:
     siteParam: "{{ site }}"
-  tasks:
-    - name: Include tool variables (aka. sites)
-      include_vars:
-        file: "./sites/{{ site }}.yml"
-    
+  vars_files:
+    - ./sites/{{ site }}.yml
+  tasks:    
     - name: Generate config file from template and dojo vars.
       template:
         src: "./templates/{{ dojo.tool }}/config.inc.php-{{ dojo.versionFamily }}.j2"

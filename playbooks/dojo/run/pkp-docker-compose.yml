@@ -4,12 +4,10 @@
   gather_facts: no
   vars:
     siteParam: "{{ site }}"
+  vars_files:
+    - ./sites/{{ site }}.yml
   tasks:
-    - name: Include tool variables (aka. sites)
-      include_vars:
-        file: "./sites/{{ site }}.yml"
-
-    - name: Set versionFamily to major_minor format
+    - name: Convert versionFamily to major_minor format
       set_fact:
         versionMajorMinor: "{{ dojo.versionFamily.split('_')[0] }}_{{ dojo.versionFamily.split('_')[1] }}"
           
@@ -17,4 +15,9 @@
       template:
         src: "./templates/{{ dojo.tool }}/docker-compose.yml-{{ versionMajorMinor }}.j2"
         dest: "/tmp/{{ dojo.id }}.docker-compose.yml"
+
+    - name: Generate docker-compose.override.yml file from template and dojo vars.
+      template:
+        src: "./templates/{{ dojo.tool }}/docker-compose.override.yml-{{ versionMajorMinor }}.j2"
+        dest: "/tmp/{{ dojo.id }}.docker-compose.override.yml"
 
