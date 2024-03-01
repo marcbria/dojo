@@ -1,0 +1,22 @@
+- name: Setup Docker Runner User and dojo's folder structure
+  hosts: all
+  become: true
+  vars_files:
+    - ./configs/dojo.yml
+  tasks:
+    - name: Create docker runner user
+      user:
+        name: "{{ user.run }}"
+        home: "{{ path.base.root }}"
+        shell: /bin/bash
+
+    - name: Add runner user to sudoers
+      lineinfile:
+        dest: /etc/sudoers
+        line: "{{ user.run }} ALL=(ALL) NOPASSWD:ALL"
+
+    - name: Add runner user to docker group
+      user:
+        name: "{{ user.run }}"
+        groups: docker
+        append: yes

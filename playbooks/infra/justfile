@@ -28,8 +28,8 @@ infra-install-ansible:
     git init && git add . && git commit -m "Initial commit"
 
 # Runs a playbook as root. Parameter includes the action (info/ or run/) and the playbook name.
-infra-play action playbook host:
-    ansible-playbook -i {{host}}, {{justPath}}/{{action}}/{{playbook}}.yml -K
+infra-play action playbook host *args:
+    ansible-playbook -i {{host}}, {{justPath}}/{{action}}/{{playbook}}.yml {{ args }}
 
 # Shows the description of the specified playbook
 infra-show playbook:

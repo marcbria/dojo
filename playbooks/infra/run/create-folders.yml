@@ -1,0 +1,67 @@
+- name: Setup dojo's folders structure
+  hosts: all
+  become: true
+  gather_facts: no
+  vars_files:
+    - ./configs/dojo.yml
+  tasks:
+    - name: Crear directorios base
+      file:
+        path: "{{ item.value }}"
+        state: directory
+        mode: 0755
+        owner: "{{ user.run }}"
+        group: "{{ user.group }}"
+        recurse: yes
+      with_dict: "{{ path.base }}"
+      tags:
+        - base_directories
+
+    - name: Crear directorios de almacenamiento
+      file:
+        path: "{{ item.value }}"
+        state: directory
+        mode: 0744
+        owner: "{{ user.run }}"
+        group: "{{ user.group }}"
+        recurse: yes
+      with_dict: "{{ path.storage }}"
+      tags:
+        - storage_directories
+
+    - name: Crear directorios de volúmenes
+      file:
+        path: "{{ item.value }}"
+        state: directory
+        mode: 0744
+        owner: "{{ user.run }}"
+        group: "{{ user.group }}"
+        recurse: yes
+      with_dict: "{{ path.volumes }}"
+      tags:
+        - volumes_directories
+
+    - name: Asignar propietario y grupo a BD
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "999"
+        group: "1002"
+        recurse: yes
+      loop:
+        - "{{ path.storage.backups }}"
+        - "{{ path.volumes.db }}"
+      tags:
+        - volumes_db
+
+    - name: Asignar propietario y grupo a www
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "100"
+        group: "101"
+        recurse: yes
+      loop:
+        - "{{ path.volumes.files }}"
+      tags:
+        - volumes_www
