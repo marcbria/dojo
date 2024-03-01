@@ -4,7 +4,7 @@ user:
 path:
   base:
     root:    "/home/docker"
-    dojo:    "/home/docker/sites"
+    sites:   "/home/docker/sites"
     service: "/home/docker/service"
   storage:  
     root:    "/srv"
