@@ -1,12 +1,20 @@
 ---
 - name: Create PKP docker-compose files from the site's diccionary vars.
   hosts: all
+  become: yes
   gather_facts: no
   vars:
     siteParam: "{{ site }}"
   vars_files:
+    - ./configs/dojo.yml
     - ./sites/{{ site }}.yml
   tasks:
+    - name: Ensure journal's directory exists
+      file:
+        path: "{{ path.base.sites }}/{{ dojo.id }}"
+        state: directory
+        force: yes
+
     - name: Convert versionFamily to major_minor format
       set_fact:
         versionMajorMinor: "{{ dojo.versionFamily.split('_')[0] }}_{{ dojo.versionFamily.split('_')[1] }}"
@@ -14,10 +22,9 @@
     - name: Generate docker-compose.yml file from template and dojo vars.
       template:
         src: "./templates/{{ dojo.tool }}/docker-compose.yml-{{ versionMajorMinor }}.j2"
-        dest: "/tmp/{{ dojo.id }}.docker-compose.yml"
+        dest: "{{ path.base.sites }}/{{ dojo.id }}/docker-compose.yml"
 
     - name: Generate docker-compose.override.yml file from template and dojo vars.
       template:
         src: "./templates/{{ dojo.tool }}/docker-compose.override.yml-{{ versionMajorMinor }}.j2"
-        dest: "/tmp/{{ dojo.id }}.docker-compose.override.yml"
-
+        dest: "{{ path.base.sites }}/{{ dojo.id }}/docker-compose.override.yml"
