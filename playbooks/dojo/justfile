@@ -60,6 +60,7 @@ dojo-site-old action name:
 
 # Create a full site or specific files based on the specified dictionary name (ie: periodicum). Vault need to be created first.
 # config: Creates "/tmp/>name>.config.inc.php" with the template /templates/<site>.yml and the vars from "/sites/<name>.yml"
-dojo-play action site host:
-    ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath}}/run/{{ vaultKey }} {{ dojoPath }}/run/pkp-{{ action }}.yml -e "site={{ site }}" \
+dojo-play action site host *args:
+    ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath}}/run/{{ vaultKey }} {{ dojoPath }}/run/pkp-{{ action }}.yml -e "site={{ site }}" {{ args }}
+
 
