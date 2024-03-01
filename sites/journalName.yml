@@ -1,9 +1,9 @@
 dojo:
-  id: periodicumada
+  id: journalName
   tool: ojs
   version: "stable-3_3_0"
   versionFamily: "3_3_0"
-  domains: "`periodicumada.precarietat.net`,`periodicumada`"
+  domains: "`revista02.precarietat.net`,`journalName`"
 
 database:
   tool: mariadb
