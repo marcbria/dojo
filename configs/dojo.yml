@@ -1,6 +1,7 @@
 user:
   run:       "docker"
   group:     "docker"
+
 path:
   base:
     root:    "/home/docker"
@@ -13,8 +14,8 @@ path:
   volumes:
     all:     "/srv/volumes/all"
     db:      "/srv/volumes/db"
-    files:   "/srv/volumes/files"
-    private: "/srv/volumes/files/private"
-    public:  "/srv/volumes/files/public"
-    config:  "/srv/volumes/files/config"
     logs:    "/srv/volumes/logs"
+  files:
+    public:  "/srv/volumes/files/public"
+    private: "/srv/volumes/files/private"
+    config:  "/srv/volumes/files/config"
