@@ -14,7 +14,7 @@ database:
   driver: mysqli
 
 images:
-  db: "{{ database.tool }}:{{ dababase.version }}"
+  db: "{{ database.tool }}:{{ database.version }}"
   app: "pkpofficial/{{ dojo.tool }}:{{ dojo.version }}"
 
 pkp:

@@ -5,20 +5,31 @@ vaultPath := './configs/secret.yml'
 vaultKey  := './configs/.vault.key'
 dojoPath  := '/home/marc/workspace/dojo/playbooks/dojo'
 
-# Shows how to use the script.
-dojo-help:
-    @cat {{dojoPath}}/README.md
+# This list of actions
+dojo:
+    just -l
 
+# Shows how to use the script.
+dojo-list:
     # Full list of infrastructure playbooks is:
     @tree --noreport {{dojoPath}}/run
     @tree --noreport {{dojoPath}}/info
+    # Run "just dojo" for a full list of actions.
 
 # Syntax and examples
 dojo-info:
     # README DOJO
     # To get a list of actions use "just dojo"
+    @cat {{dojoPath}}/README.md
     @# TBD
-    #
+    # Sample of calls:
+    # $ just dojo-play config journalName remoteServer            # Creates a config.inc.php for journalName in the remoteServer.
+    # $ just dojo-play create-journal journalName remoteServer    # And get a full OJS installed
+    @# TBD: $ dojo backup journalName                 # Backup a full journal
+    @# TBD: $ dojo clone journalName journalClone     # Clone a journal
+    @# TBD: $ dojo upgrade journalClone 3.4.0-6       # Upgrade a journal to the s
+    @# TBD: $ dojo stop journalName                   # Stop a journal
+    @# TBD: $ dojo frozen journalName                 # Makes a journal work in read-only mode.
 
 # Creates an ansible vault with default. Actions are:
 # - create: Vault is saved at "configs/secrets.yml" with the password passed and stored at .vault.key (check your permissions).
@@ -43,11 +54,12 @@ dojo-site-old action name:
             ansible-playbook -i host, --vault-password-file {{vaultKey}} ./pkp-config.yml -e "site={{ name }}" \
         ;; \
         create-all) \
-            echo "Create ALL: {{action}} - {{name}}" \
+            echo "Create ALL: {{ action }} - {{ name }}" \
         ;; \
     esac
 
 # Create a full site or specific files based on the specified dictionary name (ie: periodicum). Vault need to be created first.
 # config: Creates "/tmp/>name>.config.inc.php" with the template /templates/<site>.yml and the vars from "/sites/<name>.yml"
 dojo-play action site host:
-    ansible-playbook -i host, --vault-password-file {{ vaultKey }} {{ dojoPath }}/run/pkp-{{ action }}.yml -e "site={{ site }}" \
+    ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath}}/run/{{ vaultKey }} {{ dojoPath }}/run/pkp-{{ action }}.yml -e "site={{ site }}" \
+
