@@ -32,9 +32,10 @@ New ideas about new needs or improvements and PRs are really welcome.
 ## Structure
 
 The model is based on the usage of containers with images for both, PKP apps and aditional services.
+
 The benefits of this are multiple and will be detailed in future, but in short, this will make the OS simpler and easier to maintain, will reduce the dependencies and isolate the web-apps that could be upgrades, monitored, replaced, moved and backup independently from the rest of the platform.
 
-After running a few installation scripts (and setup some configuration), you will be able to transform a clean Debian (or another Debian based distro), to an specialized server capable of hosting and maintaining and upgrade any PKP application under the following structure:
+All the process of installation and management is automatized via ansible playbooks. It means, after some basic configuration you will only need to run a few installation scripts to transform a clean Debian (or another Debian based distro) into a server specialized in hosting and maintaining any PKP application under the following logic structure:
 
 ```
                                      +---------+     +-------+
@@ -67,64 +68,111 @@ After running a few installation scripts (and setup some configuration), you wil
 ```
 
 Each box is a container that will be stored in the proper folder according to it's usage (`service` or `site`) and with the project name (ie: `journalTag` or `proxy`).
-Each folder will include, at least, the following structure:
+
+Physically, this is stored in two main folders:
+
+```
+[runningFolder] (ie: /home/docker)
+├── service
+    └── reverseProxy
+└── sites
+    └── journalName
+        └── volumes -> /srv/volumes/all/journalName
+
+[storageFolder] (ie: /srv)
+├── backups
+│   └── journalName
+└── volumes
+    ├── all
+    │   └── journalName
+    │       ├── config -> /srv/volumes/files/config/journalName
+    │       ├── db -> /srv/volumes/db/journalName
+    │       ├── logs -> /srv/volumes/logs/journalName
+    │       ├── private -> /srv/volumes/files/private/journalName
+    │       └── public -> /srv/volumes/files/public/journalName
+    ├── db
+    │   └── journalName
+    ├── files
+    │   ├── config
+    │   │   └── journalName
+    │   ├── private
+    │   │   └── journalName
+    │   └── public
+    │       └── journalName
+    └── logs
+        └── journalName
+```
+
+Each site in the `runningFolder` will include, at least, the following structure:
 
 - `docker-compose.yml`: With common description about how to deploy the app.
 - `docker-compose.override.yml`: With specific description about how to deploy.
 - `.env`: with environment variables required by the containers.
-- `volumes`: with the persistent data
+- `volumes`: A symlink to the `storageFolder` with all the persistent data
         - config: All configuration files (like config.inc.php or certificates)
         - db: The database files.
         - public: Public files.
         - private: Private files.
 
-It's up to you to decide what parts of the project you like to use. For instance, if you have a k8s server, you will probably only need the docker images. If you like to run this in the Cloud, your won't probably need the backup and monitoring part.
-
 Again, it's not mandatory, but this project uses git as a **single source of truth** so all this site structure will be created (and recreated at any time) based on an ansible-dictionary file ([example for a journal](https://github.com/marcbria/ansible/blob/main/sites/periodicum.yml)) that includes all the required variables and configuration information. Private information will be encrypted and also stored in git with ansible-vault.
+
 
 ## Installation
 
 (This is how it will work, but not full implemented yet)
- 
-1. In your server, install a clean Debian (or Debian based) distribution and ensure you have ssh access.
-2. Clone this repository:
+
+#### Ingredients
+- Sever: A clean Debian (or Debian based) distribution (ensure you have SSH access).
+- Local: Git and Ansible installed.
+
+1. Clone this repository:
 ```
-$ git clone https://github.com/marcbria/ansible/
+$ git clone https://github.com/marcbria/dojo/
 ```
-3. Create your own `inventory/hosts.yml` adding your serverName.
+3. Create your own `inventory/hosts.yml` adding your remoteServer name.
 ```
-$ cd ansible
+$ cd dojo
 $ mkdir inventory
 $ vim inventory/hosts.yml
 # Take a look to [those examples](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/yaml_inventory.html#examples) to create your inventory file.
 ```
+4. Recommended: Install [just](https://github.com/casey/just#packages) version 1.23 or higher.
+5. Use `just` to install the underlaying infrastructure:
+```
+$ just infra-install-ansible                    # Install ansible in your local machine.
 
-4. Create your dictionary.
-5. Create your ansible-vault.
-6. Recommended: Install [just](https://github.com/casey/just#packages) version 1.23 or higher.
-7. Use `just` to install the underlaying infrastructure:
-```
-$ just infra-install ansible
-$ REMOTESERVER=serverName
-$ just ps $REMOTESERVER                   # Test if you can reach your remote server
-$ just infra-dist-upgrade $REMOTESERVER   # Update the server.
+$ REMOTESERVER=<remoteServer>
+$ just infra info ps $REMOTESERVER              # Test if you can reach your remote server.
+$ just infra-dist-upgrade $REMOTESERVER         # Update the server.
 
-$ just infra-install docker
-$ just docker-info $REMOTESERVER          # Test docker and docker-compose installations.
+$ just infra run install-docker $REMOTESERVER   # Install docker & docker-compose.
+$ just infra info docker $REMOTESERVER          # Test docker and docker-compose installations.
 
-$ just infra-install essential
-$ just infra-install extra
+$ just infra run create-user $REMOTESERVER      # Create docker user and group.
+$ just infra run create-folders $REMOTESERVER   # Creates the required folder structure.
 ```
-8. Install the reverse proxy:
+6. Install the reverse proxy:
 ```
-just infra-install proxy
+just infra run install-proxy $REMOTESERVER
 ```
-9. Create your fist journal:
+7. Create your first journal's dictionary
 ```
-just dojo-create <journalTag>
+$ JOURNAL=<yourJournal>
+$ mv sites/journalName sites/$JOURNAL
+$ vim sites/$JOURNAL
 ```
+8. Create your ansible-vault add edit your journal's passwd.
+```
+$ just dojo-vault create $JOURNAL
+$ just dojo-vault create $JOURNAL
+```
+9. Build your fist journal:
+```
+just dojo-create $JOURNAL
+```
+10. Visit your new journal in your browser.
 
-10. Read more about this project and decide if you also like to install:
+99. Read more about this project and decide if you also like to install:
 - Monitoring tool, like uptimekuma.
 - Backup apps, like sanoid and duplicati.
 - Management apps, like portainer.
