@@ -18,21 +18,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 [general]
-installed = "{{ pkp.installed | default('Off') }}"
-base_url = "{{ pkp.base_url | default('http://pkp.sfu.ca/ojs') }}"
-scheduled_tasks = "{{ pkp.scheduled_tasks | default('Off') }}"
-time_zone = "{{ pkp.time_zone | default('UTC') }}"
-session_cookie_name = "{{ pkp.session_cookie_name | default('OJSSID') }}"
-session_lifetime = "{{ pkp.session_lifetime | default('30') }}"
-session_samesite = "{{ pkp.session_samesite | default('Lax') }}"
-disable_path_info = "{{ pkp.disable_path_info | default('Off') }}"
-allow_url_fopen = "{{ pkp.allow_url_fopen | default('Off') }}"
+installed = "{{ pkp.general.installed | default('Off') }}"
+base_url = "{{ pkp.general.base_url | default('') }}"
+scheduled_tasks = "{{ pkp.general.scheduled_tasks | default('Off') }}"
+time_zone = "{{ pkp.general.time_zone | default('UTC') }}"
+session_cookie_name = "{{ pkp.general.session_cookie_name | default('OJSSID') }}"
+session_lifetime = "{{ pkp.general.session_lifetime | default('30') }}"
+session_samesite = "{{ pkp.general.session_samesite | default('Lax') }}"
+disable_path_info = "{{ pkp.general.disable_path_info | default('Off') }}"
+allow_url_fopen = "{{ pkp.general.allow_url_fopen | default('Off') }}"
 
 [database]
 driver = "{{ pkp.database.driver | default('mysqli') }}"
 host = "{{ pkp.database.host | default('localhost') }}"
 username = "{{ pkp.database.username | default('ojs') }}"
-password = "{{ pkp.database.password | default('ojs') }}"
+password = "{{ pkp.database.password | default('ojsPwd') }}"
 name = "{{ pkp.database.name | default('ojs') }}"
 debug = "{{ pkp.database.debug | default('Off') }}"
 

@@ -6,7 +6,7 @@ LoadModule rewrite_module modules/mod_rewrite.so
 <VirtualHost *:80>
         ServerName localhost
         ServerAlias {{ dojo.domain }}
-        ServerAlias {{ dojo.id }}
+        ServerAlias {{ dojo.id | lower }}
 
         DocumentRoot /var/www/html
         DirectoryIndex index.php index.html
@@ -34,42 +34,42 @@ LoadModule rewrite_module modules/mod_rewrite.so
                 ## RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R,L]
 
                 # Redirect root to index
-                RewriteRule ^/?$ index.php/{{ dojo.id }}/index [L=307]
-                RewriteRule ^{{ dojo.id }}$ index.php/{{ dojo.id }}/index [L=307]
+                RewriteRule ^/?$ index.php/{{ dojo.id | lower }}/index [L=307]
+                RewriteRule ^{{ dojo.id | lower }}$ index.php/{{ dojo.id | lower }}/index [L=307]
                 # Bloc admin pages with DB info:
-                ## RewriteRule ^/?{{ dojo.id }}/index/admin/systemInfo/?$ /{{ dojo.id }}/index [L]
+                ## RewriteRule ^/?{{ dojo.id | lower }}/index/admin/systemInfo/?$ /{{ dojo.id | lower }}/index [L]
 
                 ## Force httpS (basically to reach the API):
                 RewriteCond %{HTTPS}  !=on
-                RewriteCond %{REQUEST_URI} ^/{{ dojo.id }}\/api\/v1\/
+                RewriteCond %{REQUEST_URI} ^/{{ dojo.id | lower }}\/api\/v1\/
                 RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
                 RewriteCond %{REQUEST_FILENAME} !-f
-                RewriteRule ^/?(.*) https://%{SERVER_NAME}/{{ dojo.id }}/index.php/$1 [L,R=307]
+                RewriteRule ^/?(.*) https://%{SERVER_NAME}/{{ dojo.id | lower }}/index.php/$1 [L,R=307]
 
                 # OJS expects to be at root, so removing journal's subdomain:
-                RewriteCond %{REQUEST_URI} ^/{{ dojo.id }}
+                RewriteCond %{REQUEST_URI} ^/{{ dojo.id | lower }}
                 RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-d
                 RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
                 RewriteCond %{REQUEST_FILENAME} !-d
                 RewriteCond %{REQUEST_FILENAME} !-f
-                RewriteRule ^{{ dojo.id }}/(.*)$ $1 [QSA,L]
+                RewriteRule ^{{ dojo.id | lower }}/(.*)$ $1 [QSA,L]
 
                 ## Rewrite API calls if not including subdomain journals:
                 RewriteCond %{REQUEST_URI} api\/v1\/
                 RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
                 RewriteCond %{REQUEST_FILENAME} !-f
-                RewriteRule ^(.*)$ {{ dojo.id }}/index.php/{{ dojo.id }}/$1 [L,R=307]
+                RewriteRule ^(.*)$ {{ dojo.id | lower }}/index.php/{{ dojo.id | lower }}/$1 [L,R=307]
 
                 # Renames the short journal's rule:
-                RewriteCond %{REQUEST_URI} !^index.php\/{{ dojo.id }}
+                RewriteCond %{REQUEST_URI} !^index.php\/{{ dojo.id | lower }}
                 RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-d
                 RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
                 RewriteCond %{REQUEST_FILENAME} !-d
                 RewriteCond %{REQUEST_FILENAME} !-f
-                RewriteRule ^(.*)$ index.php/{{ dojo.id }}/$1 [QSA,L]
+                RewriteRule ^(.*)$ index.php/{{ dojo.id | lower }}/$1 [QSA,L]
 
                 # This removes index.php from the url (apache 2.2 and new ones)
-                RewriteCond %{REQUEST_URI} !^/{{ dojo.id }}/index.php
+                RewriteCond %{REQUEST_URI} !^/{{ dojo.id | lower }}/index.php
                 RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-d
                 RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
                 RewriteCond %{REQUEST_FILENAME} !-d

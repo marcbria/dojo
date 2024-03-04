@@ -14,14 +14,14 @@ services:
       - "traefik.enable=true"
 
       # HTTPS routers:
-      - "traefik.http.routers.{{ dojo.id }}-secure.rule=Host({{ proxy.domains }})"
-      - "traefik.http.routers.{{ dojo.id }}-secure.entrypoints=websecure"
-      - "traefik.http.routers.{{ dojo.id }}-secure.tls=true"
-      - "traefik.http.routers.{{ dojo.id }}-secure.tls.certresolver=leresolver"
+      - "traefik.http.routers.{{ dojo.id | lower }}-secure.rule=Host({{ proxy.domains }})"
+      - "traefik.http.routers.{{ dojo.id | lower }}-secure.entrypoints=websecure"
+      - "traefik.http.routers.{{ dojo.id | lower }}-secure.tls=true"
+      - "traefik.http.routers.{{ dojo.id | lower }}-secure.tls.certresolver=leresolver"
 
       # Redirect Scheme HTTP -> HTTPS:
-      # - "traefik.http.middlewares.{{ dojo.id }}-redirect.redirectscheme.scheme=https"
-      # - "traefik.http.middlewares.{{ dojo.id }}-redirect.redirectscheme.permanent=true"
+      - "traefik.http.middlewares.{{ dojo.id | lower }}-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.{{ dojo.id | lower }}-redirect.redirectscheme.permanent=true"
 
     networks:
       - proxy

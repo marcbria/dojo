@@ -22,5 +22,5 @@
     - name: Generate apache-config file from template and dojo vars.
       template:
         src: "./templates/{{ dojo.tool }}/apache.ojs.conf-{{ versionMajorMinor }}.j2"
-        dest: "{{ path.files.config }}/{{ dojo.id }}/apache.{{ dojo.tool }}.conf"
+        dest: "{{ path.files.config }}/{{ dojo.id }}/apache.conf"
 

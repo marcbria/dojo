@@ -1,13 +1,13 @@
 dojo:
-  id: journalName
+  id: journalname                       # This MUST be lowercase.
   tool: ojs
   version: "stable-3_3_0"
   versionFamily: "3_3_0"
-  domain: "revista02.precarietat.net"
-  installed: 1
+  domain: "revista01.precarietat.net"
+  installed: 0
 
 proxy:
-  domains: "`revista02.precarietat.net`,`journalName`"
+  domains: "`revista01.precarietat.net`,`journalName`"
 
 database:
   tool: mariadb
@@ -18,18 +18,18 @@ database:
   driver: mysqli
 
 images:
-  db: "{{ database.tool }}:{{ database.version }}"
+  db:  "{{ database.tool }}:{{ database.version }}"
   app: "pkpofficial/{{ dojo.tool }}:{{ dojo.version }}"
 
 pkp:
   general:
-    installed: On
+    installed: Off
     base_url: "https://{{ dojo.domain }}"
     scheduled_tasks: On
   database:
-    host:   "{{ database.host }}"
-    user:   "{{ database.user }}"
-    driver: "{{ database.driver }}"
+    host:     "{{ database.host }}"
+    username: "{{ database.user }}"
+    driver:   "{{ database.driver }}"
   cache:
   i18n:
   files:

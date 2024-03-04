@@ -43,8 +43,8 @@ services:
       - ./volumes/private:/var/www/files
       - ./volumes/public:/var/www/html/public
       - ./volumes/logs/app:/var/log/apache2
-      - ./volumes/config/{{ dojo.tool }}.config.inc.php:/var/www/html/config.inc.php
-      - ./volumes/config/apache.{{ dojo.tool }}.conf:/etc/apache2/conf.d/{{ dojo.tool }}.conf
+      - ./volumes/config/config.inc.php:/var/www/html/config.inc.php
+      - ./volumes/config/apache.conf:/etc/apache2/conf.d/{{ dojo.tool }}.conf
       # - ./config/apache.htaccess:/var/www/html/.htaccess
       # - ./volumes/config/php.custom.ini:/etc/php7/conf.d/0-{{ dojo.tool }}.ini
 

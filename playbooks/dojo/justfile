@@ -63,7 +63,6 @@ dojo-site-old action name:
 dojo-play action site host *args:
     ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath}}/run/{{ vaultKey }} {{ dojoPath }}/run/pkp-{{ action }}.yml -e "site={{ site }}" {{ args }}
 
-
 # Creates a full site with acording to the dictionary in sites/<site>.yml 
 # Following playbooks will be called: pkp-site-folders > pkp-config > pkp-apache > pkp-docker-compose
 dojo-create site host *args:
