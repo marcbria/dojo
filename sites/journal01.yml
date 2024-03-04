@@ -1,13 +1,13 @@
 dojo:
-  id: journalname                       # This MUST be lowercase.
+  id: journal01                       # This MUST be lowercase.
   tool: ojs
   version: "stable-3_3_0"
   versionFamily: "3_3_0"
-  domain: "revista01.precarietat.net"
+  domain: "revista03.precarietat.net"
   type: domain
   
 proxy:
-  domains: "`revista01.precarietat.net`,`journalName`"
+  domains: "`revista03.precarietat.net`,`journalName`"
 
 database:
   tool: mariadb
