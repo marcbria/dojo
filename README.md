@@ -114,6 +114,10 @@ Each site in the `runningFolder` will include, at least, the following structure
         - public: Public files.
         - private: Private files.
 
+Project is thought to be modular: You can use it as a whole, or use only the parts that are useful to you.
+For instance, you can call playbooks directly (without justfile helpers), or use it all to set up your
+infrastruture and sites, and then forget about the project and manage it manually without ansible.
+
 Again, it's not mandatory, but this project uses git as a **single source of truth** so all this site structure will be created (and recreated at any time) based on an ansible-dictionary file ([example for a journal](https://github.com/marcbria/ansible/blob/main/sites/periodicum.yml)) that includes all the required variables and configuration information. Private information will be encrypted and also stored in git with ansible-vault.
 
 
