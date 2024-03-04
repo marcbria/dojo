@@ -16,7 +16,7 @@ services:
     image: {{ images.db }}
     env_file:
       - .env
-    container_name: "ojs_db_${COMPOSE_PROJECT_NAME:-demo}"
+    container_name: "{{ dojo.tool }}_db_${COMPOSE_PROJECT_NAME:-demo}"
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-ojsPwd}"
       MYSQL_DATABASE: "${MYSQL_DATABASE:-ojs}"
@@ -35,19 +35,19 @@ services:
     image: {{ images.app }}
     env_file:
       - .env
-    container_name: "ojs_app_${COMPOSE_PROJECT_NAME:-demo}"
+    container_name: "{{ dojo.tool }}_app_${COMPOSE_PROJECT_NAME:-demo}"
     hostname: "${COMPOSE_PROJECT_NAME:-demo}"
-    restart: unless-stopped 
     volumes:
       # Sync time between docker and host:
       - /etc/localtime:/etc/localtime
       - ./volumes/private:/var/www/files
       - ./volumes/public:/var/www/html/public
       - ./volumes/logs/app:/var/log/apache2
-      - ./volumes/config/ojs.config.inc.php:/var/www/html/config.inc.php
+      - ./volumes/config/{{ dojo.tool }}.config.inc.php:/var/www/html/config.inc.php
+      - ./volumes/config/apache.{{ dojo.tool }}.conf:/etc/apache2/conf.d/{{ dojo.tool }}.conf
       # - ./config/apache.htaccess:/var/www/html/.htaccess
-      # - ./volumes/config/php.custom.ini:/etc/php7/conf.d/0-ojs.ini
-      - ./volumes/config/apache.ojs.conf:/etc/apache2/conf.d/ojs.conf
+      # - ./volumes/config/php.custom.ini:/etc/php7/conf.d/0-{{ dojo.tool }}.ini
+
       # Plugins shared and read-only:
       # - ../common/plugins:/var/www/html/plugins:ro
       # - ../common/themes/redi:/var/www/html/common/themes/redi:ro
@@ -57,7 +57,6 @@ services:
       # Plugins on container:
       # - ./volumes/plugins:/var/www/html/plugins
       # - ./volumes/themes/redi:/var/www/html/plugins/themes/redi
-
     restart: unless-stopped
 
     networks:

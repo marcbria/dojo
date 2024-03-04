@@ -14,7 +14,7 @@ services:
       - "traefik.enable=true"
 
       # HTTPS routers:
-      - "traefik.http.routers.{{ dojo.id }}-secure.rule=Host({{ dojo.domains }})"
+      - "traefik.http.routers.{{ dojo.id }}-secure.rule=Host({{ proxy.domains }})"
       - "traefik.http.routers.{{ dojo.id }}-secure.entrypoints=websecure"
       - "traefik.http.routers.{{ dojo.id }}-secure.tls=true"
       - "traefik.http.routers.{{ dojo.id }}-secure.tls.certresolver=leresolver"

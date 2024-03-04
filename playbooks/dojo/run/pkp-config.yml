@@ -11,11 +11,11 @@
   tasks:
     - name: Ensure journal's directory exists
       file:
-        path: "{{ path.volumes.config }}/{{ dojo.id }}"
+        path: "{{ path.files.config }}/{{ dojo.id }}"
         state: directory
         force: yes
 
     - name: Generate config file from template and dojo vars.
       template:
         src: "./templates/{{ dojo.tool }}/config.inc.php-{{ dojo.versionFamily }}.j2"
-        dest: "{{ path.volumes.config }}/{{ dojo.id }}/config.inc.php"
+        dest: "{{ path.files.config }}/{{ dojo.id }}/config.inc.php"

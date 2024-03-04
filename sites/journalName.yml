@@ -3,6 +3,9 @@ dojo:
   tool: ojs
   version: "stable-3_3_0"
   versionFamily: "3_3_0"
+  domain: "revista02.precarietat.net"
+
+proxy:
   domains: "`revista02.precarietat.net`,`journalName`"
 
 database:
@@ -20,7 +23,7 @@ images:
 pkp:
   general:
     installed: On
-    base_url: "https://{{ dojo.id }}.precarietat.net"
+    base_url: "https://{{ dojo.domain }}"
     scheduled_tasks: On
   database:
     host:   "{{ database.host }}"
