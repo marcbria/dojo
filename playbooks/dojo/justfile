@@ -65,7 +65,13 @@ dojo-play action site host *args:
 
 
 # Creates a full site with acording to the dictionary in sites/<site>.yml 
+# Following playbooks will be called: pkp-site-folders > pkp-config > pkp-apache > pkp-docker-compose
 dojo-create site host *args:
-    just dojo-play site-folders {{ site }} {{ host }} {{ args }} && \
-    just dojo-play config {{ site }} {{ host }} {{ args }} && \
-    just dojo-play docker-compose {{ site }} {{ host }} {{ args }} 
+    @echo "Are you sure you like to run playbooks pkp-site-folders > pkp-config > pkp-docker-compose \
+    for [{{ site }}] on [{{ host }}]?" && \
+    ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath}}/run/{{ vaultKey }} \
+     {{ dojoPath }}/run/pkp-site-folders.yml \
+     {{ dojoPath }}/run/pkp-config.yml \
+     {{ dojoPath }}/run/pkp-apache.yml \
+     {{ dojoPath }}/run/pkp-docker-compose.yml \
+     -e "site={{ site }}" {{ args }}
