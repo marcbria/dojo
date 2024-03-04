@@ -5,7 +5,7 @@ LoadModule rewrite_module modules/mod_rewrite.so
 
 <VirtualHost *:80>
         ServerName localhost
-        ServerAlias {{ proxy.domains }}
+        ServerAlias {{ dojo.domain }}
         ServerAlias {{ dojo.id }}
 
         DocumentRoot /var/www/html
