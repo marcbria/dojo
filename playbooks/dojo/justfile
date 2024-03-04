@@ -74,4 +74,5 @@ dojo-create site host *args:
      {{ dojoPath }}/run/pkp-config.yml \
      {{ dojoPath }}/run/pkp-apache.yml \
      {{ dojoPath }}/run/pkp-docker-compose.yml \
+     {{ dojoPath }}/run/pkp-env.yml \
      -e "site={{ site }}" {{ args }}
