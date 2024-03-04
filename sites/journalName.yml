@@ -4,6 +4,7 @@ dojo:
   version: "stable-3_3_0"
   versionFamily: "3_3_0"
   domain: "revista02.precarietat.net"
+  installed: 1
 
 proxy:
   domains: "`revista02.precarietat.net`,`journalName`"
