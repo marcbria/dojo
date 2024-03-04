@@ -1,0 +1,26 @@
+---
+- name: Create PKP config file from the site's diccionary vars.
+  hosts: all
+  become: yes
+  gather_facts: no
+  vars:
+    siteParam: "{{ site }}"
+  vars_files:
+    - ./configs/dojo.yml
+    - ./sites/{{ site }}.yml
+  tasks:
+    - name: Ensure journal's directory exists
+      file:
+        path: "{{ path.base.sites }}/{{ dojo.id }}"
+        state: directory
+        force: yes
+
+    - name: Extracts MAJOR from versionFamily
+      set_fact:
+        versionMajor: "{{ dojo.versionFamily.split('_')[0] }}"
+
+    - name: Generate apache-config file from template and dojo vars.
+      template:
+        src: "./templates/{{ dojo.tool }}/env{{ versionMajor }}.j2"
+        dest: "{{ path.base.sites }}/{{ dojo.id }}/.env"
+
