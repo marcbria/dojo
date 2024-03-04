@@ -40,28 +40,3 @@
       with_dict: "{{ path.volumes }}"
       tags:
         - volumes_directories
-
-    - name: Asignar propietario y grupo a BD
-      file:
-        path: "{{ item }}"
-        state: directory
-        owner: "999"
-        group: "1002"
-        recurse: yes
-      loop:
-        - "{{ path.storage.backups }}"
-        - "{{ path.volumes.db }}"
-      tags:
-        - volumes_db
-
-    - name: Asignar propietario y grupo a www
-      file:
-        path: "{{ item }}"
-        state: directory
-        owner: "100"
-        group: "101"
-        recurse: yes
-      loop:
-        - "{{ path.volumes.files }}"
-      tags:
-        - volumes_www

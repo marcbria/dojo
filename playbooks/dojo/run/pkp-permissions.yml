@@ -1,0 +1,38 @@
+- name: Set permissions in journnal's folders structure
+  hosts: all
+  become: true
+  gather_facts: no
+  vars:
+    siteParam: "{{ site }}"
+  vars_files:
+    - ./configs/dojo.yml
+    - ./sites/{{ site }}.yml
+  tasks:
+
+    - name: Assign user and group for BD folders
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: 0744
+        owner: "999"
+        group: "1002"
+        recurse: yes
+      loop:
+        - "{{ path.volumes.db }}/{{ dojo.id | lower}}"
+      tags:
+        - volumes_db
+
+    - name: Assign user and group for WWW folders
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: 0744
+        owner: "100"
+        group: "101"
+        recurse: yes
+      loop:
+        - "{{ path.files.config }}/{{ dojo.id | lower }}"
+        - "{{ path.files.public }}/{{ dojo.id | lower }}"
+        - "{{ path.files.private }}/{{ dojo.id | lower }}"
+      tags:
+        - volumes_www
