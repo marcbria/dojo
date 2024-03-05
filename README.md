@@ -126,60 +126,31 @@ Again, it's not mandatory, but this project uses git as a **single source of tru
 (This is how it will work, but not full implemented yet)
 
 #### Ingredients
+
 - Sever: A clean Debian (or Debian based) distribution (ensure you have SSH access).
-- Local: Git and Ansible installed.
+- Local: Ansible installed (use `just infra-install-ansible` if you like).
 
-1. Clone this repository:
-```
-$ git clone https://github.com/marcbria/dojo/
-```
-3. Create your own `inventory/hosts.yml` adding your remoteServer name.
-```
-$ cd dojo
-$ mkdir inventory
-$ vim inventory/hosts.yml
-# Take a look to [those examples](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/yaml_inventory.html#examples) to create your inventory file.
-```
-4. Recommended: Install [just](https://github.com/casey/just#packages) version 1.23 or higher.
-5. Use `just` to install the underlaying infrastructure:
-```
-$ just infra-install-ansible                    # Install ansible in your local machine.
+#### Recipe
 
-$ REMOTESERVER=<remoteServer>
-$ just infra info ps $REMOTESERVER              # Test if you can reach your remote server.
-$ just infra-dist-upgrade $REMOTESERVER         # Update the server.
+Instructions are detailed in the "[Installation Manual](#InstallationManual)" but, from a bird's eye view, the process is divided in 3 parts:
 
-$ just infra run install-docker $REMOTESERVER   # Install docker & docker-compose.
-$ just infra info docker $REMOTESERVER          # Test docker and docker-compose installations.
+** Basic requirements: **
+1. Clone this repository.
+2. Create your own `inventory/hosts.yml` adding your remoteServer name.
+3. Recommended: Install [just](https://github.com/casey/just#packages) version 1.23 or higher.
 
-$ just infra run create-user $REMOTESERVER      # Create docker user and group.
-$ just infra run create-folders $REMOTESERVER   # Creates the required folder structure.
-```
-6. Install the reverse proxy:
-```
-just infra run install-proxy $REMOTESERVER
-```
-7. Create your first journal's dictionary
-```
-$ JOURNAL=<your_journal>                        # Capital letters not allowed in JOURNAL tag.
-$ mv sites/journalname.yml sites/$JOURNAL.yml
-$ vim sites/$JOURNAL.yml
-```
-8. Create your ansible-vault add edit your journal's passwd.
-```
-$ just dojo-vault create $JOURNAL
-$ just dojo-vault create $JOURNAL
-```
-9. Build your fist journal:
-```
-just dojo-create $JOURNAL
-```
-10. Visit your new journal in your browser.
+** Set up your underlying infrastructure: **
+4. Use `just` to install the underlaying infrastructure.
+5. Install the reverse proxy.
 
-99. Read more about this project and decide if you also like to install:
-- Monitoring tool, like uptimekuma.
-- Backup apps, like sanoid and duplicati.
-- Management apps, like portainer.
+** Create journal: **
+6. Create your first journal's dictionary.
+7. Create your ansible-vault add edit your journal's passwd.
+8. Build your fist journal.
+9. Visit your new journal in your browser and finish your installation.
+
+** Extend your service: **
+10. Read more about this project and decide what other tools you also like to install.
 
 ### Tooling
 
@@ -207,6 +178,7 @@ TBD...
 
 If you prefer to run accions without any helper, or you like to adapt it, review the "[justfile](https://github.com/marcbria/ansible/blob/main/justfile)" and the modules in the '/scripts' folder.
 
+
 # ToDo
 
 Add more playbooks:
@@ -218,6 +190,81 @@ Add more playbooks:
 - [ ] To install and configure monitor tooling.
 - [ ] To install and configure backup tool.
 
+
+## Installation Manual
+
+This section details the installation process. 
+Remember this project is still beta and playbooks are self-dependant, so please, follow installation process carefully. 
+
+
+#### Basic requirements
+
+1. Clone this repository.
+```
+$ git clone https://github.com/marcbria/dojo/
+```
+
+2. Create your own `inventory/hosts.yml` adding your remoteServer name.
+```
+$ cd dojo
+$ mkdir inventory
+$ vim inventory/hosts.yml
+# Take a look to [those examples](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/yaml_inventory.html#examples) to create your inventory file.
+```
+3. Recommended: Install [just](https://github.com/casey/just#packages) version 1.23 or higher.
+
+
+#### Set up your underlying infrastructure
+
+4. Use `just` to install the underlaying infrastructure.
+```
+$ just infra-install-ansible                    # Install ansible in your local machine.
+
+$ REMOTESERVER=<remoteServer>
+$ just infra info ps $REMOTESERVER              # Test if you can reach your remote server.
+$ just infra-dist-upgrade $REMOTESERVER         # Update the server.
+
+$ just infra run install-docker $REMOTESERVER   # Install docker & docker-compose.
+$ just infra info docker $REMOTESERVER          # Test docker and docker-compose installations.
+
+$ just infra run create-user $REMOTESERVER      # Create docker user and group.
+$ just infra run create-folders $REMOTESERVER   # Creates the required folder structure.
+```
+
+
+#### Create journal
+
+5. Install the reverse proxy:
+```
+just infra run install-proxy $REMOTESERVER
+```
+6. Create your first journal's dictionary
+```
+$ JOURNAL=<your_journal>                        # Capital letters not allowed in JOURNAL tag.
+$ mv sites/journalname.yml sites/$JOURNAL.yml
+$ vim sites/$JOURNAL.yml
+```
+7. Create your ansible-vault add edit your journal's passwd.
+```
+$ just dojo-vault create $JOURNAL
+$ just dojo-vault create $JOURNAL
+```
+8. Build your fist journal:
+```
+just dojo-create $JOURNAL
+```
+9. Visit your new journal in your browser.
+
+
+#### Extend your service
+10. Read more about this project and decide what other tools you also like to install.
+
+- [ ] Monitoring tool, like uptimekuma.
+- [ ] Backup apps, like sanoid and duplicati.
+- [ ] Management apps, like portainer.
+- [ ] ...
+
+See section "(Tooling)[#Tooling]" for a detailed list.
 
 #### Why dojo?
 
