@@ -69,38 +69,38 @@ All the process of installation and management is automatized via ansible playbo
 
 Each box is a container that will be stored in the proper folder according to it's usage (`service` or `site`) and with the project name (ie: `journalTag` or `proxy`).
 
-Physically, this is stored in two main folders:
+Physically, in your server, this will be stored in two main folders (you can change it in `config/dojo.yml`):
 
 ```
 [runningFolder] (ie: /home/docker)
 ├── service
     └── reverseProxy
 └── sites
-    └── journalName
-        └── volumes -> /srv/volumes/all/journalName
+    └── [journalname]
+        └── volumes -> /srv/volumes/all/[journalname]
 
 [storageFolder] (ie: /srv)
 ├── backups
-│   └── journalName
+│   └── [journalname]
 └── volumes
     ├── all
-    │   └── journalName
-    │       ├── config -> /srv/volumes/files/config/journalName
-    │       ├── db -> /srv/volumes/db/journalName
-    │       ├── logs -> /srv/volumes/logs/journalName
-    │       ├── private -> /srv/volumes/files/private/journalName
-    │       └── public -> /srv/volumes/files/public/journalName
+    │   └── [journalname]
+    │       ├── config -> /srv/volumes/files/config/[journalname]
+    │       ├── db -> /srv/volumes/db/[journalname]
+    │       ├── logs -> /srv/volumes/logs/[journalname]
+    │       ├── private -> /srv/volumes/files/private/[journalname]
+    │       └── public -> /srv/volumes/files/public/[journalname]
     ├── db
-    │   └── journalName
+    │   └── [journalname]
     ├── files
     │   ├── config
-    │   │   └── journalName
+    │   │   └── [journalname]
     │   ├── private
-    │   │   └── journalName
+    │   │   └── [journalname]
     │   └── public
-    │       └── journalName
+    │       └── [journalname]
     └── logs
-        └── journalName
+        └── [journalname]
 ```
 
 Each site in the `runningFolder` will include, at least, the following structure:
@@ -161,9 +161,9 @@ just infra run install-proxy $REMOTESERVER
 ```
 7. Create your first journal's dictionary
 ```
-$ JOURNAL=<yourJournal>
-$ mv sites/journalName sites/$JOURNAL
-$ vim sites/$JOURNAL
+$ JOURNAL=<your_journal>                        # Capital letters not allowed in JOURNAL tag.
+$ mv sites/journalname.yml sites/$JOURNAL.yml
+$ vim sites/$JOURNAL.yml
 ```
 8. Create your ansible-vault add edit your journal's passwd.
 ```
