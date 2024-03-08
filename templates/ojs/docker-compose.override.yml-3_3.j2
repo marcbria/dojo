@@ -21,7 +21,7 @@ services:
       # HTTP routers:
       - "traefik.http.routers.{{ dojo.id | lower }}.rule={{traefik_rule}}"
       - "traefik.http.routers.{{ dojo.id | lower }}.entrypoints=webinsecure"
-      - "traefik.http.routers.{{ dojo.id | lower }}.middlewares=revista-redirect"
+      - "traefik.http.routers.{{ dojo.id | lower }}.middlewares={{ dojo.id | lower }}-redirect"
 
       # HTTPS routers:
       - "traefik.http.routers.{{ dojo.id | lower }}-secure.rule={{traefik_rule}}"

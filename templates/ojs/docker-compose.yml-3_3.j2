@@ -44,7 +44,7 @@ services:
       - ./volumes/public:/var/www/html/public
       - ./volumes/logs/app:/var/log/apache2
       # - ./volumes/config/config.inc.php:/var/www/html/config.inc.php
-      - ./volumes/config/apache.conf:/etc/apache2/conf.d/pkp.conf
+      - ./volumes/config/apache.conf:/etc/apache2/conf.d/{{ dojo.tool }}.conf
       # - ./config/apache.htaccess:/var/www/html/.htaccess
       # - ./volumes/config/php.custom.ini:/etc/php7/conf.d/0-custom.ini
 
