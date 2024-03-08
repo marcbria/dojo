@@ -39,6 +39,9 @@ username = "{{ pkp.database.username | default('ojs') | safe }}"
 password = "{{ pkp.database.password | default('ojsPwd') | safe }}"
 name = "{{ pkp.database.name | default('ojs') | safe }}"
 debug = "{{ pkp.database.debug | default('Off') | safe }}"
+; See: https://docs.pkp.sfu.ca/dev/release-notebooks/en/3.3-release-notebook#update-connection_charset
+client_charset = utf-8
+conection_charset = utf8
 
 [cache]
 object_cache = "{{ pkp.cache.object_cache | default('none') | safe }}"

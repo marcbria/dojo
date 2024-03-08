@@ -1,129 +1,67 @@
 # Load modules
+LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
 LoadModule rewrite_module modules/mod_rewrite.so
-## LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
 ## LoadModule expires_module modules/mod_expires.so
 
+# Let apache know we're with SSL even behind a reverse proxy
+SetEnvIf X-Forwarded-Proto "https" HTTPS=on
+
 <VirtualHost *:80>
-        ServerName revistes.uab.cat
-        ServerAlias revistes.uab.es
+    ServerName localhost
+    ServerAlias {{ dojo.domain }}
+    ServerAlias {{ dojo.id }}
+    DocumentRoot /var/www/html
 
-        DocumentRoot /var/www/html
-        DirectoryIndex index.php index.html
+    ## RewriteEngine On
+    AcceptPathInfo On
 
-        RewriteEngine On
-        AcceptPathInfo On
+    Alias /{{ proxy.pathprefix }} /var/www/html
+    <Location /{{ proxy.pathprefix }}>
+        Options FollowSymLinks
+        AllowOverride all
+        Allow from all
 
-        SetEnv HTTPS On
-        # PassEnv HTTPS
-        # SetEnvIf X-Forwarded-Proto "^https$" HTTPS=on
+        # Remove index.php from the url
+        ## RewriteCond %{REQUEST_FILENAME} !-d
+        ## RewriteCond %{REQUEST_FILENAME} !-f
+        ## RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+    </Location>
 
-        ## SSLCertificateFile /etc/ssl/apache2/server.pem
-        ## SSLCertificateKeyFile /etc/ssl/apache2/server.key
+    LogLevel alert rewrite:trace2
 
-        <Directory /var/www/html>
-
-                # Options FollowSymLinks
-                # AllowOverride All
-                # Require all granted
-
-                # RewriteBase /
-
-                ## Debug: 
-                # Redirect / https://uab.cat
-
-                ## Force httpS:
-                ## RewriteCond %{HTTPS}  !=on 
-                ## RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R,L]
-
-                # Redirect root to index
-                RewriteRule ^/?$ index.php/{{ dojo.id }}/index [L=307]
-                RewriteRule ^{{ dojo.id }}$ index.php/{{ dojo.id }}/index [L=307]
-                # Bloc admin pages with DB info:
-                ## RewriteRule ^/?{{ dojo.id }}/index/admin/systemInfo/?$ /{{ dojo.id }}/index [L]
-
-                ## Force httpS (basically to reach the API):
-                RewriteCond %{HTTPS}  !=on
-                RewriteCond %{REQUEST_URI} ^/{{ dojo.id }}\/api\/v1\/
-                RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
-                RewriteCond %{REQUEST_FILENAME} !-f
-                RewriteRule ^/?(.*) https://%{SERVER_NAME}/{{ dojo.id }}/index.php/$1 [L,R=307]
-
-                # OJS expects to be at root, so removing journal's subdomain:
-                RewriteCond %{REQUEST_URI} ^/{{ dojo.id }}
-                RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-d
-                RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
-                RewriteCond %{REQUEST_FILENAME} !-d
-                RewriteCond %{REQUEST_FILENAME} !-f
-                RewriteRule ^{{ dojo.id }}/(.*)$ $1 [QSA,L]
-
-                ## Rewrite API calls if not including subdomain journals:
-                RewriteCond %{REQUEST_URI} api\/v1\/
-                RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
-                RewriteCond %{REQUEST_FILENAME} !-f
-                RewriteRule ^(.*)$ {{ dojo.id }}/index.php/{{ dojo.id }}/$1 [L,R=307]
-
-                # Renames the short journal's rule:
-                RewriteCond %{REQUEST_URI} !^index.php\/{{ dojo.id }}
-                RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-d
-                RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
-                RewriteCond %{REQUEST_FILENAME} !-d
-                RewriteCond %{REQUEST_FILENAME} !-f
-                RewriteRule ^(.*)$ index.php/{{ dojo.id }}/$1 [QSA,L]
-
-                # This removes index.php from the url (apache 2.2 and new ones)
-                RewriteCond %{REQUEST_URI} !^/{{ dojo.id }}/index.php
-                RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-d
-                RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
-                RewriteCond %{REQUEST_FILENAME} !-d
-                RewriteCond %{REQUEST_FILENAME} !-f
-                RewriteRule ^(.*)$ index.php/$1 [QSA,L]
-
-        </Directory>
-
-        # LogLevel alert rewrite:trace2
-
-        ErrorLog  /var/log/apache2/error.log
-        CustomLog  /var/log/apache2/access.log combined
-
-
+    ErrorLog  /var/log/apache2/error.log
+    CustomLog  /var/log/apache2/access.log combined
 </VirtualHost>
 
-
-
-# Kind of "do nothing" rules for https as far it won't be used.
-
 <VirtualHost *:443>
-        ServerName revistes.uab.cat
-        ServerAlias revistes.uab.es
+    ServerName localhost
+    ServerAlias {{ dojo.domain }}
+    ServerAlias {{ dojo.id }}
 
-        DocumentRoot /var/www/html
-        DirectoryIndex index.php index.html
+    DocumentRoot /var/www/html
 
-        RewriteEngine On
-        # AcceptPathInfo On                                                                 
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/apache2/server.pem
+    SSLCertificateKeyFile /etc/ssl/apache2/server.key
 
-        SetEnv HTTPS On
-        PassEnv HTTPS
-        SetEnvIf X-Forwarded-Proto "^https$" HTTPS=on
+    AcceptPathInfo On
+    ## PassEnv HTTPS
+    ## RewriteEngine on
 
-        SSLCertificateFile /etc/ssl/apache2/server.pem
-        SSLCertificateKeyFile /etc/ssl/apache2/server.key
+    Alias /{{ proxy.pathprefix }} /var/www/html
+    <Location /{{ proxy.pathprefix }}>
+        Options FollowSymLinks
+        AllowOverride all
+        Allow from all
 
-        ## Debug: 
-        Redirect / https://eff.org
+        # Remove index.php from the url
+        ## RewriteCond %{REQUEST_FILENAME} !-d
+        ## RewriteCond %{REQUEST_FILENAME} !-f
+        ## RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+    </Location>
 
+    LogLevel alert rewrite:trace2
 
-        <Directory /var/www/html>
-                Options FollowSymLinks
-                AllowOverride All
-                Require all granted
-
-                Redirect / https://wikipedia.org
-        </Directory>
-
-    LogLevel alert rewrite:trace3
-
-    ErrorLog  /var/log/apache2/ssl_error.log
-    CustomLog  /var/log/apache2/ssl_access.log combined
-
+    ErrorLog  /var/log/apache2/error.log
+    CustomLog  /var/log/apache2/access.log combined
 </VirtualHost>

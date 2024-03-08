@@ -25,7 +25,7 @@ images:
 pkp:
   general:
     installed: Off
-    base_url: "https://{{ dojo.domain }}/{{ dojo.id }}"
+    base_url: "https://{{ dojo.domain }}/{{ proxy.pathprefix }}"
     scheduled_tasks: On
   database:
     host:     "{{ database.host }}"
