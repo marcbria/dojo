@@ -33,12 +33,12 @@ infra-play action playbook host *args:
 
 # Shows the description of the specified playbook
 infra-show playbook:
-    cat ./playbooks/infra/{{playbook}}.yml | grep name
+    cat {{justPath}}/{{playbook}}.yml | grep name
 
 # Runs a dist-upgrade, remove unused dependences and reboot.
 infra-dist-upgrade host:
-    ansible-playbook -i {{host}}, run/dist-upgrade.yml -K
+    ansible-playbook -i {{host}}, {{justPath}}/run/dist-upgrade.yml -K
 
 # Runs an "apt update" and "apt ugrade" and show the result.
 infra-update-upgrade host:
-    ansible-playbook -i {{host}}, run/update-upgrade.yml -K
+    ansible-playbook -i {{host}}, {{justPath}}/run/update-upgrade.yml -K

@@ -221,8 +221,8 @@ $ vim inventory/hosts.yml
 $ just infra-install-ansible                    # Install ansible in your local machine.
 
 $ REMOTESERVER=<remoteServer>
-$ just infra info ps $REMOTESERVER              # Test if you can reach your remote server.
-$ just infra-dist-upgrade $REMOTESERVER         # Update the server.
+$ just infra-play info ps $REMOTESERVER -K      # Test if you can reach your remote server.
+$ just infra-dist-upgrade $REMOTESERVER         # Update the server (-K is implicit)
 
 $ just infra run install-docker $REMOTESERVER   # Install docker & docker-compose.
 $ just infra info docker $REMOTESERVER          # Test docker and docker-compose installations.
