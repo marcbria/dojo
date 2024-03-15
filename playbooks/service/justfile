@@ -45,4 +45,4 @@ service-create service host *args:
     for [{{ service }}] on [{{ host }}]?" && \
     ansible-playbook -i {{ host }}, --vault-password-file {{ servicePath }}/run/{{ serviceVaultKey }} \
      {{ servicePath }}/run/service-create.yml \
-     -e "service={{ service }}" {{ args }}
+     -e "service={{ service }}" -K {{ args }}
