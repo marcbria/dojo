@@ -1,2 +1,48 @@
-default:
+# Justfile for service actions
+
+# Default values
+serviceVaultPath    := './configs/secret.yml'
+serviceVaultKey     := './configs/.vault.key'
+servicePath  := '/home/marc/workspace/dojo/playbooks/service'
+
+# This list of actions
+service:
     just -l
+
+# Shows how to use the script.
+service-list:
+    # Full list of infrastructure playbooks is:
+    @tree --noreport {{ servicePath }}/run
+    @tree --noreport {{ servicePath }}/info
+    # Run "just service" for a full list of actions.
+
+# Syntax and examples
+service-info:
+    # README SERVICE
+    # To get a list of actions use "just service"
+    @cat {{ servicePath }}/README.md
+    @# TBD
+    # Sample of calls:
+    # $ just service-play create serviceName remoteServer    # And get a full service installed
+
+# Creates an ansible vault with default. Actions are:
+# - create: Vault is saved at "configs/secrets.yml" with the password passed and stored at .vault.key (check your permissions).
+# - edit:   Edits the deault vault in "configs/secrets.yml" with the password stored at .vault.key:
+service-vault action:
+    @if [[ "${action}" == "create" ]]; then \
+        echo "${2}" >> ${serviceVaultKey}; \
+        ansible-vault create --vault-password-file=${serviceVaultKey} ${serviceVaultPath} \
+    elif [[ "${create}" == "edit" ]]; then \
+        ansible-vault edit --vault-password-file={{ serviceVaultKey }} {{ serviceVaultPath }} \
+    else \
+        echo "Unknown action"; \
+    fi
+
+# Creates a full service acording to the dictionary in inventory/services/<service>.yml 
+# Following playbooks will be called: service-create.yml
+service-create service host *args:
+    @echo "Are you sure you like to run playbook service-create.yml \
+    for [{{ service }}] on [{{ host }}]?" && \
+    ansible-playbook -i {{ host }}, --vault-password-file {{ servicePath }}/run/{{ serviceVaultKey }} \
+     {{ servicePath }}/run/service-create.yml \
+     -e "service={{ service }}" {{ args }}
