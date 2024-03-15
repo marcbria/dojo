@@ -74,7 +74,7 @@ Physically, in your server, this will be stored in two main folders (you can cha
 ```
 [runningFolder] (ie: /home/docker)
 ├── service
-    └── reverseProxy
+    └── proxy
 └── sites
     └── [journalname]
         └── volumes -> /srv/volumes/all/[journalname]
@@ -236,7 +236,7 @@ $ just infra run create-folders $REMOTESERVER   # Creates the required folder st
 
 5. Install the reverse proxy:
 ```
-just infra run install-proxy $REMOTESERVER
+just service-create traefik $REMOTESERVER
 ```
 6. Create your first journal's dictionary
 ```
@@ -247,7 +247,7 @@ $ vim sites/$JOURNAL.yml
 7. Create your ansible-vault add edit your journal's passwd.
 ```
 $ just dojo-vault create $JOURNAL
-$ just dojo-vault create $JOURNAL
+$ just dojo-vault edit $JOURNAL
 ```
 8. Build your fist journal:
 ```
