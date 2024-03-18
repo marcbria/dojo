@@ -3,11 +3,19 @@
 # Default values
 serviceVaultPath    := './configs/secret.yml'
 serviceVaultKey     := './configs/.vault.key'
-servicePath  := '/home/marc/workspace/dojo/playbooks/service'
+servicePath         := '/home/marc/workspace/dojo/playbooks/service'
 
 # This list of actions
 service:
     just -l
+
+# Shows how to use the script.
+service-help:
+    @cat {{ servicePath }}/README.md
+
+    # Full list of infrastructure playbooks is:
+    @tree --noreport {{ servicePath }}/run
+    @tree --noreport {{ servicePath }}/info
 
 # Shows how to use the script.
 service-list:

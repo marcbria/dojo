@@ -38,12 +38,8 @@ services:
       #   Static Configuration harnessing CLI   #
       ###########################################
       # Activate dashboard.
-{% if app.api.dashboard %}
       - "--api.dashboard={{ app.api.dashboard | safe | string | lower }}"
-{% endif %}
-{% if app.api.insecure %}
       - "--api.insecure={{ app.api.insecure | safe | string | lower }}"
-{% endif %}
 {% if app.pilot.token %}
       - "--pilot.token={{ app.pilot.token | safe }}"
 {% endif %}
