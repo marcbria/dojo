@@ -1,0 +1,20 @@
+---
+- name: Installs basic tooling (curl, rsync, python and pip)
+  hosts: all
+  become: yes 
+
+  tasks:
+    - name: Update the repository cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'  # Check if the system is debian based.
+
+    - name: Installs curl, rsync, python and pip
+      apt:
+        name:
+          - curl
+          - rsync
+          - python3
+          - python3-pip
+        state: present
+      when: ansible_os_family == 'Debian'

@@ -1,5 +1,5 @@
 ---
-- name: Installs and config tmux, vim, rsync, tree, tldr and pip.
+- name: Installs extra tools (not esential but helpfull).
   hosts: all
   become: yes 
 
@@ -9,15 +9,14 @@
         update_cache: yes
       when: ansible_os_family == 'Debian'  # Check if the system is debian based.
 
-    - name: Installs tmux, vim, rsync, tree, tldr and pip.
+    - name: Installs tmux, vim, tree, htop and tldr.
       apt:
         name:
           - tmux
           - vim
-          - rsync
           - tree
+          - htop
           - tldr
-          - python3-pip
         state: present
       when: ansible_os_family == 'Debian'
 
