@@ -18,3 +18,4 @@ T. just infra-play info docker $SERVER -K               # TEST: docker and docke
 6. just infra-play run create-user $SERVER              # Create docker user and group and folders.
 7. just infra-play run create-folders $SERVER           # DOJO: Creates the required folder structure.
 
+Follow with `just service-help`
