@@ -2,9 +2,10 @@
 #
 # General settings# File: docker-compose.yml
 #
-# Site:    {{ service }}
-# Tool:    {{ dojo.tool }}
-# Version: {{ dojo.version }}
+# Site:      {{ service }}
+# Tool:      {{ dojo.tool }}
+# Version:   {{ dojo.version }}
+# Creation:  {{ fileCreation }}
 #
 #########################################################################
 
@@ -15,7 +16,7 @@ services:
   app:
     # The official Traefik docker image (v.2)
     image: traefik:{{ dojo.version | default('2.11') | safe }}
-    container_name: ${COMPOSE_PROJECT_NAME:-{{ dojo.id | safe }}}
+    container_name: ${COMPOSE_PROJECT_NAME:-{{ dojo.id | safe | string | lower }}}
     # security_opt:
     #  - no-new-privileges:true
     restart: always
@@ -23,11 +24,11 @@ services:
       # So that Traefik can listen to Docker events
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # tls-certificates path (TLS)
-      - ./volumes/certificates/acme:/etc/traefik/acme
+      - ./volumes/config/certificates/acme:/etc/traefik/acme
       # Static certificates
-      - ./volumes/certificates/host:/etc/traefik/host
+      - ./volumes/config/certificates/host:/etc/traefik/host
       # Dynamc providers
-      - ./volumes/providers:/etc/traefik/providers
+      - ./volumes/config/providers:/etc/traefik/providers
     ports:
       - ${HTTP_PORT:-80}:{{ app.ports.http | default('80') | safe }}
       - ${HTTPS_PORT:-443}:{{ app.ports.https | default('443') | safe }}
@@ -38,13 +39,11 @@ services:
       ###########################################
       # Activate dashboard.
 {% if app.api.dashboard %}
-      - "--api.dashboard={{ app.api.dashboard | safe }}"
+      - "--api.dashboard={{ app.api.dashboard | safe | string | lower }}"
 {% endif %}
-
 {% if app.api.insecure %}
-      - "--api.insecure={{ app.api.insecure | safe }}"
+      - "--api.insecure={{ app.api.insecure | safe | string | lower }}"
 {% endif %}
-
 {% if app.pilot.token %}
       - "--pilot.token={{ app.pilot.token | safe }}"
 {% endif %}
@@ -84,12 +83,14 @@ services:
       - "--certificatesresolvers.leresolver.acme.tlschallenge=true"
 
       # Email address used for registration
-      - "--certificatesresolvers.leresolver.acme.email={{ app.email | safe }}"
+      - "--certificatesresolvers.leresolver.acme.email={{ app.certificate.email | safe }}"
       - "--certificatesresolvers.leresolver.acme.storage=/etc/traefik/acme/acme.json"
-      # Staging server to avoid hit letsencrypt limits.
+
+{% if app.certificate.staging %}
+      # Staging server to test without hitting letsencrypt limits.
       # From: https://doc.traefik.io/traefik/https/acme/#caserver
-      # Uncomment this line for testing:
       - "--certificatesResolvers.leresolver.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
+{% endif %}
 
     networks:
       # This is the network over which Traefik communicates with other containers.
@@ -108,15 +109,17 @@ services:
       traefik.http.routers.traefik.rule: Host(`${DASHBOARD_DOMAIN:-{{ dojo.domain | safe }}}`)
       traefik.http.routers.traefik.service: api@internal
       traefik.http.routers.traefik.tls.certresolver: leresolver
+
       # Declaring the user list
       #
       # Note=all dollar signs in the hash need to be doubled for escaping.
       # To create user:password pair, it's possible to use this command:
       # echo $(htpasswd -nb user password) and then save user and password in
       # the .env file
-#      traefik.http.routers.traefik.middlewares: traefik-auth
-#      traefik.http.middlewares.traefik-auth.basicauth.users: ${DASHBOARD_USERNAME}:${DASHBOARD_PASSWORD}
-#      traefik.http.middlewares.traefik-auth.basicauth.users: {{ app.credentials.username }}:{{ app.credentials.password }}
+      #
+      # traefik.http.routers.traefik.middlewares: traefik-auth
+      # traefik.http.middlewares.traefik-auth.basicauth.users: ${DASHBOARD_USERNAME}:${DASHBOARD_PASSWORD}
+      # traefik.http.middlewares.traefik-auth.basicauth.users: {{ app.credentials.username }}:{{ app.credentials.password }}
 
 
 networks:
