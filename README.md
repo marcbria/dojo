@@ -218,17 +218,19 @@ $ vim inventory/hosts.yml
 
 4. Use `just` to install the underlaying infrastructure.
 ```
-$ just infra-install-ansible                    # Install ansible in your local machine.
+$ just infra-install-ansible                            # Install ansible in your local machine.
 
-$ REMOTESERVER=<remoteServer>
-$ just infra-play info ps $REMOTESERVER -K      # Test if you can reach your remote server.
-$ just infra-dist-upgrade $REMOTESERVER         # Update the server (-K is implicit)
+$ REMOTESERVER=<remoteServer>                           # Set your removte server from inventory/hosts.yml
+$ just infra-play info ps $REMOTESERVER -K              # Test if you can reach your remote server.
+$ just infra-dist-upgrade $REMOTESERVER                 # Update the server (-K implicit)
 
-$ just infra run install-docker $REMOTESERVER   # Install docker & docker-compose.
-$ just infra info docker $REMOTESERVER          # Test docker and docker-compose installations.
+$ just infra-play run install-basic $REMOTESERVER -K    # Essential tooling (curl,rsync,pip...)
 
-$ just infra run create-user $REMOTESERVER      # Create docker user and group.
-$ just infra run create-folders $REMOTESERVER   # Creates the required folder structure.
+$ just infra-play run install-docker $REMOTESERVER -K   # Install docker & docker-compose.
+$ just infra-play info docker $REMOTESERVER -K          # Test docker and docker-compose installations.
+
+$ just infra-play run create-user $REMOTESERVER         # Create docker user and group and folders.
+$ just infra-play run create-folders $REMOTESERVER      # Creates the required folder structure.
 ```
 
 
@@ -236,6 +238,7 @@ $ just infra run create-folders $REMOTESERVER   # Creates the required folder st
 
 5. Install the reverse proxy:
 ```
+vim ./inventory/services/traefik.yml                    # Edit your proxy's dictionary.
 just service-create traefik $REMOTESERVER
 ```
 6. Create your first journal's dictionary
