@@ -25,15 +25,15 @@ infra-install-ansible:
     ansible-galaxy install -r requirements.yml
     ansible-galaxy collection install community.general
     # Keep changes under version control
-    git init && git add . && git commit -m "Initial commit"
+    # git init && git add . && git commit -m "Initial commit"
 
 # Runs a playbook as root. Parameter includes the action (info/ or run/) and the playbook name.
 infra-play action playbook host *args:
     ansible-playbook -i {{host}}, {{justPath}}/{{action}}/{{playbook}}.yml {{ args }}
 
 # Shows the description of the specified playbook
-infra-show playbook:
-    cat {{justPath}}/{{playbook}}.yml | grep name
+infra-show action playbook:
+    cat {{justPath}}/{{action}}/{{playbook}}.yml 
 
 # Runs a dist-upgrade, remove unused dependences and reboot.
 infra-dist-upgrade host:
