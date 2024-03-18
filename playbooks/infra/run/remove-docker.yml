@@ -1,0 +1,41 @@
+---
+- name: Remove Docker and Docker Compose
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Remove Docker Compose
+      apt:
+        name: docker-compose
+        state: absent
+
+    - name: Remove Docker packages
+      apt:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+
+    - name: Remove Docker GPG key
+      apt_key:
+        id: 0EBFCD88
+        state: absent
+
+    - name: Remove Docker APT repository
+      apt_repository:
+        repo: "{{ item }}"
+        state: absent
+      loop:
+        - deb [arch=amd64] https://download.docker.com/linux/debian buster stable
+        - deb [arch=amd64] https://download.docker.com/linux/debian stretch stable
+
+  handlers:
+    - name: Update APT package cache
+      apt:
+        update_cache: yes
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: yes
