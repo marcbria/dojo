@@ -1,5 +1,4 @@
----
-- name: Installs Docker and Docker Compose using the rol ansible-docker
+- name: Installs Docker and Docker Compose using the ansible-docker role
   hosts: all
   become: yes
 
@@ -7,9 +6,11 @@
     docker__channel: ["stable"]
     docker__state: "latest"
     docker__compose_v2_version: ""
-    docker__users: ["{{ ansible_user }}"]
-#    docker__users: ["marc"]
+    docker__users: ["{{ ansible_env.SUDO_USER | d('root') }}"]
+    # docker__pip_virtualenv: "/usr/local/lib/docker/virtualenv"
+    # docker__pip_dependencies:
+    #   - "python3-pip"
+    #   - "virtualenv"    
 
   roles:
     - name: nickjj.docker
-
