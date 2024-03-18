@@ -1,10 +1,11 @@
 ---
-- name: Create a full folder for the service from the service's diccionary vars.
+- name: Create a full folder for the service from the service's diccionary vars
   hosts: all
   become: yes
-  gather_facts: no
+  gather_facts: yes
   vars:
     siteParam: "{{ service }}"
+    fileCreation: "{{ ansible_date_time.iso8601 }}"
   vars_files:
     - ./configs/dojo.yml
     - ./services/{{ service }}.yml
@@ -15,12 +16,12 @@
         state: directory
         force: yes
 
-    - name: Generate docker-compose file from template and dojo vars.
+    - name: Generate docker-compose file from template and dojo vars
       template:
         src: "./templates/services/docker-compose-{{ dojo.tool }}.j2"
         dest: "{{ path.base.service }}/{{ dojo.id }}/docker-compose.yml"
 
-    - name: Generate env file from template and dojo vars.
+    - name: Generate env file from template and dojo vars
       template:
         src: "./templates/services/env.j2"
         dest: "{{ path.base.service }}/{{ dojo.id }}/.env"
