@@ -10,7 +10,7 @@
     - ./configs/dojo.yml
     - ./services/{{ service }}.yml
   tasks:
-    - name: Ensure traefik's directory exists
+    - name: Ensure service directory exists
       file:
         path: "{{ path.base.service }}/{{ dojo.id }}"
         state: directory
@@ -26,7 +26,7 @@
         src: "./templates/services/env.j2"
         dest: "{{ path.base.service }}/{{ dojo.id }}/.env"
 
-    - name: Ensure treafik's essential folders exists
+    - name: Ensure service's essential folders exists
       file:
         path: "{{ item }}"
         state: directory
@@ -39,7 +39,7 @@
         - "{{ path.storage.backups }}/{{ dojo.id }}"
         - "{{ path.storage.volumes }}/files"
 
-    - name: Create journal's volume folders
+    - name: Create service's volume folders
       file:
         path: "{{ item.value }}/{{ dojo.id }}"
         state: directory
@@ -51,7 +51,7 @@
       tags:
         - volumes_directories
 
-    - name: Create journal's volume folders for files
+    - name: Create service's volume folders for files
       file:
         path: "{{ item.value }}/{{ dojo.id }}"
         state: directory
@@ -63,16 +63,17 @@
       tags:
         - files_directories
 
-    - name: Restric permissions to certificates and ACME files
+    - name: Restrict permissions to securized folders
       file:
         path: "{{ item }}"
         state: directory
         mode: 0600
         owner: "{{ user.run }}"
         group: "{{ user.group }}"
+        recurse: yes
         force: yes
       loop:
-        - "{{ path.storage.volumes }}/all/{{ dojo.id }}/certificates"
+        - "{{ app.securize }}"
 
     - name: Create required symbolic links
       file:
