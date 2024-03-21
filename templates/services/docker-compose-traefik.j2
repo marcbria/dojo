@@ -68,25 +68,29 @@ services:
       # Redirection to https: Link in your container to be applied.
       - "--entrypoints.webinsecure.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.webinsecure.http.redirections.entrypoint.scheme=https"
-      ## - "--entrypoints.webinsecure.http.redirections.entrypoint.permanent=true"
+      - "--entrypoints.webinsecure.http.redirections.entrypoint.permanent=true"
 {% endif %}
 
-      # certificatesresolvers (HTTP, TLS, DNS mutualy exclusive)
-      # Via HTTP: Only if webinsecure port is open!!
-      ## - "--certificatesresolvers.leresolver.acme.httpchallenge=true"
-      ## - "--certificatesresolvers.leresolver.acme.httpchallenge.entrypoint=webinsecure"
-      # Via TLS:
+      # Certificatesresolvers (HTTP, TLS, DNS mutualy exclusive)
+{% if app.certificate.method == 'http' %}
+      # Via HTTP: RECOMENDED - Be sure port 80 (webinsecure) is open.
+      - "--certificatesresolvers.leresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.leresolver.acme.httpchallenge.entrypoint=webinsecure"
+{% elif app.certificate.method == 'tls' %}
+      # Via TLS: DEPRECATED by Let's Encrypt.
       - "--certificatesresolvers.leresolver.acme.tlschallenge=true"
-
-      # Email address used for registration
-      - "--certificatesresolvers.leresolver.acme.email={{ app.certificate.email | safe }}"
-      - "--certificatesresolvers.leresolver.acme.storage=/etc/traefik/acme/acme.json"
-
+{% elif app.certificate.method == 'dns' %}
+      # Via DNS: Not tested.
+      - "--certificatesresolvers.leresolver.acme.dnschallenge=true"
+{% endif %}
 {% if app.certificate.staging %}
       # Staging server to test without hitting letsencrypt limits.
       # From: https://doc.traefik.io/traefik/https/acme/#caserver
       - "--certificatesResolvers.leresolver.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
 {% endif %}
+      # Email address used for registration
+      - "--certificatesresolvers.leresolver.acme.email={{ app.certificate.email | safe }}"
+      - "--certificatesresolvers.leresolver.acme.storage=/etc/traefik/acme/acme.json"
 
     networks:
       # This is the network over which Traefik communicates with other containers.
@@ -113,10 +117,11 @@ services:
       # echo $(htpasswd -nb user password) and then save user and password in
       # the .env file
       #
-      # traefik.http.routers.traefik.middlewares: traefik-auth
+{% if app.credentials %}
+      traefik.http.routers.traefik.middlewares: traefik-auth
       # traefik.http.middlewares.traefik-auth.basicauth.users: ${DASHBOARD_USERNAME}:${DASHBOARD_PASSWORD}
-      # traefik.http.middlewares.traefik-auth.basicauth.users: {{ app.credentials.username }}:{{ app.credentials.password }}
-
+      traefik.http.middlewares.traefik-auth.basicauth.users: {{ app.credentials.username }}:{{ app.credentials.password }}
+{% endif %}
 
 networks:
   {{ app.network | default('proxy') | safe}}:
