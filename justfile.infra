@@ -1,9 +1,5 @@
 # Justfile for infra
 
-# Variables
-rootPath := '/home/marc/workspace/dojo'
-justPath := rootPath / 'playbooks/infra'
-
 # This list of actions.
 infra:
     just -l

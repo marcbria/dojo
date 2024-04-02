@@ -1,10 +1,5 @@
 # Justfile for service actions
 
-# Default values
-serviceVaultPath    := './configs/secret.yml'
-serviceVaultKey     := './configs/.vault.key'
-servicePath         := '/home/marc/workspace/dojo/playbooks/service'
-
 # This list of actions
 service:
     just -l
@@ -39,9 +34,9 @@ service-info:
 service-vault action:
     @if [[ "${action}" == "create" ]]; then \
         echo "${2}" >> ${serviceVaultKey}; \
-        ansible-vault create --vault-password-file=${serviceVaultKey} ${serviceVaultPath} \
+        ansible-vault create --vault-password-file=${vaultKey} ${vaultPath} \
     elif [[ "${create}" == "edit" ]]; then \
-        ansible-vault edit --vault-password-file={{ serviceVaultKey }} {{ serviceVaultPath }} \
+        ansible-vault edit --vault-password-file={{ vaultKey }} {{ vaultPath }} \
     else \
         echo "Unknown action"; \
     fi
@@ -51,6 +46,6 @@ service-vault action:
 service-create service host *args:
     @echo "Are you sure you like to run playbook service-create.yml \
     for [{{ service }}] on [{{ host }}]?" && \
-    ansible-playbook -i {{ host }}, --vault-password-file {{ servicePath }}/run/{{ serviceVaultKey }} \
+    ansible-playbook -i {{ host }}, --vault-password-file {{ servicePath }}/run/{{ vaultKey }} \
      {{ servicePath }}/run/service-create.yml \
      -e "service={{ service }}" -K {{ args }}

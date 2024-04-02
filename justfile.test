@@ -1,8 +1,16 @@
 test:
-    echo "TEST"
+    just -l | grep test
+
+test-readme:
+    cat "{{ rootPath }}/playbooks/test/README.md"
+    @just test
+
+test-vars:
+    @echo "Variable generalHost: " {{ generalHost }}
+    @echo "Variable rootPath: " {{ rootPath }}
 
 test-args *arguments:
-    echo "TEST" $@
+    @echo "TEST ARGS: " $@
 
 test-ls:
     ls playbooks/test

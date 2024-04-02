@@ -6,31 +6,31 @@
 # - Infrastructure: To setup and maintain your underlaying system (OS + docker).
 # - Service: To setup and maintain essential or collateral services.
 # - Dojo: To setup and maintain your PKP apps (journals and books).
-
 # General settings
-set allow-duplicate-recipes
-set positional-arguments
 
-# Default values
-host := 'kalimero'
+set allow-duplicate-recipes := true
+set positional-arguments    := true
 
-# Imports
+# General variables
+
+import 'config.just'
+
+# Just imports
+
 import 'justfile.test'
-import 'playbooks/infra/justfile'
-import 'playbooks/service/justfile'
-import 'playbooks/dojo/justfile'
+import 'justfile.infra'
+import 'justfile.service'
+import 'justfile.dojo'
 
-default:
+# General calls
+_default:
     just -l
 
-test:
-    just -f "justfile.test" -l
-
-infra:
-    just -f "playbooks/infra/justfile" -l
-
-service:
-    just -f "playbooks/service/justfile" -l
-
-dojo:
-    just -f "playbooks/dojo/justfile" -l
+# test:
+#     just -f "justfile.test" -l
+# infra:
+#     just -f "justfile.infra" -l
+# service:
+#     just -f "justfile.service" -l
+# dojo:
+#     just -f "justfile.dojo" -l
