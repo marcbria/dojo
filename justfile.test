@@ -3,3 +3,6 @@ test:
 
 test-args *arguments:
     echo "TEST" $@
+
+test-ls:
+    ls playbooks/test
