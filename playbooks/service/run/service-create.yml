@@ -63,18 +63,6 @@
       tags:
         - files_directories
 
-    - name: Restrict permissions to securized folders
-      file:
-        path: "{{ item }}"
-        state: directory
-        mode: 0600
-        owner: "{{ user.run }}"
-        group: "{{ user.group }}"
-        recurse: yes
-        force: yes
-      loop:
-        - "{{ app.securize }}"
-
     - name: Create required symbolic links
       file:
         src: "{{ item.target }}"
@@ -87,3 +75,15 @@
         - { link: "{{ path.volumes.all }}/{{ dojo.id }}/config", target: "{{ path.files.config }}/{{ dojo.id }}" }
         - { link: "{{ path.volumes.all }}/{{ dojo.id }}/public", target: "{{ path.files.public }}/{{ dojo.id }}" }
         - { link: "{{ path.volumes.all }}/{{ dojo.id }}/private", target: "{{ path.files.private }}/{{ dojo.id }}" }
+
+    - name: Restrict permissions to securized folders
+      file:
+        path: "{{ item.value.path }}"
+        state: "{{ item.value.type | default('directory') }}"
+        mode: "{{ item.value.mode | default('600') }}"
+        owner: "{{ user.run }}"
+        group: "{{ user.group }}"
+        force: yes
+        recurse: "{{ 'yes' if item.value.type == 'directory' else 'no' }}"
+      with_dict:
+        - "{{ app.securize }}"
