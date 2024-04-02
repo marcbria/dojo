@@ -183,11 +183,11 @@ If you prefer to run accions without any helper, or you like to adapt it, review
 
 Add more playbooks:
 - [x] To install and configure traefik.
-- [%] To install and configure an OJS journal (on any url).
+- [ ] To install and configure an OJS journal (on any url).
 - [ ] To install and configure an OMP monograph (on any url).
 - [ ] Review infrastructure and extra playbooks.
 - [ ] Structure the justfile better.
-- [%] To install and configure monitor tooling.
+- [ ] To install and configure monitor tooling.
 - [ ] To install and configure backup tool.
 
 
