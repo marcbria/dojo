@@ -134,22 +134,22 @@ Again, it's not mandatory, but this project uses git as a **single source of tru
 
 Instructions are detailed in the "[Installation Manual](#InstallationManual)" but, from a bird's eye view, the process is divided in 3 parts:
 
-** Basic requirements: **
+**Basic requirements:**
 1. Clone this repository.
 2. Create your own `inventory/hosts.yml` adding your remoteServer name.
 3. Recommended: Install [just](https://github.com/casey/just#packages) version 1.23 or higher.
 
-** Set up your underlying infrastructure: **
+**Set up your underlying infrastructure:**
 4. Use `just` to install the underlaying infrastructure.
 5. Install the reverse proxy.
 
-** Create journal: **
+**Create journal:**
 6. Create your first journal's dictionary.
 7. Create your ansible-vault add edit your journal's passwd.
 8. Build your fist journal.
 9. Visit your new journal in your browser and finish your installation.
 
-** Extend your service: **
+**Extend your service:**
 10. Read more about this project and decide what other tools you also like to install.
 
 ### Tooling
@@ -182,12 +182,12 @@ If you prefer to run accions without any helper, or you like to adapt it, review
 # ToDo
 
 Add more playbooks:
-- [ ] To install and configure traefik.
-- [ ] To install and configure an OJS journal.
-- [ ] To install and configure an OMP monograph.
+- [x] To install and configure traefik.
+- [%] To install and configure an OJS journal (on any url).
+- [ ] To install and configure an OMP monograph (on any url).
 - [ ] Review infrastructure and extra playbooks.
 - [ ] Structure the justfile better.
-- [ ] To install and configure monitor tooling.
+- [%] To install and configure monitor tooling.
 - [ ] To install and configure backup tool.
 
 
