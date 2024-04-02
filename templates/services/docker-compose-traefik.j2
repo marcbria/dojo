@@ -15,7 +15,7 @@ services:
 
   app:
     # The official Traefik docker image (v.2)
-    image: traefik:{{ dojo.version | default('2.11') | safe }}
+    image: {{ images.app | default('treaefik:2.11') | safe }}
     container_name: ${COMPOSE_PROJECT_NAME:-{{ dojo.id | safe | string | lower }}}
     # security_opt:
     #  - no-new-privileges:true
