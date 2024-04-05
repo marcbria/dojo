@@ -2,13 +2,13 @@
 
 # This list of actions
 dojo:
-    just -l
+    @just -l | grep dojo
 
 # Shows how to use the script.
 dojo-list:
     # Full list of infrastructure playbooks is:
-    @tree --noreport {{dojoPath}}/run
-    @tree --noreport {{dojoPath}}/info
+    @ls -1 {{dojoPath}}/run/ | grep yml  
+    @ #ls -1 {{dojoPath}}/info/ | grep yml  
     # Run "just dojo" for a full list of actions.
 
 # Syntax and examples
@@ -26,9 +26,11 @@ dojo-info:
     @# TBD: $ dojo stop journalName                   # Stop a journal
     @# TBD: $ dojo frozen journalName                 # Makes a journal work in read-only mode.
 
-# Creates an ansible vault with default. Actions are:
+# TODO: Creates an manages an ansible vault with default. Actions are:
 # - create: Vault is saved at "configs/secrets.yml" with the password passed and stored at .vault.key (check your permissions).
-# - edit:   Edits the deault vault in "configs/secrets.yml" with the password stored at .vault.key:
+# - edit:   Edits the default vault in "configs/secrets.yml" with the password stored at .vault.key:
+#
+# Manages the ansible vault.
 dojo-vault action:
     @if [[ "${action}" == "create" ]]; then \
         echo "${2}" >> ${vaultKey}; \
@@ -39,9 +41,9 @@ dojo-vault action:
         echo "Unknown action"; \
     fi
 
-# Create a config.inc.php based on the specified dictionary name (ie: periodicum). Vault need to be created first.
+# DEPRECATED: Create a config.inc.php based on the specified dictionary name (ie: periodicum). Vault need to be created first.
 # Crea un fichero en "/tmp/>name>.config.inc.php" con la plantilla de /templates/<site>.yml y las variables del diccionario "/sites/<name>.yml"
-dojo-site-old action name:
+_dojo-site-old action name:
     #!/bin/bash
     echo "{{action}} - {{name}}"
     case ${action} in \
@@ -53,13 +55,20 @@ dojo-site-old action name:
         ;; \
     esac
 
-# Create a full site or specific files based on the specified dictionary name (ie: periodicum). Vault need to be created first.
-# config: Creates "/tmp/>name>.config.inc.php" with the template /templates/<site>.yml and the vars from "/sites/<name>.yml"
+# Runs an action with:
+# - Action: Is a playbook from playbooks/dojo/run (no need to add .yml).
+# - Site: A "site" is an ansible dictionary read from inventory/sites.
+# - Host: A "host" Acording to the inverntory/hosts.yml
+# - Args: Additional arguments.
+# 
+# Runs an action (playbook) with the specified site (dictionary) in the selected host.
 dojo-play action site host *args:
-    ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/run/{{ vaultKey }} {{ dojoPath }}/run/pkp-{{ action }}.yml -e "site={{ site }}" {{ args }}
+    ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/run/{{ vaultKey }} {{ dojoPath }}/run/{{ action }}.yml -e "site={{ site }}" {{ args }}
 
 # Creates a full site with acording to the dictionary in sites/<site>.yml 
 # Following playbooks will be called: pkp-site-folders > pkp-config > pkp-apache > pkp-docker-compose
+#
+# Multiplaybook: Creates a full site acording to the site's dictionary.
 dojo-create site host *args:
     @echo "Are you sure you like to run playbooks pkp-site-folders > pkp-config > pkp-docker-compose \
     for [{{ site }}] on [{{ host }}]?" && \
