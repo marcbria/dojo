@@ -9,7 +9,7 @@ test-readme:
 
 # Test if you can reach global vars
 test-vars:
-    @echo "Variable generalHost: " {{ generalHost }}
+    @echo "Variable remoteHost: " {{ remoteHost }}
     @echo "Variable rootPath: " {{ rootPath }}
 
 # Test if you can pass arguments

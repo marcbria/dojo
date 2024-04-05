@@ -4,9 +4,16 @@
 service:
     just -l
 
+# Syntax and examples
+service-tldr:
+    # Sample of calls:
+    # $ just service-play create servicename remoteserver    # And get a full service installed
+
 # Shows how to use the script.
 service-help:
+    # README SERVICE
     @cat {{ servicePath }}/README.md
+    @echo "\n\n"
 
     # Full list of infrastructure playbooks is:
     @tree --noreport {{ servicePath }}/run
@@ -18,15 +25,6 @@ service-list:
     @tree --noreport {{ servicePath }}/run
     @tree --noreport {{ servicePath }}/info
     # Run "just service" for a full list of actions.
-
-# Syntax and examples
-service-info:
-    # README SERVICE
-    # To get a list of actions use "just service"
-    @cat {{ servicePath }}/README.md
-    @# TBD
-    # Sample of calls:
-    # $ just service-play create serviceName remoteServer    # And get a full service installed
 
 # Creates an ansible vault with default. Actions are:
 # - create: Vault is saved at "configs/secrets.yml" with the password passed and stored at .vault.key (check your permissions).

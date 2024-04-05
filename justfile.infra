@@ -2,15 +2,17 @@
 
 # This list of actions.
 infra:
-    just -l
+    @just -l | grep infra
 
 # Shows how to use the script.
 infra-help:
-    @cat {{justPath}}/README.md
+    @cat {{infraPath}}/README.md
+    @echo "\n\n"
 
     # Full list of infrastructure playbooks is:
-    @tree --noreport {{justPath}}/run
-    @tree --noreport {{justPath}}/info
+    @ls -1 {{infraPath}}/run/ | grep yml  
+    @ #ls -1 {{infraPath}}/info/ | grep yml  
+    # Run "just dojo" for a full list of actions.
 
 # Installs ansible and it's roles in your laptop.
 infra-install-ansible:
@@ -25,16 +27,16 @@ infra-install-ansible:
 
 # Runs a playbook as root. Parameter includes the action (info/ or run/) and the playbook name.
 infra-play action playbook host *args:
-    ansible-playbook -i {{host}}, {{justPath}}/{{action}}/{{playbook}}.yml {{ args }}
+    ansible-playbook -i {{host}}, {{infraPath}}/{{action}}/{{playbook}}.yml {{ args }}
 
 # Shows the description of the specified playbook
 infra-show action playbook:
-    cat {{justPath}}/{{action}}/{{playbook}}.yml 
+    cat {{infraPath}}/{{action}}/{{playbook}}.yml 
 
 # Runs a dist-upgrade, remove unused dependences and reboot.
 infra-dist-upgrade host:
-    ansible-playbook -i {{host}}, {{justPath}}/run/dist-upgrade.yml -K
+    ansible-playbook -i {{host}}, {{infraPath}}/run/dist-upgrade.yml -K
 
 # Runs an "apt update" and "apt ugrade" and show the result.
 infra-update-upgrade host:
-    ansible-playbook -i {{host}}, {{justPath}}/run/update-upgrade.yml -K
+    ansible-playbook -i {{host}}, {{infraPath}}/run/update-upgrade.yml -K
