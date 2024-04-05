@@ -14,6 +14,14 @@ infra-help:
     @ #ls -1 {{infraPath}}/info/ | grep yml  
     # Run "just dojo" for a full list of actions.
 
+# Shows the list of playbooks
+infra-list:
+    # Full list of infrastructure playbooks is:
+    @ ls -1 {{infraPath}}/run/ | grep yml  
+    @ #ls -1 {{infraPath}}/info/ | grep yml
+    @ echo ""  
+    # Run "just infra" for a full list of actions.
+
 # Installs ansible and it's roles in your laptop.
 infra-install-ansible:
     sudo apt install ansible git
@@ -25,13 +33,17 @@ infra-install-ansible:
     # Keep changes under version control
     # git init && git add . && git commit -m "Initial commit"
 
-# Runs a playbook as root. Parameter includes the action (info/ or run/) and the playbook name.
-infra-play action playbook host *args:
-    ansible-playbook -i {{host}}, {{infraPath}}/{{action}}/{{playbook}}.yml {{ args }}
+# Runs an action (playbook) from /playbooks/infra/run as root.
+infra-run action host *args:
+    ansible-playbook -i {{host}}, {{infraPath}}/run/{{action}}.yml -K {{ args }}
 
-# Shows the description of the specified playbook
-infra-show action playbook:
-    cat {{infraPath}}/{{action}}/{{playbook}}.yml 
+# Runs an action (playbook) from /playbooks/infra/run as root.
+infra-info playbook host *args:
+    ansible-playbook -i {{host}}, {{infraPath}}/info/{{playbook}}.yml -K {{ args }}
+
+# Shows the description of the specified playbook. Param is a relative path like ./run/playbook.yml
+infra-show playbookPath:
+    cat {{infraPath}}/{{playbookPath}}.yml 
 
 # Runs a dist-upgrade, remove unused dependences and reboot.
 infra-dist-upgrade host:
