@@ -3,7 +3,7 @@
 | **WARNING:** This is an ongoing project. |
 |:--|
 | Features could change, be unstable or not even tested. |
-| Final version is planned to be released at the end of March. |
+| Final version is planned to be released at the end of April. |
 
 TL;DR; The aim of this project is to offer the PKP community a way to host its applications (OJS, OMP...) on-premises, in a simple, standardised and resilient way.
 
