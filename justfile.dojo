@@ -4,14 +4,7 @@
 dojo:
     @just -l | grep dojo
 
-# Shows how to use the script.
-dojo-list:
-    # Full list of infrastructure playbooks is:
-    @ls -1 {{dojoPath}}/run/ | grep yml  
-    @ #ls -1 {{dojoPath}}/info/ | grep yml  
-    # Run "just dojo" for a full list of actions.
-
-# Syntax and examples
+# Shows how to use the script
 dojo-help:
     # README DOJO
     @cat {{dojoPath}}/README.md
@@ -25,6 +18,13 @@ dojo-help:
     @# TBD: $ dojo stop journalName                   # Stop a journal
     @# TBD: $ dojo frozen journalName                 # Makes a journal work in read-only mode.
     # To get a full list of actions use "just dojo"
+
+# Shows the list of playbooks.
+dojo-list:
+    # Full list of infrastructure playbooks is:
+    @ls -1 {{dojoPath}}/run/ | grep yml  
+    @ #ls -1 {{dojoPath}}/info/ | grep yml  
+    # Run "just dojo" for a full list of actions.
 
 # TODO: Creates an manages an ansible vault with default. Actions are:
 # - create: Vault is saved at "configs/secrets.yml" with the password passed and stored at .vault.key (check your permissions).
@@ -56,13 +56,13 @@ _dojo-site-old action name:
     esac
 
 # Runs an action with:
-# - Action: Is a playbook from playbooks/dojo/run (no need to add .yml).
+# - Action: Is the playbook name (without .yml) from playbooks/dojo/run.
 # - Site: A "site" is an ansible dictionary read from inventory/sites.
 # - Host: A "host" Acording to the inverntory/hosts.yml
 # - Args: Additional arguments.
 # 
 # Runs an action (playbook) with the specified site (dictionary) in the selected host.
-dojo-play action site host *args:
+dojo-run action site host *args:
     ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/run/{{ vaultKey }} {{ dojoPath }}/run/{{ action }}.yml -e "site={{ site }}" {{ args }}
 
 # Creates a full site with acording to the dictionary in sites/<site>.yml 
