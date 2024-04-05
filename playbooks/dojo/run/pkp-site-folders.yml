@@ -30,7 +30,8 @@
         owner: "{{ user.run }}"
         group: "{{ user.group }}"
         recurse: yes
-      with_dict: "{{ path.volumes }}"
+      with_dict: 
+        - "{{ path.volumes }}"
       tags:
         - volumes_directories
 
@@ -42,7 +43,8 @@
         owner: "{{ user.run }}"
         group: "{{ user.group }}"
         recurse: yes
-      with_dict: "{{ path.files }}"
+      with_dict: 
+        - "{{ path.files }}"
       tags:
         - files_directories
 
@@ -60,12 +62,12 @@
 
     - name: Assign ownership in Web files
       file:
-        path: "{{ item }}"
+        path: "{{ item.value }}"
         state: directory
         owner: "100"
         group: "101"
         recurse: yes
-      loop:
+      with_dict: 
         - "{{ path.files }}"
       tags:
         - volumes_www
