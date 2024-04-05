@@ -12,19 +12,19 @@ dojo-list:
     # Run "just dojo" for a full list of actions.
 
 # Syntax and examples
-dojo-info:
+dojo-help:
     # README DOJO
-    # To get a list of actions use "just dojo"
     @cat {{dojoPath}}/README.md
-    @# TBD
+    @echo "\n"
     # Sample of calls:
-    # $ just dojo-play config journalName remoteServer            # Creates a config.inc.php for journalName in the remoteServer.
-    # $ just dojo-play create-journal journalName remoteServer    # And get a full OJS installed
+    # $ just dojo-play create-journal journalname remoteServer    # Get a full OJS installed
+    # $ just dojo-play config journalname remoteServer            # Creates a config.inc.php for journalName in the remoteServer.
     @# TBD: $ dojo backup journalName                 # Backup a full journal
     @# TBD: $ dojo clone journalName journalClone     # Clone a journal
     @# TBD: $ dojo upgrade journalClone 3.4.0-6       # Upgrade a journal to the s
     @# TBD: $ dojo stop journalName                   # Stop a journal
     @# TBD: $ dojo frozen journalName                 # Makes a journal work in read-only mode.
+    # To get a full list of actions use "just dojo"
 
 # TODO: Creates an manages an ansible vault with default. Actions are:
 # - create: Vault is saved at "configs/secrets.yml" with the password passed and stored at .vault.key (check your permissions).
@@ -48,7 +48,7 @@ _dojo-site-old action name:
     echo "{{action}} - {{name}}"
     case ${action} in \
         create-config) \
-            ansible-playbook -i host, --vault-password-file {{vaultKey}} ./pkp-config.yml -e "site={{ name }}" \
+            ansible-playbook -i host, --vault-password-file {{vaultKey}} ./onfig.yml -e "site={{ name }}" \
         ;; \
         create-all) \
             echo "Create ALL: {{ action }} - {{ name }}" \
@@ -66,17 +66,18 @@ dojo-play action site host *args:
     ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/run/{{ vaultKey }} {{ dojoPath }}/run/{{ action }}.yml -e "site={{ site }}" {{ args }}
 
 # Creates a full site with acording to the dictionary in sites/<site>.yml 
-# Following playbooks will be called: pkp-site-folders > pkp-config > pkp-apache > pkp-docker-compose
+# Following playbooks will be called: site-folders > config > apache > docker-compose
 #
 # Multiplaybook: Creates a full site acording to the site's dictionary.
 dojo-create site host *args:
-    @echo "Are you sure you like to run playbooks pkp-site-folders > pkp-config > pkp-docker-compose \
+    @echo "Are you sure you like to run playbooks: \n \
+    site-folders > config > apache > docker-compose > env > permissions\n \
     for [{{ site }}] on [{{ host }}]?" && \
     ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/run/{{ vaultKey }} \
-     {{ dojoPath }}/run/pkp-site-folders.yml \
-     {{ dojoPath }}/run/pkp-config.yml \
-     {{ dojoPath }}/run/pkp-apache.yml \
-     {{ dojoPath }}/run/pkp-docker-compose.yml \
-     {{ dojoPath }}/run/pkp-env.yml \
-     {{ dojoPath }}/run/pkp-permissions.yml \
+     {{ dojoPath }}/run/site-folders.yml \
+     {{ dojoPath }}/run/config.yml \
+     {{ dojoPath }}/run/apache.yml \
+     {{ dojoPath }}/run/docker-compose.yml \
+     {{ dojoPath }}/run/env.yml \
+     {{ dojoPath }}/run/permissions.yml \
      -e "site={{ site }}" -K {{ args }}
