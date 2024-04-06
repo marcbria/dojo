@@ -2,29 +2,44 @@
 
 # This list of actions
 dojo:
-    @just -l | grep dojo
+    @ just -l | grep dojo
+
+
+# Sample calls
+dojo-tldr:
+    # Sample of calls:
+    @ echo ""
+    # $ just dojo-help                                 # Just in case you like to read.
+    # $ just dojo-list                                 # For a detailed list of actions.
+    @ echo ""
+    # To get a commented list of actions use "just dojo"
+
 
 # Shows how to use the script
 dojo-help:
     # README DOJO
-    @cat {{dojoPath}}/README.md
-    @echo "\n"
+    @ cat {{dojoPath}}/README.md
+    @ echo "\n"
     # Sample of calls:
     # $ just dojo-play create-journal journalname remoteServer    # Get a full OJS installed
     # $ just dojo-play config journalname remoteServer            # Creates a config.inc.php for journalName in the remoteServer.
-    @# TBD: $ dojo backup journalName                 # Backup a full journal
-    @# TBD: $ dojo clone journalName journalClone     # Clone a journal
-    @# TBD: $ dojo upgrade journalClone 3.4.0-6       # Upgrade a journal to the s
-    @# TBD: $ dojo stop journalName                   # Stop a journal
-    @# TBD: $ dojo frozen journalName                 # Makes a journal work in read-only mode.
-    # To get a full list of actions use "just dojo"
+    @ # TBD: $ dojo backup journalName                 # Backup a full journal
+    @ # TBD: $ dojo clone journalName journalClone     # Clone a journal
+    @ # TBD: $ dojo upgrade journalClone 3.4.0-6       # Upgrade a journal to the s
+    @ # TBD: $ dojo stop journalName                   # Stop a journal
+    @ # TBD: $ dojo frozen journalName                 # Makes a journal work in read-only mode.
+    @ echo ""
+    # To get a commented list of actions use "just dojo"
+
 
 # Shows the list of playbooks.
 dojo-list:
     # Full list of infrastructure playbooks is:
-    @ls -1 {{dojoPath}}/run/ | grep yml  
+    @ ls -1 {{dojoPath}}/run/ | grep yml  
     @ #ls -1 {{dojoPath}}/info/ | grep yml  
-    # Run "just dojo" for a full list of actions.
+    @ echo ""
+    # To get a commented list of actions use "just dojo"
+
 
 # TODO: Creates an manages an ansible vault with default. Actions are:
 # - create: Vault is saved at "configs/secrets.yml" with the password passed and stored at .vault.key (check your permissions).
@@ -32,7 +47,7 @@ dojo-list:
 #
 # Manages the ansible vault.
 dojo-vault action:
-    @if [[ "${action}" == "create" ]]; then \
+    @ if [[ "${action}" == "create" ]]; then \
         echo "${2}" >> ${vaultKey}; \
         ansible-vault create --vault-password-file=${vaultKey} ${vaultPath} \
     elif [[ "${create}" == "edit" ]]; then \
@@ -40,6 +55,7 @@ dojo-vault action:
     else \
         echo "Unknown action"; \
     fi
+
 
 # DEPRECATED: Create a config.inc.php based on the specified dictionary name (ie: periodicum). Vault need to be created first.
 # Crea un fichero en "/tmp/>name>.config.inc.php" con la plantilla de /templates/<site>.yml y las variables del diccionario "/sites/<name>.yml"
@@ -55,6 +71,7 @@ _dojo-site-old action name:
         ;; \
     esac
 
+
 # Runs an action with:
 # - Action: Is the playbook name (without .yml) from playbooks/dojo/run.
 # - Site: A "site" is an ansible dictionary read from inventory/sites.
@@ -65,12 +82,13 @@ _dojo-site-old action name:
 dojo-run action site host *args:
     ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/run/{{ vaultKey }} {{ dojoPath }}/run/{{ action }}.yml -e "site={{ site }}" {{ args }}
 
+
 # Creates a full site with acording to the dictionary in sites/<site>.yml 
 # Following playbooks will be called: site-folders > config > apache > docker-compose
 #
 # Multiplaybook: Creates a full site acording to the site's dictionary.
 dojo-create site host *args:
-    @echo "Are you sure you like to run playbooks: \n \
+    @ echo "Are you sure you like to run playbooks: \n \
     site-folders > config > apache > docker-compose > env > permissions\n \
     for [{{ site }}] on [{{ host }}]?" && \
     ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/run/{{ vaultKey }} \

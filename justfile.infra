@@ -2,25 +2,48 @@
 
 # This list of actions.
 infra:
-    @just -l | grep infra
+    @ just -l | grep infra
+
+# Sample calls
+infra-tldr:
+    # Sample of calls:
+    @ echo ""
+    # $ just infra-help                                 # Just in case you like to read.
+    # $ just infra-list                                 # For a detailed list of actions.
+
+    # $ just infra-install-ansible                      # Install ansible in your local machine
+    # $ just infra-info ps $SERVER -K                   # TEST: if you can reach your remote server
+
+    # $ just infra-dist-upgrade $SERVER                 # Upgrades the full system (-K is implicit)
+    # $ just infra-play install-basic $SERVER           # Essential tooling (curl, rsync, pip...)
+    # $ just infra-play install-docker $SERVER          # Docker and compose are also essential.
+    # $ just infra-info docker $SERVER -K               # TEST: docker and docker-compose.
+
+    # $ just infra-play run create-user $SERVER         # Create docker user and group and folders.
+    @echo ""
+    # To get a commented list of actions use "just infra"
+
 
 # Shows how to use the script.
 infra-help:
-    @cat {{infraPath}}/README.md
-    @echo "\n\n"
+    @ cat {{infraPath}}/README.md
+    @ echo ""
 
     # Full list of infrastructure playbooks is:
-    @ls -1 {{infraPath}}/run/ | grep yml  
+    @ ls -1 {{infraPath}}/run/ | grep yml  
     @ #ls -1 {{infraPath}}/info/ | grep yml  
-    # Run "just dojo" for a full list of actions.
+    @ echo ""
+    # To get a commented list of actions use "just infra"
+
 
 # Shows the list of playbooks
 infra-list:
     # Full list of infrastructure playbooks is:
     @ ls -1 {{infraPath}}/run/ | grep yml  
     @ #ls -1 {{infraPath}}/info/ | grep yml
-    @ echo ""  
-    # Run "just infra" for a full list of actions.
+    @ echo ""
+    # To get a commented list of actions use "just infra"
+
 
 # Installs ansible and it's roles in your laptop.
 infra-install-ansible:
@@ -33,21 +56,26 @@ infra-install-ansible:
     # Keep changes under version control
     # git init && git add . && git commit -m "Initial commit"
 
+
 # Runs an action (playbook) from /playbooks/infra/run as root.
 infra-run action host *args:
     ansible-playbook -i {{host}}, {{infraPath}}/run/{{action}}.yml -K {{ args }}
+
 
 # Runs an action (playbook) from /playbooks/infra/run as root.
 infra-info playbook host *args:
     ansible-playbook -i {{host}}, {{infraPath}}/info/{{playbook}}.yml -K {{ args }}
 
+
 # Shows the description of the specified playbook. Param is a relative path like ./run/playbook.yml
 infra-show playbookPath:
     cat {{infraPath}}/{{playbookPath}}.yml 
 
+
 # Runs a dist-upgrade, remove unused dependences and reboot.
 infra-dist-upgrade host:
     ansible-playbook -i {{host}}, {{infraPath}}/run/dist-upgrade.yml -K
+
 
 # Runs an "apt update" and "apt ugrade" and show the result.
 infra-update-upgrade host:

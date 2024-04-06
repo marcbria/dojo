@@ -2,12 +2,16 @@
 
 # This list of actions
 service:
-    just -l
+    just -l | grep service
 
-# Syntax and examples
+
+# Sample calls
 service-tldr:
     # Sample of calls:
     # $ just service-play create servicename remoteserver    # And get a full service installed
+    @echo ""
+    # To get a commented list of actions use "just service"
+
 
 # Shows how to use the script.
 service-help:
@@ -18,6 +22,9 @@ service-help:
     # Full list of infrastructure playbooks is:
     @tree --noreport {{ servicePath }}/run
     @tree --noreport {{ servicePath }}/info
+    @echo ""
+    # To get a commented list of actions use "just service"
+
 
 # Shows how to use the script.
 service-list:
@@ -25,6 +32,7 @@ service-list:
     @tree --noreport {{ servicePath }}/run
     @tree --noreport {{ servicePath }}/info
     # Run "just service" for a full list of actions.
+
 
 # Creates an ansible vault with default. Actions are:
 # - create: Vault is saved at "configs/secrets.yml" with the password passed and stored at .vault.key (check your permissions).
@@ -38,6 +46,7 @@ service-vault action:
     else \
         echo "Unknown action"; \
     fi
+
 
 # Creates a full service acording to the dictionary in inventory/services/<service>.yml 
 # Following playbooks will be called: service-create.yml
