@@ -24,16 +24,11 @@ infra-tldr:
     # To get a commented list of actions use "just infra"
 
 
-# Shows how to use the script.
+# Shows how to use the script
 infra-help:
+    # README DOJO
     @ cat {{infraPath}}/README.md
     @ echo ""
-
-    # Full list of infrastructure playbooks is:
-    @ ls -1 {{infraPath}}/run/ | grep yml  
-    @ #ls -1 {{infraPath}}/info/ | grep yml  
-    @ echo ""
-    # To get a commented list of actions use "just infra"
 
 
 # Shows the list of playbooks

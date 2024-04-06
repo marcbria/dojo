@@ -9,28 +9,22 @@ service:
 service-tldr:
     # Sample of calls:
     # $ just service-play create servicename remoteserver    # And get a full service installed
-    @echo ""
+    @ echo ""
     # To get a commented list of actions use "just service"
 
 
-# Shows how to use the script.
+# Shows how to use the script
 service-help:
     # README SERVICE
-    @cat {{ servicePath }}/README.md
-    @echo "\n\n"
-
-    # Full list of infrastructure playbooks is:
-    @tree --noreport {{ servicePath }}/run
-    @tree --noreport {{ servicePath }}/info
-    @echo ""
-    # To get a commented list of actions use "just service"
+    @ cat {{ servicePath }}/README.md
+    @ echo ""
 
 
 # Shows how to use the script.
 service-list:
     # Full list of infrastructure playbooks is:
-    @tree --noreport {{ servicePath }}/run
-    @tree --noreport {{ servicePath }}/info
+    @ tree --noreport {{ servicePath }}/run
+    @ tree --noreport {{ servicePath }}/info
     # Run "just service" for a full list of actions.
 
 
@@ -38,7 +32,7 @@ service-list:
 # - create: Vault is saved at "configs/secrets.yml" with the password passed and stored at .vault.key (check your permissions).
 # - edit:   Edits the deault vault in "configs/secrets.yml" with the password stored at .vault.key:
 service-vault action:
-    @if [[ "${action}" == "create" ]]; then \
+    @ if [[ "${action}" == "create" ]]; then \
         echo "${2}" >> ${serviceVaultKey}; \
         ansible-vault create --vault-password-file=${vaultKey} ${vaultPath} \
     elif [[ "${create}" == "edit" ]]; then \
@@ -51,7 +45,7 @@ service-vault action:
 # Creates a full service acording to the dictionary in inventory/services/<service>.yml 
 # Following playbooks will be called: service-create.yml
 service-create service host *args:
-    @echo "Are you sure you like to run playbook service-create.yml \
+    @ echo "Are you sure you like to run playbook service-create.yml \
     for [{{ service }}] on [{{ host }}]?" && \
     ansible-playbook -i {{ host }}, --vault-password-file {{ servicePath }}/run/{{ vaultKey }} \
      {{ servicePath }}/run/service-create.yml \
