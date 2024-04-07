@@ -1,4 +1,4 @@
-- name: Setup Docker Runner User and dojo's folder structure
+- name: Setup Docker Runner User 
   hosts: all
   become: true
   vars_files:
