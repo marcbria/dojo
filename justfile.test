@@ -1,6 +1,6 @@
 # This list of actions
 test:
-    just -l | grep test
+    just -l --unsorted | grep test
 
 # Test if you can read the playbook README.md
 test-readme:
