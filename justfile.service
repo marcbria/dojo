@@ -20,12 +20,9 @@ service-help:
     @ echo ""
 
 
-# Shows how to use the script.
+# An alias for "just list service"
 service-list:
-    # Full list of infrastructure playbooks is:
-    @ tree --noreport {{ servicePath }}/run
-    @ tree --noreport {{ servicePath }}/info
-    # Run "just service" for a full list of actions.
+    @ just list service
 
 
 # Creates an ansible vault with default. Actions are:

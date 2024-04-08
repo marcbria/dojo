@@ -45,8 +45,8 @@ list $type:
             just -l; 
             ;; 
         "dojo" | "service" | "infra" | "test") 
-            echo "Full list of [$type] playbooks is:"; 
-            ls -1 {{ rootPath }}/playbooks/$type/run/ | grep yml; 
+            echo "Full list of [$type] playbooks (actions) are:"; 
+            ls -1 -R {{ rootPath }}/playbooks/$type/ | grep yml; 
             echo "To get a commented list of actions use 'just $type'"; 
             ;; 
         *) 

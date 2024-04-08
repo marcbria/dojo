@@ -31,13 +31,9 @@ infra-help:
     @ echo ""
 
 
-# Shows the list of playbooks
+# An alias for "just list infra"
 infra-list:
-    # Full list of infrastructure playbooks is:
-    @ ls -1 {{infraPath}}/run/ | grep yml  
-    @ #ls -1 {{infraPath}}/info/ | grep yml
-    @ echo ""
-    # To get a commented list of actions use "just infra"
+    @ just list infra
 
 
 # Installs ansible and it's roles in your laptop.

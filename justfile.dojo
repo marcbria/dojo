@@ -10,7 +10,7 @@ dojo-tldr:
     # Sample of calls:
     @ echo ""
     # $ just dojo-help                                      # Just in case you like to read
-    # $ just dojo-list                                      # For a detailed list of actions
+    # $ just list dojo                                      # For a detailed list of actions
 
     # $ just dojo-play create-journal journalname $SERVER   # Get a full OJS installed
     # $ just dojo-play config journalname $SERVER           # Creates a config.inc.php for journalName in the remoteServer.
@@ -32,13 +32,9 @@ dojo-help:
     @ echo ""
 
 
-# Shows the list of playbooks.
+# An alias for "just list dojo"
 dojo-list:
-    # Full list of infrastructure playbooks is:
-    @ ls -1 {{dojoPath}}/run/ | grep yml  
-    @ #ls -1 {{dojoPath}}/info/ | grep yml  
-    @ echo ""
-    # To get a commented list of actions use "just dojo"
+    @ just list dojo
 
 
 # TODO: Creates an manages an ansible vault with default. Actions are:

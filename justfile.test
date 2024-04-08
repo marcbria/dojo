@@ -2,19 +2,28 @@
 test:
     just -l --unsorted | grep test
 
+
 # Test if you can read the playbook README.md
 test-readme:
     cat "{{ rootPath }}/playbooks/test/README.md"
     @just test
+
+
+# An alias for "just list service"
+test-list:
+    @ just list service
+
 
 # Test if you can reach global vars
 test-vars:
     @echo "Variable remoteHost: " {{ remoteHost }}
     @echo "Variable rootPath: " {{ rootPath }}
 
+
 # Test if you can pass arguments
 test-args *arguments:
     @echo "TEST ARGS: " $@
+
 
 # Test if you can list playbook's folder
 test-ls:
