@@ -2,7 +2,7 @@
 
 # This list of actions
 service:
-    just -l | grep service
+    just -l --unsorted | grep service
 
 
 # Sample calls
@@ -40,6 +40,17 @@ service-vault action:
     else \
         echo "Unknown action"; \
     fi
+
+
+# Runs an action with:
+# - Action: Is the playbook name (without .yml) from playbooks/service/run.
+# - Site: A "site" is an ansible dictionary read from inventory/sites.
+# - Host: A "host" Acording to the inverntory/hosts.yml
+# - Args: Additional arguments.
+# 
+# Runs an action (playbook) with the specified site (dictionary) in the selected host.
+service-run action site host *args:
+    ansible-playbook -i {{ host }}, --vault-password-file {{ servicePath }}/run/{{ vaultKey }} {{ dojoPath }}/run/{{ action }}.yml -e "site={{ site }}" {{ args }}
 
 
 # Creates a full service acording to the dictionary in inventory/services/<service>.yml 
