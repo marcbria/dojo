@@ -24,13 +24,35 @@ import 'justfile.dojo'
 
 # General calls
 _default:
-    just -l
+    @ echo ">> DOJO MAIN <<"
+    @ echo ""
+    @ echo "This script let you call 4 types of commands:"
+    @ echo "  - infra: To install the required infrastructure (docker and ansible)."
+    @ echo "  - service: To install and manage related services (traefik, monitor...)."
+    @ echo "  - dojo: To create, upgrade and manage PKP applications (ojs, omp)."
+    @ echo "  - test: To test and debug this script."
+    @ echo ""
+    @ echo "Run 'just [type]' for a list of actions for each type."
+    @ echo "Run 'just tldr' for a list of common calls."
+    @ echo "Run 'just readme' for a detailed explanation."
 
-# test:
-#     just -f "justfile.test" -l
-# infra:
-#     just -f "justfile.infra" -l
-# service:
-#     just -f "justfile.service" -l
-# dojo:
-#     just -f "justfile.dojo" -l
+
+# Shows the list of playbooks.
+list $type:
+    #!/usr/bin/env sh
+    case "$type" in 
+        "all") 
+            just -l; 
+            ;; 
+        "dojo" | "service" | "infra" | "test") 
+            echo "Full list of [$type] playbooks is:"; 
+            ls -1 {{ rootPath }}/playbooks/$type/run/ | grep yml; 
+            echo "To get a commented list of actions use 'just $type'"; 
+            ;; 
+        *) 
+            echo "Invalid type: $type";
+            echo "Valid values are: dojo, infra, service, all";
+            exit 1;
+            ;;
+    esac
+
