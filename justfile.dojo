@@ -2,7 +2,7 @@
 
 # This list of actions
 dojo:
-    @ just -l | grep dojo
+    @ just -l --unsorted | grep dojo
 
 
 # Sample calls
@@ -60,16 +60,16 @@ dojo-vault action:
 # DEPRECATED: Create a config.inc.php based on the specified dictionary name (ie: periodicum). Vault need to be created first.
 # Crea un fichero en "/tmp/>name>.config.inc.php" con la plantilla de /templates/<site>.yml y las variables del diccionario "/sites/<name>.yml"
 _dojo-site-old action name:
-    #!/bin/bash
+    #!/usr/bin/env sh
     echo "{{action}} - {{name}}"
-    case ${action} in \
-        create-config) \
-            ansible-playbook -i host, --vault-password-file {{vaultKey}} ./onfig.yml -e "site={{ name }}" \
-        ;; \
-        create-all) \
-            echo "Create ALL: {{ action }} - {{ name }}" \
-        ;; \
-    esac
+    # case ${action} in 
+    #     create-config) 
+    #         ansible-playbook -i host, --vault-password-file {{ vaultKey }} ./config.yml -e "site={{ name }}" 
+    #     ;; 
+    #     create-all) 
+    #         echo "Create ALL: {{ action }} - {{ name }}" 
+    #     ;; 
+    # esac
 
 
 # Runs an action with:
@@ -87,11 +87,10 @@ dojo-run action site host *args:
 # Following playbooks will be called: site-folders > config > apache > docker-compose
 #
 # Multiplaybook: Creates a full site acording to the site's dictionary.
+[confirm("Are you sure you like to create [{{ site }}] on [{{ host }}]?")]
 dojo-create site host *args:
-    @ echo "Are you sure you like to run playbooks: \n \
-    site-folders > config > apache > docker-compose > env > permissions\n \
-    for [{{ site }}] on [{{ host }}]?" && \
-    ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/run/{{ vaultKey }} \
+    @ echo 'Running playbooks: site-folders > config > apache > docker-compose > env > permissions.' 
+    @ ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/run/{{ vaultKey }} \
      {{ dojoPath }}/run/site-folders.yml \
      {{ dojoPath }}/run/config.yml \
      {{ dojoPath }}/run/apache.yml \
