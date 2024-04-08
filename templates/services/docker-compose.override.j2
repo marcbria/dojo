@@ -1,11 +1,14 @@
-# File: docker-compose.yml
+#########################################################################
 #
-# Site:    {{ site }}
-# Tool:    {{ dojo.tool }}
-# Version: {{ dojo.version }}
+# General settings# File: docker-compose.override.yml
 #
+# Site:      {{ service }}
+# Tool:      {{ dojo.tool }}
+# Version:   {{ dojo.version }}
+# Creation:  {{ fileCreation }}
+#
+#########################################################################
 
-version: "3.8"
 
 {% set traefik_rule = "Host(" + proxy.domains + ")" %}
 {% if proxy.pathprefix is defined %}
