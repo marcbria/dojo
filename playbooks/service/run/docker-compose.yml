@@ -1,0 +1,43 @@
+---
+- name: Run Docker Compose in service's root folder. 
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    siteParam: "{{ service }}"
+  vars_files:
+    - ./configs/dojo.yml
+    - ./services/{{ service }}.yml
+  tasks:
+    - name: Check if the service directory exists
+      stat:
+        path: "{{ path.base.service }}/{{ service }}"
+      register: service_dir_stat
+
+    - name: Fail if service directory does not exist
+      fail:
+        msg: "Service directory does not exist"
+      when: not service_dir_stat.stat.exists
+
+    - name: Changes to the service's folder 
+      become: yes
+      become_user: docker
+      shell: cd "{{ path.base.service }}/{{ service }}"
+
+    - name: Runs "docker-compose up -d"
+      become: yes
+      become_user: docker
+      command: docker-compose up -d
+      when: "'up' in command"
+
+    - name: Runs "docker-compose stop"
+      become: yes
+      become_user: docker
+      command: docker-compose stop
+      when: "'stop' in command"
+
+    - name: Runs "docker-compose down"
+      become: yes
+      become_user: docker
+      command: docker-compose down
+      when: "'down' in command"
