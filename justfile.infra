@@ -2,7 +2,7 @@
 
 # This list of actions.
 infra:
-    @ just -l | grep infra
+    @ just -l --unsorted | grep infra
 
 # Sample calls
 infra-tldr:
