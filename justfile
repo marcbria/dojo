@@ -11,9 +11,11 @@
 set allow-duplicate-recipes := true
 set positional-arguments    := true
 
+
 # General variables
 
 import 'config.just'
+
 
 # Just imports
 
@@ -22,7 +24,8 @@ import 'justfile.infra'
 import 'justfile.service'
 import 'justfile.dojo'
 
-# General calls
+
+# General recipes
 _default:
     @ echo ">> DOJO MAIN <<"
     @ echo ""
@@ -32,9 +35,9 @@ _default:
     @ echo "  - dojo: To create, upgrade and manage PKP applications (ojs, omp)."
     @ echo "  - test: To test and debug this script."
     @ echo ""
-    @ echo "Run 'just [type]' for a list of actions for each type."
-    @ echo "Run 'just tldr' for a list of common calls."
-    @ echo "Run 'just readme' for a detailed explanation."
+    @ echo "  > Run 'just [type]' for a type-specific list of actions."
+    @ echo "  > Run 'just tldr' for a list of common calls."
+    @ echo "  > Run 'just readme' for a detailed explanation."
 
 
 # Shows the list of playbooks.
