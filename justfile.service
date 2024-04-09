@@ -53,8 +53,9 @@ service-run action site host *args:
 # Creates a full service acording to the dictionary in inventory/services/<service>.yml 
 # Following playbooks will be called: service-create.yml
 service-create service host *args:
+    @ echo "WARNING: Creating a service will overwrite existing one."
     @ echo "Are you sure you like to run playbook service-create.yml \
     for [{{ service }}] on [{{ host }}]?" && \
     ansible-playbook -i {{ host }}, --vault-password-file {{ servicePath }}/run/{{ vaultKey }} \
      {{ servicePath }}/run/service-create.yml \
-     -e "service={{ service }}" -K {{ args }}
+     -e "service={{ service }}" -e "host={{ host }}" -K {{ args }}
