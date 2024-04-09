@@ -12,6 +12,11 @@
   tasks:
     - name: Load vars from service.yml
       include_vars:
+        file: ./configs/dojo.yml
+        name: dojoVars
+
+    - name: Load vars from service.yml
+      include_vars:
         file: ./services/{{ service }}.yml
         name: serviceGenericVars
 
@@ -23,23 +28,27 @@
       
     - name: Combine serviceGenericVars and serviceHostVars
       set_fact:
-        combinedServiceVars: "{{ serviceGenericVars | combine(serviceHostVars, recursive=True) | default({}) }}"
+        allVars: "{{ dojoVars | combine(serviceGenericVars, recursive=True) | combine(serviceHostVars, recursive=True) | default({}) }}"
+
+    - name: Debugging variable
+      debug:
+        var: allVars
 
     - name: Ensure service directory exists
       file:
-        path: "{{ path.base.service }}/{{ combinedServiceVars.dojo.id }}"
+        path: "{{ path.base.service }}/{{ allVars.dojo.id }}"
         state: directory
         force: yes
 
     - name: Generate docker-compose file from template and dojo vars
       template:
-        src: "./templates/services/docker-compose-{{ combinedServiceVars.dojo.tool }}.j2"
-        dest: "{{ path.base.service }}/{{ combinedServiceVars.dojo.id }}/docker-compose.yml"
+        src: "./templates/services/docker-compose-{{ allVars.dojo.tool }}.j2"
+        dest: "{{ path.base.service }}/{{ allVars.dojo.id }}/docker-compose.yml"
 
     - name: Generate env file from template and dojo vars
       template:
         src: "./templates/services/env.j2"
-        dest: "{{ path.base.service }}/{{ combinedServiceVars.dojo.id }}/.env"
+        dest: "{{ path.base.service }}/{{ allVars.dojo.id }}/.env"
 
     - name: Ensure service's essential folders exists
       file:
@@ -50,13 +59,13 @@
         group: "{{ user.group }}"
         force: yes
       loop:
-        - "{{ path.base.service }}/{{ combinedServiceVars.dojo.id }}"
-        - "{{ path.storage.backups }}/{{ combinedServiceVars.dojo.id }}"
+        - "{{ path.base.service }}/{{ allVars.dojo.id }}"
+        - "{{ path.storage.backups }}/{{ allVars.dojo.id }}"
         - "{{ path.storage.volumes }}/files"
 
     - name: Create service's volume folders
       file:
-        path: "{{ item.value }}/{{ combinedServiceVars.dojo.id }}"
+        path: "{{ item.value }}/{{ allVars.dojo.id }}"
         state: directory
         mode: 0744
         owner: "{{ user.run }}"
@@ -68,7 +77,7 @@
 
     - name: Create service's volume folders for files
       file:
-        path: "{{ item.value }}/{{ combinedServiceVars.dojo.id }}"
+        path: "{{ item.value }}/{{ allVars.dojo.id }}"
         state: directory
         mode: 0744
         owner: "{{ user.run }}"
@@ -84,12 +93,12 @@
         dest: "{{ item.link }}"
         state: link
       loop: 
-        - { link: "{{ path.base.service }}/{{ combinedServiceVars.dojo.id }}/volumes", target: "{{ path.volumes.all }}/{{ combinedServiceVars.dojo.id }}" }
-        - { link: "{{ path.volumes.all }}/{{ combinedServiceVars.dojo.id }}/db", target: "{{ path.volumes.db }}/{{ combinedServiceVars.dojo.id }}" }
-        - { link: "{{ path.volumes.all }}/{{ combinedServiceVars.dojo.id }}/logs", target: "{{ path.volumes.logs }}/{{ combinedServiceVars.dojo.id }}" }
-        - { link: "{{ path.volumes.all }}/{{ combinedServiceVars.dojo.id }}/config", target: "{{ path.files.config }}/{{ combinedServiceVars.dojo.id }}" }
-        - { link: "{{ path.volumes.all }}/{{ combinedServiceVars.dojo.id }}/public", target: "{{ path.files.public }}/{{ combinedServiceVars.dojo.id }}" }
-        - { link: "{{ path.volumes.all }}/{{ combinedServiceVars.dojo.id }}/private", target: "{{ path.files.private }}/{{ combinedServiceVars.dojo.id }}" }
+        - { link: "{{ path.base.service }}/{{ allVars.dojo.id }}/volumes", target: "{{ path.volumes.all }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ path.volumes.all }}/{{ allVars.dojo.id }}/db", target: "{{ path.volumes.db }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ path.volumes.all }}/{{ allVars.dojo.id }}/logs", target: "{{ path.volumes.logs }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ path.volumes.all }}/{{ allVars.dojo.id }}/config", target: "{{ path.files.config }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ path.volumes.all }}/{{ allVars.dojo.id }}/public", target: "{{ path.files.public }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ path.volumes.all }}/{{ allVars.dojo.id }}/private", target: "{{ path.files.private }}/{{ allVars.dojo.id }}" }
 
     - name: Restrict permissions to securized folders
       file:

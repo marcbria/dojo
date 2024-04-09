@@ -3,8 +3,8 @@
 # General settings# File: docker-compose.yml
 #
 # Site:      {{ service }}
-# Tool:      {{ dojo.tool }}
-# Version:   {{ dojo.version }}
+# Tool:      {{ allVars.dojo.tool }}
+# Version:   {{ allVars.dojo.version }}
 # Creation:  {{ fileCreation }}
 #
 #########################################################################
@@ -14,8 +14,8 @@ services:
 
   app:
     # The official Traefik docker image (v.2)
-    image: {{ images.app | default('treaefik:2.11') | safe }}
-    container_name: ${COMPOSE_PROJECT_NAME:-{{ dojo.id | safe | string | lower }}}
+    image: {{ allVars.images.app | default('treaefik:2.11') | safe }}
+    container_name: ${COMPOSE_PROJECT_NAME:-{{ allVars.dojo.id | safe | string | lower }}}
     # security_opt:
     #  - no-new-privileges:true
     restart: always
@@ -29,18 +29,18 @@ services:
       # Dynamc providers
       - ./volumes/config/providers:/etc/traefik/providers
     ports:
-      - ${HTTP_PORT:-80}:{{ app.ports.http | default('80') | safe }}
-      - ${HTTPS_PORT:-443}:{{ app.ports.https | default('443') | safe }}
-      - ${API_HTTP_PORT:-8080}:{{ app.ports.api | default('8080') | safe }}
+      - ${HTTP_PORT:-80}:{{ allVars.app.ports.http | default('80') | safe }}
+      - ${HTTPS_PORT:-443}:{{ allVars.app.ports.https | default('443') | safe }}
+      - ${API_HTTP_PORT:-8080}:{{ allVars.app.ports.api | default('8080') | safe }}
     command:
       ###########################################
       #   Static Configuration harnessing CLI   #
       ###########################################
       # Activate dashboard.
-      - "--api.dashboard={{ app.api.dashboard | safe | string | lower }}"
-      - "--api.insecure={{ app.api.insecure | safe | string | lower }}"
+      - "--api.dashboard={{ allVars.app.api.dashboard | safe | string | lower }}"
+      - "--api.insecure={{ allVars.app.api.insecure | safe | string | lower }}"
 {% if app.pilot.token %}
-      - "--pilot.token={{ app.pilot.token | safe }}"
+      - "--pilot.token={{ allVars.app.pilot.token | safe }}"
 {% endif %}
 
       # Log level in traefik logs (Default: ERROR)
@@ -51,7 +51,7 @@ services:
       # Do not expose containers by default.
       - "--providers.docker.exposedbydefault=false"
       # Default Docker network used.
-      - "--providers.docker.network={{ app.network | default('proxy') | safe}}"
+      - "--providers.docker.network={{ allVars.app.network | default('proxy') | safe}}"
 
       # Dynamic providers:
       - "--providers.file.directory=/etc/traefik/providers"
@@ -59,9 +59,9 @@ services:
 
       # --entrypoints.<name>.address for ports
       # 80 (i.e., name = webinsercure)
-      - "--entrypoints.webinsecure.address=:{{ app.ports.http | default('80') | safe }}"
+      - "--entrypoints.webinsecure.address=:{{ allVars.app.ports.http | default('80') | safe }}"
       # 443 (i.e., name = websecure)
-      - "--entrypoints.websecure.address=:{{ app.ports.https | default('443') | safe }}"
+      - "--entrypoints.websecure.address=:{{ allVars.app.ports.https | default('443') | safe }}"
 
 {% if app.ports.redirect %}
       # Redirection to https: Link in your container to be applied.
@@ -88,12 +88,12 @@ services:
       - "--certificatesResolvers.leresolver.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
 {% endif %}
       # Email address used for registration
-      - "--certificatesresolvers.leresolver.acme.email={{ app.certificate.email | safe }}"
+      - "--certificatesresolvers.leresolver.acme.email={{ allVars.app.certificate.email | safe }}"
       - "--certificatesresolvers.leresolver.acme.storage=/etc/traefik/acme/acme.json"
 
     networks:
       # This is the network over which Traefik communicates with other containers.
-      - {{ app.network | default('proxy') | safe}}
+      - {{ allVars.app.network | default('proxy') | safe}}
 
     labels:
       ################################################
@@ -105,7 +105,7 @@ services:
 
       # Dashboard
       traefik.http.routers.traefik.entrypoints: websecure
-      traefik.http.routers.traefik.rule: Host(`${DASHBOARD_DOMAIN:-{{ dojo.domain | safe }}}`)
+      traefik.http.routers.traefik.rule: Host(`${DASHBOARD_DOMAIN:-{{ allVars.dojo.domain | safe }}}`)
       traefik.http.routers.traefik.service: api@internal
       traefik.http.routers.traefik.tls.certresolver: leresolver
 
@@ -119,9 +119,9 @@ services:
 {% if app.credentials %}
       traefik.http.routers.traefik.middlewares: traefik-auth
       # traefik.http.middlewares.traefik-auth.basicauth.users: ${DASHBOARD_USERNAME}:${DASHBOARD_PASSWORD}
-      traefik.http.middlewares.traefik-auth.basicauth.users: {{ app.credentials.username }}:{{ app.credentials.password }}
+      traefik.http.middlewares.traefik-auth.basicauth.users: {{ allVars.app.credentials.username }}:{{ allVars.app.credentials.password }}
 {% endif %}
 
 networks:
-  {{ app.network | default('proxy') | safe}}:
+  {{ allVars.app.network | default('proxy') | safe}}:
     external: true

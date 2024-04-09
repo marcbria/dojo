@@ -1,3 +1,17 @@
+###############################################################################
+#
+# Function: dojo's Global variables
+# Type: Required
+#
+# Description:
+# Global variables for dojo.
+# 
+# Documentation:
+# https://github.com/marcbria/dojo
+#
+###############################################################################
+
+
 user:
   run:       "docker"
   group:     "docker"
