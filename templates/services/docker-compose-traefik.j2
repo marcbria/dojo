@@ -82,7 +82,7 @@ services:
       # Via DNS: Not tested.
       - "--certificatesresolvers.leresolver.acme.dnschallenge=true"
 {% endif %}
-{% if app.certificate.staging %}
+{% if app.certificate.staging|bool %}
       # Staging server to test without hitting letsencrypt limits.
       # From: https://doc.traefik.io/traefik/https/acme/#caserver
       - "--certificatesResolvers.leresolver.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
