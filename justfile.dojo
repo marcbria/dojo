@@ -27,8 +27,8 @@ dojo-tldr:
 
 # Shows how to use the script
 dojo-help:
-    # README DOJO
-    @ cat {{dojoPath}}/README.md
+    # README for PKP's dojo playbooks
+    @ cat {{ dojoPath }}/README.md
     @ echo ""
 
 
@@ -47,7 +47,7 @@ dojo-vault action:
         echo "${2}" >> ${vaultKey}; \
         ansible-vault create --vault-password-file=${vaultKey} ${vaultPath} \
     elif [[ "${create}" == "edit" ]]; then \
-        ansible-vault edit --vault-password-file={{vaultKey}} {{vaultPath}} \
+        ansible-vault edit --vault-password-file={{ vaultKey }} {{ vaultPath }} \
     else \
         echo "Unknown action"; \
     fi
@@ -57,7 +57,7 @@ dojo-vault action:
 # Crea un fichero en "/tmp/>name>.config.inc.php" con la plantilla de /templates/<site>.yml y las variables del diccionario "/sites/<name>.yml"
 _dojo-site-old action name:
     #!/usr/bin/env sh
-    echo "{{action}} - {{name}}"
+    echo "{{ action }} - {{ name }}"
     # case ${action} in 
     #     create-config) 
     #         ansible-playbook -i host, --vault-password-file {{ vaultKey }} ./config.yml -e "site={{ name }}" 

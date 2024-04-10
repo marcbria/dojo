@@ -3,10 +3,11 @@ test:
     just -l --unsorted | grep test
 
 
-# Test if you can read the playbook README.md
-test-readme:
-    cat "{{ rootPath }}/playbooks/test/README.md"
-    @just test
+# Shows how to use the script
+test-help:
+    # README for PKP's dojo playbooks
+    @ cat {{ testPath }}/README.md
+    @ echo ""
 
 
 # An alias for "just list service"

@@ -8,9 +8,9 @@ service:
 # Sample calls
 service-tldr:
     # Sample of calls:
-    # $ just service-play create servicename remoteserver    # And get a full service installed
+    # $ just service-create traefik $SERVER     # To install traefik.
     @ echo ""
-    # To get a commented list of actions use "just service"
+    # > To get a commented list of actions use "just service"
 
 
 # Shows how to use the script
