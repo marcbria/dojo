@@ -1,4 +1,4 @@
-- name: Set permissions in journnal's folders structure
+- name: Set permissions in journal's folders structure
   hosts: all
   become: true
   gather_facts: no

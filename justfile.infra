@@ -12,21 +12,21 @@ infra-tldr:
     # $ just infra-list                                 # For a detailed list of actions.
 
     # $ just infra-install-ansible                      # Install ansible in your local machine
-    # $ just infra-info ps $SERVER -K                   # TEST: if you can reach your remote server
+    # $ just infra-run info-ps $SERVER -K               # TEST: if you can reach your remote server
 
     # $ just infra-dist-upgrade $SERVER                 # Upgrades the full system (-K is implicit)
-    # $ just infra-play install-basic $SERVER           # Essential tooling (curl, rsync, pip...)
-    # $ just infra-play install-docker $SERVER          # Docker and compose are also essential.
-    # $ just infra-info docker $SERVER -K               # TEST: docker and docker-compose.
+    # $ just infra-run install-basic $SERVER            # Essential tooling (curl, rsync, pip...)
+    # $ just infra-run install-docker $SERVER           # Docker and compose are also essential.
+    # $ just infra-run info-docker $SERVER              # TEST: docker and docker-compose.
 
-    # $ just infra-play run create-user $SERVER         # Create docker user and group and folders.
+    # $ just infra-run create-user $SERVER              # Create docker user and group and folders.
     @echo ""
     # To get a commented list of actions use "just infra"
 
 
 # Shows how to use the script
 infra-help:
-    # README DOJO
+    # README for infrastructure playbooks
     @ cat {{infraPath}}/README.md
     @ echo ""
 
@@ -48,26 +48,21 @@ infra-install-ansible:
     # git init && git add . && git commit -m "Initial commit"
 
 
-# Runs an action (playbook) from /playbooks/infra/run as root.
+# Runs an action (playbook) from /playbooks/infra as root.
 infra-run action host *args:
-    ansible-playbook -i {{host}}, {{infraPath}}/run/{{action}}.yml -K {{ args }}
+    ansible-playbook -i {{host}}, {{infraPath}}/{{action}}.yml -K {{ args }}
 
 
-# Runs an action (playbook) from /playbooks/infra/run as root.
-infra-info playbook host *args:
-    ansible-playbook -i {{host}}, {{infraPath}}/info/{{playbook}}.yml -K {{ args }}
-
-
-# Shows the description of the specified playbook. Param is a relative path like ./run/playbook.yml
-infra-show playbookPath:
-    cat {{infraPath}}/{{playbookPath}}.yml 
+# Shows the description of the specified playbook. Run "just infra-list" for a list.
+infra-show playbook:
+    cat {{infraPath}}/{{playbook}}.yml 
 
 
 # Runs a dist-upgrade, remove unused dependences and reboot.
 infra-dist-upgrade host:
-    ansible-playbook -i {{host}}, {{infraPath}}/run/dist-upgrade.yml -K
+    ansible-playbook -i {{host}}, {{infraPath}}/dist-upgrade.yml -K
 
 
 # Runs an "apt update" and "apt ugrade" and show the result.
 infra-update-upgrade host:
-    ansible-playbook -i {{host}}, {{infraPath}}/run/update-upgrade.yml -K
+    ansible-playbook -i {{host}}, {{infraPath}}/update-upgrade.yml -K
