@@ -6,7 +6,7 @@ test:
 # Shows how to use the script
 test-help:
     # README for PKP's dojo playbooks
-    @ cat {{ testPath }}/README.md
+    @ cat {{ rootPath }}/playbooks/test/README.md
     @ echo ""
 
 

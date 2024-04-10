@@ -30,10 +30,6 @@
       set_fact:
         allVars: "{{ dojoVars | combine(serviceGenericVars, recursive=True) | combine(serviceHostVars, recursive=True) | default({}) }}"
 
-    - name: Debugging variable
-      debug:
-        var: allVars
-
     - name: Ensure service directory exists
       file:
         path: "{{ path.base.service }}/{{ allVars.dojo.id }}"
