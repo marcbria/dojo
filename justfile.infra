@@ -21,7 +21,7 @@ infra-tldr:
 
     # $ just infra-run create-user $SERVER              # Create docker user and group and folders.
     @echo ""
-    # To get a commented list of actions use "just infra"
+    # > To get a commented list of actions use "just infra"
 
 
 # Shows how to use the script
@@ -36,16 +36,13 @@ infra-list:
     @ just list infra
 
 
-# Installs ansible and it's roles in your laptop.
+# Installs ansible the required roles in your laptop.
 infra-install-ansible:
     sudo apt install ansible git
     sudo python3 -m venv venv
-    # Activa el entorno virtual (en sistemas Unix/Linux)
+    # Activates the virtual environment (in Unix/Linux systems)
     bash -c "source venv/bin/activate"
     ansible-galaxy install -r requirements.yml
-    ansible-galaxy collection install community.general
-    # Keep changes under version control
-    # git init && git add . && git commit -m "Initial commit"
 
 
 # Runs an action (playbook) from /playbooks/infra as root.
