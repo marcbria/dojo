@@ -26,7 +26,7 @@
           docker compose {{ command }};
           docker compose ps
         chdir: "{{ path.base.service }}/{{ dojo.id }}"
-      when: command in ['start', 'stop', 'restart', 'down', 'pull', 'pause', 'unpause', 'build']
+      when: command in ['start', 'stop', 'restart', 'down', 'pull', 'pause', 'ps', 'unpause', 'build']
       register: docker_compose_output
 
     - name: Show the service's status
