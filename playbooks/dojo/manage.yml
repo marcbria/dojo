@@ -4,7 +4,6 @@
   gather_facts: yes
   vars:
     siteParam: "{{ site }}"
-
   vars_files:
     - ./configs/dojo.yml
     - ./sites/{{ siteParam }}.yml

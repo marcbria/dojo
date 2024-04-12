@@ -5,7 +5,8 @@
   gather_facts: no
   vars:
     siteParam: "{{ site }}"
-  vars_files:
+      fileCreation: "{{ ansible_date_time.iso8601 }}"
+vars_files:
     - ./configs/dojo.yml
     - ./sites/{{ site }}.yml
   tasks:
