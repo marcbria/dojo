@@ -1,11 +1,14 @@
-# File: docker-compose.yml
+#########################################################################
 #
-# Site:    {{ site }}
-# Tool:    {{ dojo.tool }}
-# Version: {{ dojo.version }}
+# General settings# File: docker-compose.override.yml
 #
+# Site:      {{ site }}
+# Tool:      {{ allVars.dojo.tool }}
+# Version:   {{ allVars.dojo.version }}
+# Creation:  {{ fileCreation }}
+#
+#########################################################################
 
-version: "3.8"
 
 {% set traefik_rule = "Host(" + proxy.domains + ")" %}
 {% if proxy.pathprefix is defined %}
@@ -19,9 +22,9 @@ services:
       - "traefik.enable=true"
 
       # HTTP routers:
-      - "traefik.http.routers.{{ dojo.id | lower }}.rule={{traefik_rule}}"
-      - "traefik.http.routers.{{ dojo.id | lower }}.entrypoints=webinsecure"
-      - "traefik.http.routers.{{ dojo.id | lower }}.middlewares={{ dojo.id | lower }}-redirect"
+      # - "traefik.http.routers.{{ dojo.id | lower }}.rule={{traefik_rule}}"
+      # - "traefik.http.routers.{{ dojo.id | lower }}.entrypoints=webinsecure"
+      # - "traefik.http.routers.{{ dojo.id | lower }}.middlewares={{ dojo.id | lower }}-redirect"
 
       # HTTPS routers:
       - "traefik.http.routers.{{ dojo.id | lower }}-secure.rule={{traefik_rule}}"
@@ -30,8 +33,8 @@ services:
       - "traefik.http.routers.{{ dojo.id | lower }}-secure.tls.certresolver=leresolver"
 
       # Redirect Scheme HTTP -> HTTPS:
-      - "traefik.http.middlewares.{{ dojo.id | lower }}-redirect.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.{{ dojo.id | lower }}-redirect.redirectscheme.permanent=true"
+      # - "traefik.http.middlewares.{{ dojo.id | lower }}-redirect.redirectscheme.scheme=https"
+      # - "traefik.http.middlewares.{{ dojo.id | lower }}-redirect.redirectscheme.permanent=true"
 
     networks:
       - proxy

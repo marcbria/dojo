@@ -22,9 +22,9 @@ services:
       - "traefik.enable=true"
 
       # HTTP routers:
-      - "traefik.http.routers.{{ allVars.dojo.id | lower }}.rule={{traefik_rule}}"
-      - "traefik.http.routers.{{ allVars.dojo.id | lower }}.entrypoints=webinsecure"
-      - "traefik.http.routers.{{ allVars.dojo.id | lower }}.middlewares={{ dojo.id | lower }}-redirect"
+      # - "traefik.http.routers.{{ allVars.dojo.id | lower }}.rule={{traefik_rule}}"
+      # - "traefik.http.routers.{{ allVars.dojo.id | lower }}.entrypoints=webinsecure"
+      # - "traefik.http.routers.{{ allVars.dojo.id | lower }}.middlewares={{ dojo.id | lower }}-redirect"
 
       # HTTPS routers:
       - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.rule={{traefik_rule}}"
@@ -33,8 +33,8 @@ services:
       - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.tls.certresolver=leresolver"
 
       # Redirect Scheme HTTP -> HTTPS:
-      - "traefik.http.middlewares.{{ allVars.dojo.id | lower }}-redirect.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.{{ allVars.dojo.id | lower }}-redirect.redirectscheme.permanent=true"
+      # - "traefik.http.middlewares.{{ allVars.dojo.id | lower }}-redirect.redirectscheme.scheme=https"
+      # - "traefik.http.middlewares.{{ allVars.dojo.id | lower }}-redirect.redirectscheme.permanent=true"
 
     networks:
       - proxy

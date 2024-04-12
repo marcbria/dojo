@@ -1,11 +1,14 @@
-# File: docker-compose.yml
+#########################################################################
 #
-# Site:    {{ site }}
-# Tool:    {{ dojo.tool }}
-# Version: {{ dojo.version }}
+# General settings# File: docker-compose.yml
 #
+# Site:      {{ site }}
+# Tool:      {{ allVars.dojo.tool }}
+# Version:   {{ allVars.dojo.version }}
+# Creation:  {{ fileCreation }}
+#
+#########################################################################
 
-version: "3.8"
 
 networks:
   inside:
