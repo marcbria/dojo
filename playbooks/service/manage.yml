@@ -3,11 +3,11 @@
   become: yes
   gather_facts: yes
   vars:
-    siteParam: "{{ service }}"
+    serviceParam: "{{ service }}"
 
   vars_files:
     - ./configs/dojo.yml
-    - ./services/{{ service }}.yml
+    - ./services/{{ serviceParam }}.yml
 
   tasks:
     - name: Check if the service directory exists
@@ -27,6 +27,15 @@
           docker compose ps
         chdir: "{{ path.base.service }}/{{ dojo.id }}"
       when: command in ['start', 'stop', 'restart', 'down', 'pull', 'pause', 'ps', 'unpause', 'build']
+      register: docker_compose_output
+
+    - name: Runs "docker compose up -d" in the service's directory
+      shell:
+        cmd: |
+          docker compose up -d;
+          docker compose ps
+        chdir: "{{ path.base.service }}/{{ dojo.id }}"
+      when: command in ['up']
       register: docker_compose_output
 
     - name: Show the service's status

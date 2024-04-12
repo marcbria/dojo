@@ -8,7 +8,10 @@ service:
 # Sample calls
 service-tldr:
     # Sample of calls:
-    # $ just service-create traefik $SERVER     # To install traefik.
+    # $ SERVER=yourRemoteServer
+    #
+    # $ just service-create traefik $SERVER         # Install traefik.
+    # $ just service-manage traefik $SERVER start   # Show the status.
     @ echo ""
     # > To get a commented list of actions use "just service"
 
@@ -51,18 +54,18 @@ service-run action site host *args:
 
 
 # Creates a full service acording to the dictionary in inventory/services/<service>.yml 
-# Following playbooks will be called: service-create.yml
+# Following playbooks will be called: create.yml
 service-create service host *args:
     @ echo "WARNING: Creating a service will overwrite existing one."
-    @ echo "Are you sure you like to run playbook service-create.yml \
+    @ echo "Are you sure you like to run playbook create.yml \
     for [{{ service }}] on [{{ host }}]?" && \
     ansible-playbook -i {{ host }}, --vault-password-file {{ servicePath }}/{{ vaultKey }} \
-     {{ servicePath }}/service-create.yml \
+     {{ servicePath }}/create.yml \
      -e "service={{ service }}" -e "host={{ host }}" -K {{ args }}
 
 
 # Manages the service 
 service-manage service host command *args:
     ansible-playbook -i {{ host }}, --vault-password-file {{ servicePath }}/{{ vaultKey }} \
-     {{ servicePath }}/service-manage.yml \
+     {{ servicePath }}/manage.yml \
      -e "service={{ service }}" -e "host={{ host }}"  -e "command={{ command }}" -K {{ args }}

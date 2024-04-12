@@ -1,0 +1,35 @@
+- name: Run Docker Compose in site's root folder. 
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    siteParam: "{{ site }}"
+
+  vars_files:
+    - ./configs/dojo.yml
+    - ./sites/{{ siteParam }}.yml
+
+  tasks:
+    - name: Check if the site directory exists
+      stat:
+        path: "{{ path.base.sites }}/{{ dojo.id }}"
+      register: site_dir_stat
+
+    - name: Fail if site directory does not exist
+      fail:
+        msg: "Site directory does not exist"
+      when: not site_dir_stat.stat.exists
+
+    - name: Runs "docker compose <command>" in the site's directory
+      shell:
+        cmd: |
+          docker compose {{ command }};
+          docker compose ps
+        chdir: "{{ path.base.sites }}/{{ dojo.id }}"
+      when: command in ['start', 'stop', 'restart', 'down', 'pull', 'pause', 'ps', 'unpause', 'build']
+      register: docker_compose_output
+
+    - name: Show the site's status
+      debug:
+        msg: "{{ docker_compose_output.stdout_lines }}"
+      when: docker_compose_output.stdout_lines is defined
