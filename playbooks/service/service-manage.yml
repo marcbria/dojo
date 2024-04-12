@@ -1,4 +1,3 @@
----
 - name: Run Docker Compose in service's root folder. 
   hosts: all
   become: yes
@@ -22,8 +21,15 @@
       when: not service_dir_stat.stat.exists
 
     - name: Runs "docker compose <command>" in the service's directory
-      command: >
-        docker compose {{ command }}
-      args:
+      shell:
+        cmd: |
+          docker compose {{ command }};
+          docker compose ps
         chdir: "{{ path.base.service }}/{{ dojo.id }}"
       when: command in ['start', 'stop', 'restart', 'down', 'pull', 'pause', 'unpause', 'build']
+      register: docker_compose_output
+
+    - name: Show the service's status
+      debug:
+        msg: "{{ docker_compose_output.stdout_lines }}"
+      when: docker_compose_output.stdout_lines is defined
