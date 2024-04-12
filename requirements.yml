@@ -1,3 +1,7 @@
 ---
-- name: adfinis-sygroup.upgrade
-- name: nickjj.docker
+roles:
+  - name: adfinis-sygroup.upgrade
+  - name: nickjj.docker
+
+collections:
+  - name: community.docker

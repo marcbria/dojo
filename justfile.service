@@ -59,3 +59,10 @@ service-create service host *args:
     ansible-playbook -i {{ host }}, --vault-password-file {{ servicePath }}/{{ vaultKey }} \
      {{ servicePath }}/service-create.yml \
      -e "service={{ service }}" -e "host={{ host }}" -K {{ args }}
+
+
+# Manages the service 
+service-manage service host command *args:
+    ansible-playbook -i {{ host }}, --vault-password-file {{ servicePath }}/{{ vaultKey }} \
+     {{ servicePath }}/service-manage.yml \
+     -e "service={{ service }}" -e "host={{ host }}"  -e "command={{ command }}" -K {{ args }}
