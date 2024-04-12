@@ -29,6 +29,15 @@
       when: command in ['start', 'stop', 'restart', 'down', 'pull', 'pause', 'ps', 'unpause', 'build']
       register: docker_compose_output
 
+    - name: Runs "docker compose up -d" in the sites's directory
+      shell:
+        cmd: |
+          docker compose up -d;
+          docker compose ps
+        chdir: "{{ path.base.sites }}/{{ dojo.id }}"
+      when: command in ['up']
+      register: docker_compose_output
+
     - name: Show the site's status
       debug:
         msg: "{{ docker_compose_output.stdout_lines }}"
