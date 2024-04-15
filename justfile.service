@@ -23,7 +23,7 @@ service-help:
     @ echo ""
 
 
-# An alias for "just list service"
+# An alias for "just list service" that shows a full list of service's actions
 service-list:
     @ just list service
 

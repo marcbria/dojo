@@ -31,7 +31,7 @@ infra-help:
     @ echo ""
 
 
-# An alias for "just list infra"
+# An alias for "just list infra" that shows a full list of infra's actions
 infra-list:
     @ just list infra
 

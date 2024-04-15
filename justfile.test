@@ -10,7 +10,7 @@ test-help:
     @ echo ""
 
 
-# An alias for "just list test"
+# An alias for "just list test" that shows a full list of test's actions
 test-list:
     @ just list service
 

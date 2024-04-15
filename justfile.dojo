@@ -32,7 +32,7 @@ dojo-help:
     @ echo ""
 
 
-# An alias for "just list dojo"
+# An alias for "just list dojo" that shows a full list of dojo's actions
 dojo-list:
     @ just list dojo
 
