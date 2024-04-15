@@ -2,7 +2,7 @@
 - name: Create PKP docker-compose files from the site's diccionary vars.
   hosts: all
   become: yes
-  gather_facts: no
+  gather_facts: yes
   vars:
     siteParam: "{{ site }}"
     fileCreation: "{{ ansible_date_time.iso8601 }}"
