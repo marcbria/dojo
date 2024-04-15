@@ -45,7 +45,7 @@ list $type:
     #!/usr/bin/env sh
     case "$type" in 
         "all") 
-            just -l; 
+            @ just -l; 
             ;; 
         "dojo" | "service" | "infra" | "test") 
             echo "Full list of [$type] playbooks (actions) are:"; 

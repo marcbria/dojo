@@ -1,6 +1,6 @@
 # This list of actions
 test:
-    just -l --unsorted | grep test
+    @ just -l --unsorted | grep test
 
 
 # Shows how to use the script
@@ -10,7 +10,7 @@ test-help:
     @ echo ""
 
 
-# An alias for "just list service"
+# An alias for "just list test"
 test-list:
     @ just list service
 
