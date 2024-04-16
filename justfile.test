@@ -12,7 +12,7 @@ test-help:
 
 # An alias for "just list test" that shows a full list of test's actions
 test-list:
-    @ just list service
+    @ just list test
 
 
 # Test if you can reach global vars
@@ -29,3 +29,14 @@ test-args *arguments:
 # Test if you can list playbook's folder
 test-ls:
     ls playbooks/test
+
+# Runs an action with:
+# - Action: Is the playbook name (without .yml) from playbooks/dojo.
+# - Site: A "site" is an ansible dictionary read from inventory/sites.
+# - Host: A "host" Acording to the inverntory/hosts.yml
+# - Args: Additional arguments.
+# 
+# Runs an action (playbook) with the specified site (dictionary) in the selected host.
+test-run action host *args:
+    ansible-playbook -i {{ host }}, --vault-password-file \
+        {{ testPath }}/{{ vaultKey }} {{ testPath }}/{{ action }}.yml -K {{ args }}

@@ -17,3 +17,6 @@ dojoPath            := rootPath / 'playbooks/dojo'
 
 # Service vars
 servicePath         := rootPath / 'playbooks/service'
+
+# Test vars
+testPath            := rootPath / 'playbooks/test'

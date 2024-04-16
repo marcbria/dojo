@@ -1,9 +1,11 @@
-- name: Ejemplo de playbook con variables cifradas
+- name: Ejemplo de playbook con acceso a las variables cifradas
   hosts: all
   vars_files:
-    - ../configs/secret.yml
+    - ./configs/secret.yml
   tasks:
-    - name: Imprimir la variable de contraseña de la base de datos
+    - name: Imprimir variables almacenadas en la Vault (./configs/secrets.yml)
       debug:
-        msg: "La contraseña de la base de datos es {{ MYSQL_ROOT_PASSWORD }}"
+        msg: 
+          - "Usuario con acceso a traefik: [{{ traefik.appUser }}]"
+          - "Usuario con acceso al correo SMTP: [{{ general.SMPT_MAIL }}]"
 
