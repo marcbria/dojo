@@ -42,15 +42,36 @@ dojo-list:
 # - edit:   Edits the default vault in "configs/secrets.yml" with the password stored at .vault.key:
 #
 # Manages the ansible vault.
+# dojo-vault action:
+#     @ if [[ "${action}" == "create" ]]; then \
+#         echo "${2}" >> ${vaultKey}; \
+#         ansible-vault create --vault-password-file=${vaultKey} ${vaultPath}; \
+#     elif [[ "${create}" == "edit" ]]; then \
+#         ansible-vault edit --vault-password-file={{ vaultKey }} {{ vaultPath }}; \
+#     else \
+#         echo "Unknown action"; \
+#     fi
 dojo-vault action:
-    @ if [[ "${action}" == "create" ]]; then \
-        echo "${2}" >> ${vaultKey}; \
-        ansible-vault create --vault-password-file=${vaultKey} ${vaultPath} \
-    elif [[ "${create}" == "edit" ]]; then \
-        ansible-vault edit --vault-password-file={{ vaultKey }} {{ vaultPath }} \
-    else \
-        echo "Unknown action"; \
-    fi
+    #!/usr/bin/env bash
+    echo "Action: {{ action }}";
+    echo "vaultKey: {{ vaultKey }}";
+    echo "vaultPath: {{ vaultPath }}";
+    case "{{ action }}" in 
+        "create")
+            echo "${2}" >> {{ vaultKey }}; 
+            ansible-vault create --vault-password-file={{ vaultKey }} {{ vaultPath }}; 
+            ;; 
+        "edit") 
+            ansible-vault edit --vault-password-file={{ vaultKey }} {{ vaultPath }}; 
+            ;; 
+        "view") 
+            ansible-vault view --vault-password-file={{ vaultKey }} {{ vaultPath }}; 
+            ;; 
+        *) 
+            echo "Unknown action"; 
+            exit 1;
+            ;;
+    esac
 
 
 # DEPRECATED: Create a config.inc.php based on the specified dictionary name (ie: periodicum). Vault need to be created first.

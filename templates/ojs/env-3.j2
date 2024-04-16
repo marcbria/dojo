@@ -7,16 +7,16 @@ SERVERNAME=$PROJECT_DOMAIN
 # OJS_BRANCH=ojs-stable-3_1_2-0
 
 # Remember this to fill your installation form in a clean installation
-MYSQL_ROOT_PASSWORD=ojsPwd
-MYSQL_USER={{ database.user }}
-MYSQL_PASSWORD=ojsPwd
-MYSQL_DATABASE={{ database.name }}
+MYSQL_ROOT_PASSWORD={{ vault.general.database.MYSQL_ROOT_PASSWORD }}
+MYSQL_USER={{ vault.general.database.MYSQL_USER }}
+MYSQL_PASSWORD={{ vault.general.database.MYSQL_PASSWORD }}
+MYSQL_DATABASE={{ vault.general.database.MYSQL_USER }}
 
 # OJS variables
 OJS_DB_HOST={{ database.host }}
 OJS_DB_DRIVER={{ database.driver }}
 OJS_DB_USER={{ database.user }}
-OJS_DB_PASSWORD=ojsPwd
+OJS_DB_PASSWORD={{ vault.general.OJS_DB_PASSWORD }}
 OJS_DB_NAME={{ database.name }}
 
 # Not used yet.

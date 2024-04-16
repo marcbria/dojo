@@ -27,7 +27,7 @@ import 'justfile.dojo'
 
 # General recipes
 _default:
-    @ echo ">> DOJO MAIN <<"
+    @ echo "[[ DOJO MAIN ]]"
     @ echo ""
     @ echo "This script let you call 4 types of commands:"
     @ echo "  - infra: To install the required infrastructure (docker and ansible)."

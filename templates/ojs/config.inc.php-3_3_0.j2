@@ -10,120 +10,131 @@
 ; Copyright (c) 2003-2021 John Willinsky
 ; Distributed under the GNU GPL v3. For full terms see the file docs/COPYING.
 ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; WARNING: AVOID EDITING THIS FILE. MODIFY sites INVENTORY INSTEAD.
+; This file is a generic template to generate config.inc.php for OJS 3.3.
+; This should only be modified if config.inc.php add changes between versions
+; and a new variable is included or changed. 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
 ; OJS Configuration settings.
 ;
 ; Journal:  {{ dojo.id}}
 ; Tool:     {{ dojo.tool }}
 ; Version:  {{ dojo.version }}
 ; Domain:   {{ dojo.domain }}
+; Creation: {{ fileCreation }}
 ;
-; From: https://raw.githubusercontent.com/pkp/ojs/stable-3_3_0/config.TEMPLATE.inc.php
+; From: 
+; https://raw.githubusercontent.com/pkp/ojs/stable-3_3_0/config.TEMPLATE.inc.php
 ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 [general]
-installed = "{{ pkp.general.installed | default('Off') | safe }}"
-base_url = "{{ pkp.general.base_url | default('') }}"
-scheduled_tasks = "{{ pkp.general.scheduled_tasks | default('Off') | safe }}"
-time_zone = "{{ pkp.general.time_zone | default('UTC') }}"
+installed           = {{ pkp.general.installed | default('Off') | safe }}
+base_url            = "{{ pkp.general.base_url | default('') }}"
+scheduled_tasks     = {{ pkp.general.scheduled_tasks | default('Off') | safe }}
+time_zone           = "{{ pkp.general.time_zone | default('UTC') }}"
 session_cookie_name = "{{ pkp.general.session_cookie_name | default('OJSSID') | safe }}"
-session_lifetime = "{{ pkp.general.session_lifetime | default('30') | safe }}"
-session_samesite = "{{ pkp.general.session_samesite | default('Lax') | safe }}"
-disable_path_info = "{{ pkp.general.disable_path_info | default('Off') | safe }}"
-allow_url_fopen = "{{ pkp.general.allow_url_fopen | default('Off') | safe }}"
+session_lifetime    = {{ pkp.general.session_lifetime | default('30') | safe }}
+session_samesite    = "{{ pkp.general.session_samesite | default('Lax') | safe }}"
+disable_path_info   = {{ pkp.general.disable_path_info | default('Off') | safe }}
+allow_url_fopen     = {{ pkp.general.allow_url_fopen | default('Off') | safe }}
 
 [database]
-driver = "{{ pkp.database.driver | default('mysqli') | safe }}"
-host = "{{ pkp.database.host | default('localhost') | safe }}"
-username = "{{ pkp.database.username | default('ojs') | safe }}"
-password = "{{ pkp.database.password | default('ojsPwd') | safe }}"
-name = "{{ pkp.database.name | default('ojs') | safe }}"
-debug = "{{ pkp.database.debug | default('Off') | safe }}"
+driver              = "{{ pkp.database.driver | default('mysqli') | safe }}"
+host                = "{{ pkp.database.host | default('localhost') | safe }}"
+username            = "{{ pkp.database.username | default('ojs') | safe }}"
+password            = "{{ pkp.database.password | default('ojsPwd') | safe }}"
+name                = "{{ pkp.database.name | default('ojs') | safe }}"
+debug               = "{{ pkp.database.debug | default('Off') | safe }}"
 ; See: https://docs.pkp.sfu.ca/dev/release-notebooks/en/3.3-release-notebook#update-connection_charset
-client_charset = utf-8
-conection_charset = utf8
+client_charset      = utf-8
+conection_charset   = utf8
 
 [cache]
-object_cache = "{{ pkp.cache.object_cache | default('none') | safe }}"
-memcache_hostname = "{{ pkp.cache.memcache_hostname | default('localhost') | safe }}"
-memcache_port = "{{ pkp.cache.memcache_port | default('11211') | safe }}"
-web_cache = "{{ pkp.cache.web_cache | default('Off') | safe }}"
-web_cache_hours = "{{ pkp.cache.web_cache_hours | default('1') | safe }}"
+object_cache        = "{{ pkp.cache.object_cache | default('none') | safe }}"
+memcache_hostname   = "{{ pkp.cache.memcache_hostname | default('localhost') | safe }}"
+memcache_port       = {{ pkp.cache.memcache_port | default('11211') | safe }}
+web_cache           = {{ pkp.cache.web_cache | default('Off') | safe }}
+web_cache_hours     = {{ pkp.cache.web_cache_hours | default('1') | safe }}
 
 [i18n]
-locale = "{{ pkp.i18n.locale | default('en_US') | safe }}"
-client_charset = "{{ pkp.i18n.client_charset | default('utf-8') | safe }}"
-connection_charset = "{{ pkp.i18n.connection_charset | default('utf8') | safe }}"
+locale              = "{{ pkp.i18n.locale | default('en_US') | safe }}"
+client_charset      = "{{ pkp.i18n.client_charset | default('utf-8') | safe }}"
+connection_charset  = "{{ pkp.i18n.connection_charset | default('utf8') | safe }}"
 
 [files]
-files_dir = "{{ pkp.files.files_dir | default('files') | safe }}"
-public_files_dir = "{{ pkp.files.public_files_dir | default('public') | safe }}"
+files_dir           = "{{ pkp.files.files_dir | default('files') | safe }}"
+public_files_dir    = "{{ pkp.files.public_files_dir | default('public') | safe }}"
 public_user_dir_size = "{{ pkp.files.public_user_dir_size | default('5000') | safe }}"
-umask = "{{ pkp.files.umask | default('0022') | safe }}"
+umask               = "{{ pkp.files.umask | default('0022') | safe }}"
 filename_revision_match = "{{ pkp.files.filename_revision_match | default('70') | safe }}"
 
 [security]
-force_ssl = "{{ pkp.security.force_ssl | default('Off') | safe }}"
-force_login_ssl = "{{ pkp.security.force_login_ssl | default('Off') | safe }}"
-session_check_ip = "{{ pkp.security.session_check_ip | default('On') | safe }}"
-encryption = "{{ pkp.security.encryption | default('sha1') | safe }}"
-salt = "{{ pkp.security.salt | default('YouMustSetASecretKeyHere!!') | safe }}"
-api_key_secret = "{{ pkp.security.api_key_secret | default('') | safe }}"
-reset_seconds = "{{ pkp.security.reset_seconds | default('7200') | safe }}"
-allowed_html = "{{ pkp.security.allowed_html | default('a[href|target|title],em,strong,cite,code,ul,ol,li[class],dl,dt,dd,b,i,u,img[src|alt],sup,sub,br,p') | safe }}"
+force_ssl           = "{{ pkp.security.force_ssl | default('Off') | safe }}"
+force_login_ssl     = "{{ pkp.security.force_login_ssl | default('Off') | safe }}"
+session_check_ip    = "{{ pkp.security.session_check_ip | default('On') | safe }}"
+encryption          = "{{ pkp.security.encryption | default('sha1') | safe }}"
+salt                = "{{ pkp.security.salt | default('YouMustSetASecretKeyHere!!') | safe }}"
+api_key_secret      = "{{ pkp.security.api_key_secret | default('') | safe }}"
+reset_seconds       = "{{ pkp.security.reset_seconds | default('7200') | safe }}"
+allowed_html        = "{{ pkp.security.allowed_html | default('a[href|target|title],em,strong,cite,code,ul,ol,li[class],dl,dt,dd,b,i,u,img[src|alt],sup,sub,br,p') | safe }}"
 
 [email]
-smtp = "{{ pkp.email.smtp | default('Off') | safe }}"
-smtp_server = "{{ pkp.email.smtp_server | default('mail.example.com') | safe }}"
-smtp_port = "{{ pkp.email.smtp_port | default('25') | safe }}"
-smtp_auth = "{{ pkp.email.smtp_auth | default('') | safe }}"
-smtp_username = "{{ pkp.email.smtp_username | default('') | safe }}"
-smtp_password = "{{ pkp.email.smtp_password | default('') | safe }}"
-smtp_authtype = "{{ pkp.email.smtp_authtype | default('') | safe }}"
+smtp                = "{{ pkp.email.smtp | default('Off') | safe }}"
+smtp_server         = "{{ pkp.email.smtp_server | default('mail.example.com') | safe }}"
+smtp_port           = "{{ pkp.email.smtp_port | default('25') | safe }}"
+smtp_auth           = "{{ pkp.email.smtp_auth | default('') | safe }}"
+smtp_username       = "{{ pkp.email.smtp_username | default('') | safe }}"
+smtp_password       = "{{ pkp.email.smtp_password | default('') | safe }}"
+smtp_authtype       = "{{ pkp.email.smtp_authtype | default('') | safe }}"
 smtp_oauth_provider = "{{ pkp.email.smtp_oauth_provider | default('') | safe }}"
-smtp_oauth_email = "{{ pkp.email.smtp_oauth_email | default('') | safe }}"
+smtp_oauth_email    = "{{ pkp.email.smtp_oauth_email | default('') | safe }}"
 smtp_oauth_clientid = "{{ pkp.email.smtp_oauth_clientid | default('') | safe }}"
 smtp_oauth_clientsecret = "{{ pkp.email.smtp_oauth_clientsecret | default('') | safe }}"
 smtp_oauth_refreshtoken = "{{ pkp.email.smtp_oauth_refreshtoken | default('') | safe }}"
 smtp_suppress_cert_check = "{{ pkp.email.smtp_suppress_cert_check | default('On') | safe }}"
-allow_envelope_sender = "{{ pkp.email.allow_envelope_sender | default('Off') | safe }}"
+allow_envelope_sender   = "{{ pkp.email.allow_envelope_sender | default('Off') | safe }}"
 default_envelope_sender = "{{ pkp.email.default_envelope_sender | default('my_address@my_host.com') | safe }}"
 force_default_envelope_sender = "{{ pkp.email.force_default_envelope_sender | default('Off') | safe }}"
 force_dmarc_compliant_from = "{{ pkp.email.force_dmarc_compliant_from | default('Off') | safe }}"
 dmarc_compliant_from_displayname = "{{ pkp.email.dmarc_compliant_from_displayname | default('%n via %s') | safe }}"
 time_between_emails = "{{ pkp.email.time_between_emails | default('3600') | safe }}"
-max_recipients = "{{ pkp.email.max_recipients | default('10') | safe }}"
-require_validation = "{{ pkp.email.require_validation | default('Off') | safe }}"
-validation_timeout = "{{ pkp.email.validation_timeout | default('14') | safe }}"
+max_recipients      = "{{ pkp.email.max_recipients | default('10') | safe }}"
+require_validation  = "{{ pkp.email.require_validation | default('Off') | safe }}"
+validation_timeout  = "{{ pkp.email.validation_timeout | default('14') | safe }}"
 
 [search]
-min_word_length = "{{ pkp.search.min_word_length | default('3') | safe }}"
+min_word_length     = "{{ pkp.search.min_word_length | default('3') | safe }}"
 results_per_keyword = "{{ pkp.search.results_per_keyword | default('500') | safe }}"
 
 [interface]
-items_per_page = "{{ pkp.interface.items_per_page | default('25') | safe }}"
-page_links = "{{ pkp.interface.page_links | default('10') | safe }}"
+items_per_page      = "{{ pkp.interface.items_per_page | default('25') | safe }}"
+page_links          = "{{ pkp.interface.page_links | default('10') | safe }}"
 
 [captcha]
-recaptcha = "{{ pkp.captcha.recaptcha | default('off') | safe }}"
+recaptcha           = "{{ pkp.captcha.recaptcha | default('off') | safe }}"
 recaptcha_public_key = "{{ pkp.captcha.recaptcha_public_key | default('your_public_key') | safe }}"
 recaptcha_private_key = "{{ pkp.captcha.recaptcha_private_key | default('your_private_key') | safe }}"
 captcha_on_register = "{{ pkp.captcha.captcha_on_register | default('on') | safe }}"
 recaptcha_enforce_hostname = "{{ pkp.captcha.recaptcha_enforce_hostname | default('Off') | safe }}"
 
 [cli]
-tar = "{{ pkp.cli.tar | default('/bin/tar') | safe }}"
-xslt_command = "{{ pkp.cli.xslt_command | default('') | safe }}"
+tar                 = "{{ pkp.cli.tar | default('/bin/tar') | safe }}"
+xslt_command        = "{{ pkp.cli.xslt_command | default('') | safe }}"
 
 [proxy]
-http_proxy = "{{ pkp.proxy.http_proxy | default('') | safe }}"
-https_proxy = "{{ pkp.proxy.https_proxy | default('') | safe }}"
+http_proxy          = "{{ pkp.proxy.http_proxy | default('') | safe }}"
+https_proxy         = "{{ pkp.proxy.https_proxy | default('') | safe }}"
 
 [debug]
-show_stacktrace = "{{ pkp.debug.show_stacktrace | default('Off') | safe }}"
-display_errors = "{{ pkp.debug.display_errors | default('Off') | safe }}"
+show_stacktrace     = "{{ pkp.debug.show_stacktrace | default('Off') | safe }}"
+display_errors      = "{{ pkp.debug.display_errors | default('Off') | safe }}"
 deprecation_warnings = "{{ pkp.debug.deprecation_warnings | default('Off') | safe }}"
 log_web_service_info = "{{ pkp.debug.log_web_service_info | default('Off') | safe }}"
 
 [curl]
-; cainfo = "{{ pkp.curl.cainfo | default('') | safe }}"
+; cainfo            = "{{ pkp.curl.cainfo | default('') | safe }}"
