@@ -20,7 +20,7 @@
       set_fact:
         versionMajorMinor: "{{ dojo.versionFamily.split('_')[0] }}_{{ dojo.versionFamily.split('_')[1] }}"
 
-    - name: Generate apache-config file from template and dojo vars.
+    - name: Generate apache-config file from template and dojo vars
       template:
         src: "./templates/{{ dojo.tool }}/apache.ojs.conf-{{ versionMajorMinor }}-{{ dojo.type }}.j2"
         dest: "{{ path.files.config }}/{{ dojo.id }}/apache.conf"
