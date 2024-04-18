@@ -110,12 +110,19 @@ dojo-create site host *args:
     @ echo "Are you sure you like to run action "create" for [{{ site }}] on [{{ host }}]?" 
     @ ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
      {{ dojoPath }}/site-folders.yml \
-     {{ dojoPath }}/config.yml \
-     {{ dojoPath }}/apache.yml \
      {{ dojoPath }}/docker-compose.yml \
+     {{ dojoPath }}/apache.yml \
      {{ dojoPath }}/env.yml \
      {{ dojoPath }}/permissions.yml \
      -e "site={{ site }}" -K {{ args }}
+
+    #  {{ dojoPath }}/site-folders.yml \
+    #  {{ dojoPath }}/config.yml \
+    #  {{ dojoPath }}/apache.yml \
+    #  {{ dojoPath }}/docker-compose.yml \
+    #  {{ dojoPath }}/env.yml \
+    #  {{ dojoPath }}/permissions.yml \
+    #  -e "site={{ site }}" -K {{ args }}
 
 
 # Manages the site
