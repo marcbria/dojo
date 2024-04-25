@@ -2,17 +2,16 @@
 #
 # General settings# File: docker-compose.override.yml
 #
-# Site:      {{ site }}
-# Tool:      {{ dojo.tool }}
-# Version:   {{ dojo.version }}
+# Site:      {{ siteParam }}
+# Tool:      {{ allVars.dojo.tool }}
+# Version:   {{ allVars.dojo.version }}
 # Creation:  {{ fileCreation }}
 #
 #########################################################################
 
-
-{% set traefik_rule = "Host(" + proxy.domains + ")" %}
-{% if proxy.pathprefix is defined %}
-{%   set traefik_rule = traefik_rule + " && PathPrefix(`/" + proxy.pathprefix + "`)" %}
+{% set traefik_rule = "Host(" + allVars.proxy.domains + ")" %}
+{% if allVars.proxy.pathprefix is defined %}
+{%   set traefik_rule = traefik_rule + " && PathPrefix(`/" + allVars.proxy.pathprefix + "`)" %}
 {% endif %}
 
 services:
@@ -21,20 +20,20 @@ services:
       # Enable traefik for this stack:
       - "traefik.enable=true"
 
-      # HTTP routers:
-      # - "traefik.http.routers.{{ dojo.id | lower }}.rule={{traefik_rule}}"
-      # - "traefik.http.routers.{{ dojo.id | lower }}.entrypoints=webinsecure"
-      # - "traefik.http.routers.{{ dojo.id | lower }}.middlewares={{ dojo.id | lower }}-redirect"
-
       # HTTPS routers:
-      - "traefik.http.routers.{{ dojo.id | lower }}-secure.rule={{traefik_rule}}"
-      - "traefik.http.routers.{{ dojo.id | lower }}-secure.entrypoints=websecure"
-      - "traefik.http.routers.{{ dojo.id | lower }}-secure.tls=true"
-      - "traefik.http.routers.{{ dojo.id | lower }}-secure.tls.certresolver=leresolver"
+      - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.rule={{ traefik_rule }}"
+      - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.entrypoints=websecure"
+      - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.tls=true"
+      - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.tls.certresolver=leresolver"
+
+      # HTTP routers:
+      # - "traefik.http.routers.{{ allVars.dojo.id | lower }}.rule={{ traefik_rule }}"
+      # - "traefik.http.routers.{{ allVars.dojo.id | lower }}.entrypoints=webinsecure"
+      # - "traefik.http.routers.{{ allVars.dojo.id | lower }}.middlewares={{ allVars.dojo.id | lower }}-redirect"
 
       # Redirect Scheme HTTP -> HTTPS:
-      # - "traefik.http.middlewares.{{ dojo.id | lower }}-redirect.redirectscheme.scheme=https"
-      # - "traefik.http.middlewares.{{ dojo.id | lower }}-redirect.redirectscheme.permanent=true"
+      # - "traefik.http.middlewares.{{ allVars.dojo.id | lower }}-redirect.redirectscheme.scheme=https"
+      # - "traefik.http.middlewares.{{ allVars.dojo.id | lower }}-redirect.redirectscheme.permanent=true"
 
     networks:
       - proxy

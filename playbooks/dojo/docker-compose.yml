@@ -9,7 +9,7 @@
   vars_files:
     - ./configs/dojo.yml
     - ./configs/secret.yml
-    - ./sites/{{ site }}.yml
+    - ./sites/{{ siteParam }}.yml
   tasks:
     - name: Load vars from dojo.yml
       include_vars:
@@ -18,22 +18,24 @@
 
     - name: Load vars from site.yml
       include_vars:
-        file: ./site/{{ site }}.yml
+        file: ./sites/{{ siteParam }}.yml
         name: siteGenericVars
 
     - name: If exists, load vars from site-host.yml
       include_vars:
-        file: ./site/{{ site }}-{{ ansible_hostname }}.yml
+        file: ./sites/{{ siteParam }}-{{ ansible_hostname }}.yml
         name: siteHostVars
       ignore_errors: yes
-      
+      register: siteHostVars_result
+      failed_when: false
+
     - name: Combine siteGenericVars and siteHostVars
       set_fact:
-        allVars: "{{ dojoVars | combine(siteGenericVars, recursive=True) | combine(siteHostVars, recursive=True) | default({}) }}"
+        allVars: "{{ dojoVars | combine(siteGenericVars | default({}), recursive=True) | combine(siteHostVars | default({}), recursive=True) }}"
 
     - name: Ensure site directory exists
       file:
-        path: "{{ path.base.site }}/{{ allVars.dojo.id }}"
+        path: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
         state: directory
         force: yes
 
@@ -44,9 +46,9 @@
     - name: Generate docker-compose.yml file from template and dojo vars.
       template:
         src: "./templates/{{ allVars.dojo.tool }}/docker-compose.yml-{{ versionMajorMinor }}.j2"
-        dest: "{{ path.base.sites }}/{{ allVars.dojo.id }}/docker-compose.yml"
+        dest: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}/docker-compose.yml"
 
     - name: Generate docker-compose.override.yml file from template and dojo vars.
       template:
         src: "./templates/{{ dojo.tool }}/docker-compose.override.yml-{{ versionMajorMinor }}.j2"
-        dest: "{{ path.base.sites }}/{{ allVars.dojo.id }}/docker-compose.override.yml"
+        dest: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}/docker-compose.override.yml"

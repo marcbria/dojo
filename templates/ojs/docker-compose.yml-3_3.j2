@@ -2,9 +2,9 @@
 #
 # General settings# File: docker-compose.yml
 #
-# Site:      {{ site }}
-# Tool:      {{ dojo.tool }}
-# Version:   {{ dojo.version }}
+# Site:      {{ siteParam }}
+# Tool:      {{ allVars.dojo.tool }}
+# Version:   {{ allVars.dojo.version }}
 # Creation:  {{ fileCreation }}
 #
 #########################################################################
@@ -16,10 +16,10 @@ networks:
 
 services:
   db:
-    image: {{ images.db }}
+    image: {{ allVars.images.db }}
     env_file:
       - .env
-    container_name: "{{ dojo.tool }}_db_${COMPOSE_PROJECT_NAME:-demo}"
+    container_name: "{{ allVars.dojo.tool }}_db_${COMPOSE_PROJECT_NAME:-demo}"
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-ojsPwd}"
       MYSQL_DATABASE: "${MYSQL_DATABASE:-ojs}"
@@ -38,7 +38,7 @@ services:
     image: {{ images.app }}
     env_file:
       - .env
-    container_name: "{{ dojo.tool }}_app_${COMPOSE_PROJECT_NAME:-demo}"
+    container_name: "{{ allVars.dojo.tool }}_app_${COMPOSE_PROJECT_NAME:-demo}"
     hostname: "${COMPOSE_PROJECT_NAME:-demo}"
     volumes:
       # Sync time between docker and host:
@@ -46,8 +46,8 @@ services:
       - ./volumes/private:/var/www/files
       - ./volumes/public:/var/www/html/public
       - ./volumes/logs/app:/var/log/apache2
-      # - ./volumes/config/config.inc.php:/var/www/html/config.inc.php
-      - ./volumes/config/apache.conf:/etc/apache2/conf.d/{{ dojo.tool }}.conf
+      - ./volumes/config/config.inc.php:/var/www/html/config.inc.php
+      - ./volumes/config/apache.conf:/etc/apache2/conf.d/{{ allVars.dojo.tool }}.conf
       # - ./config/apache.htaccess:/var/www/html/.htaccess
       # - ./volumes/config/php.custom.ini:/etc/php7/conf.d/0-custom.ini
 
