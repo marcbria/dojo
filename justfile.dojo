@@ -107,23 +107,15 @@ dojo-run action site host *args:
 dojo-create site host *args:
     @ echo 'This will run playbooks: site-folders > config > apache > docker-compose > env > permissions.' 
     @ echo "WARNING: Creating a site will overwrite data in the existing one!!"
-    @ echo "Are you sure you like to run action "create" for [{{ site }}] on [{{ host }}]?" 
+    @ echo "Are you sure you like to run action "create" for [{{ site }}] on [{{ host }} - `dig +short {{ host }}`]?" 
     @ ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
      {{ dojoPath }}/site-folders.yml \
+     {{ dojoPath }}/config.yml \
      {{ dojoPath }}/docker-compose.yml \
      {{ dojoPath }}/apache.yml \
      {{ dojoPath }}/env.yml \
      {{ dojoPath }}/permissions.yml \
      -e "site={{ site }}" -K {{ args }}
-
-    #  {{ dojoPath }}/site-folders.yml \
-    #  {{ dojoPath }}/config.yml \
-    #  {{ dojoPath }}/apache.yml \
-    #  {{ dojoPath }}/docker-compose.yml \
-    #  {{ dojoPath }}/env.yml \
-    #  {{ dojoPath }}/permissions.yml \
-    #  -e "site={{ site }}" -K {{ args }}
-
 
 # Manages the site
 dojo-manage site host command *args:

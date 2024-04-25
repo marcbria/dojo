@@ -9,7 +9,7 @@
   vars_files:
     - ./configs/dojo.yml
     - ./configs/secret.yml
-    - ./sites/{{ site }}.yml
+    - ./sites/{{ siteParam }}.yml
   tasks:
     - name: Load vars from dojo.yml
       include_vars:
@@ -18,26 +18,26 @@
 
     - name: Load vars from site.yml
       include_vars:
-        file: ./site/{{ site }}.yml
+        file: ./sites/{{ siteParam }}.yml
         name: siteGenericVars
 
     - name: If exists, load vars from site-host.yml
       include_vars:
-        file: ./site/{{ site }}-{{ ansible_hostname }}.yml
+        file: ./sites/{{ siteParam }}-{{ ansible_hostname }}.yml
         name: siteHostVars
       ignore_errors: yes
       
     - name: Combine siteGenericVars and siteHostVars
       set_fact:
-        allVars: "{{ dojoVars | combine(siteGenericVars, recursive=True) | combine(siteHostVars, recursive=True) | default({}) }}"
+        allVars: "{{ dojoVars | combine(siteGenericVars | default({}), recursive=True) | combine(siteHostVars | default({}), recursive=True) }}"
 
     - name: Ensure site directory exists
       file:
-        path: "{{ path.base.site }}/{{ allVars.dojo.id }}"
+        path: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
         state: directory
         force: yes
 
     - name: Generate config file from template and dojo vars.
       template:
         src: "./templates/{{ allVars.dojo.tool }}/config.inc.php-{{ allVars.dojo.versionFamily }}.j2"
-        dest: "{{ path.files.config }}/{{ allVars.dojo.id }}/config.inc.php"
+        dest: "{{ allVars.path.files.config }}/{{ allVars.dojo.id }}/config.inc.php"

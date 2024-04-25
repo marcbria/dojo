@@ -1,0 +1,79 @@
+# Load modules
+LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
+LoadModule rewrite_module modules/mod_rewrite.so
+LoadModule expires_module modules/mod_expires.so
+
+SetEnvIf X-Forwarded-Proto "https" HTTPS=on
+
+<VirtualHost *:80>
+    ServerName localhost
+    ServerAlias {{ dojo.domain }}
+    ServerAlias {{ dojo.id }}
+    DocumentRoot /var/www/html
+
+    RewriteEngine On
+    AcceptPathInfo On
+    <Directory /var/www/html>
+        Options FollowSymLinks
+        AllowOverride all
+        Allow from all
+
+        ## Force httpS:
+        ## RewriteCond %{HTTPS}  !=on 
+        ## RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R=307,L]
+
+        # ## Force httpS (basically to reach the API):
+        # RewriteCond %{HTTPS}  !=on
+        # RewriteCond %{REQUEST_URI} ^/{{ dojo.id | lower }}\/api\/v1\/
+        # RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
+        # RewriteCond %{REQUEST_FILENAME} !-f
+        # RewriteRule ^/?(.*) https://%{SERVER_NAME}/{{ dojo.id | lower }}/index.php/$1 [L,R=307]
+
+        # ## Rewrite API calls if not including subdomain journals:
+        # RewriteCond %{REQUEST_URI} api\/v1\/
+        # RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} !-f
+        # RewriteCond %{REQUEST_FILENAME} !-f
+        # RewriteRule ^(.*)$ {{ dojo.id | lower }}/index.php/{{ dojo.id | lower }}/$1 [L,R=307]
+
+        # Remove index.php from the url
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+    </Directory>
+
+    # LogLevel alert rewrite:trace2
+
+    ErrorLog  /var/log/apache2/error.log
+    CustomLog  /var/log/apache2/access.log combined
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName localhost
+    ServerAlias {{ dojo.domain }}
+    ServerAlias {{ dojo.id }}
+    DocumentRoot /var/www/html
+
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/apache2/server.pem
+    SSLCertificateKeyFile /etc/ssl/apache2/server.key
+
+    PassEnv HTTPS
+    RewriteEngine on
+    AcceptPathInfo On
+
+    <Directory /var/www/html>
+        Options FollowSymLinks
+        AllowOverride all
+        Allow from all
+
+        # Remove index.php from the url
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+    </Directory>
+
+    LogLevel alert rewrite:trace2
+
+    ErrorLog  /var/log/apache2/error.log
+    CustomLog  /var/log/apache2/access.log combined
+</VirtualHost>
