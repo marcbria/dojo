@@ -20,13 +20,15 @@
       include_vars:
         file: ./sites/{{ siteParam }}.yml
         name: siteGenericVars
+      ignore_errors: yes
 
     - name: If exists, load vars from site-host.yml
       include_vars:
         file: ./sites/{{ siteParam }}-{{ ansible_hostname }}.yml
         name: siteHostVars
       ignore_errors: yes
-      
+      failed_when: false
+
     - name: Combine siteGenericVars and siteHostVars
       set_fact:
         allVars: "{{ dojoVars | combine(siteGenericVars | default({}), recursive=True) | combine(siteHostVars | default({}), recursive=True) }}"
