@@ -36,6 +36,11 @@
         state: directory
         force: yes
 
+    - name: Ensures "proxy" network exists
+      shell:
+        cmd: docker network create proxy
+      ignore_errors: yes
+
     - name: Generate docker-compose file from template and dojo vars
       template:
         src: "./templates/services/docker-compose-{{ allVars.dojo.tool }}.j2"
