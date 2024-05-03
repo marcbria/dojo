@@ -1,5 +1,5 @@
 ---
-- name: Create a PKP site folder structure based on site's diccionary vars.
+- name: Create a PKP's site folder structure based on site's diccionary vars.
   hosts: all
   become: yes
   gather_facts: no

@@ -1,5 +1,5 @@
 ---
-- name: Create PKP docker-compose files from the site's diccionary vars.
+- name: Create PKP's docker-compose files from the site's diccionary vars.
   hosts: all
   become: yes
   gather_facts: yes

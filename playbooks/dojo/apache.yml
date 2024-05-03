@@ -1,5 +1,5 @@
 ---
-- name: Create PKP config file from the site's diccionary vars.
+- name: Create an APACHE virtual host file from the site's diccionary vars.
   hosts: all
   become: yes
   gather_facts: no

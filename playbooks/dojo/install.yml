@@ -1,0 +1,104 @@
+---
+- name: Runs the installation script with site's diccionary vars.
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    siteParam: "{{ site }}"
+    fileCreation: "{{ ansible_date_time.iso8601 }}"
+  vars_files:
+    - ./configs/dojo.yml
+    - ./configs/secret.yml
+    - ./sites/{{ siteParam }}.yml
+  tasks:
+    - name: Load vars from dojo.yml
+      include_vars:
+        file: ./configs/dojo.yml
+        name: dojoVars
+
+    - name: Load vars from site.yml
+      include_vars:
+        file: ./sites/{{ siteParam }}.yml
+        name: siteGenericVars
+      ignore_errors: yes
+      failed_when: false
+
+    - name: If exists, load vars from site-host.yml
+      include_vars:
+        file: ./sites/{{ siteParam }}-{{ ansible_hostname }}.yml
+        name: siteHostVars
+      ignore_errors: yes
+      failed_when: false
+
+    - name: Combine siteGenericVars and siteHostVars
+      set_fact:
+        allVars: "{{ dojoVars | combine(siteGenericVars | default({}), recursive=True) | combine(siteHostVars | default({}), recursive=True) }}"
+
+    - name: Ensure site directory exists
+      file:
+        path: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
+        state: directory
+        force: yes
+
+    - name: Definir la cadena de petición
+      set_fact:
+        installString: >
+          installing=0
+          &adminUsername={{ allVars.pkp.install.user | default('admin') | urlencode }}
+          &adminPassword={{ vault.general.pkp.OJS_ADMIN_PASSWORD | default('vaultPwd') | urlencode }}
+          &adminPassword2={{ vault.general.pkp.OJS_ADMIN_PASSWORD | default('vaultPwd') | urlencode }}
+          &adminEmail={{ allVars.pkp.database.install.mail | default('admin@localhost') | urlencode }}
+          &locale=en_US
+          &clientCharset={{ allVars.pkp.i18n.client_charset | default('utf-8') | urlencode }}
+          &connectionCharset={{ allVars.pkp.i18n.connection_charset | default('utf8') | urlencode }}
+          &databaseCharset={{ allVars.database.charset | default('utf8') | urlencode }}
+          &filesDir={{ allVars.pkp.files.private | default('/var/www/files') | urlencode }}
+          &databaseDriver={{ allVars.database.driver | default('mysqli') | urlencode }}
+          &databaseHost={{ allVars.pkp.database.host | default('db') | urlencode }}
+          &databaseUsername={{ allVars.pkp.database.username | default('ojs') | urlencode }}
+          &databasePassword={{ vault.general.pkp.OJS_DB_PASSWORD | default('vaultPwd') | urlencode }}
+          &databaseName={{ allVars.database.name | default('ojs') | urlencode }}
+          &oaiRepositoryId=ojs.{{ allVars.dojo.domain | default('dojo') | urlencode }}
+          &enableBeacon={{ allVars.pkp.general.enable_beacon | default('0') | urlencode }}
+        # &additionalLocales%5B%5D={{ allVars.pkp.install.additionalLocales | default('en_US') | urlencode }}
+
+# Example of a call:
+# installing=0
+# &adminUsername=admin
+# &adminPassword=vaultPwd
+# &adminPassword2=vaultPwd
+# &adminEmail=marc.bria%40gmail.com
+# &locale=es_ES
+# &additionalLocales%5B%5D=ca_ES
+# &additionalLocales%5B%5D=en_US
+# &additionalLocales%5B%5D=es_ES
+# &clientCharset=utf-8
+# &connectionCharset=utf8
+# &filesDir=%2Fvar%2Fwww%2Ffiles
+# &databaseDriver=mysqli
+# &databaseHost=db
+# &databaseUsername=ojs
+# &databasePassword=vaultPwd
+# &databaseName=ojs
+# &oaiRepositoryId=ojs.testing.precarietat.net
+
+
+    - name: Ejecutar instalación de OJS
+      uri:
+        url: "{{ allVars.pkp.general.base_url }}/index/install/install"
+        method: POST
+        body: "{{ installString }}"
+        body_format: "raw"
+        force_basic_auth: yes
+        status_code: 200
+        validate_certs: no
+        follow_redirects: all
+      register: response
+
+    # - name: Se ha realizado la siguiente petición a OJS, el siguiente resultado
+    #   debug:
+    #     msg:
+    #       - ">> PETITION:"
+    #       - "{{ allVars.pkp.general.base_url }}/index/install/install/{{ installString | replace(' ', '') }}"
+    #       - ">> RESPONSE:"
+    #       - "{{ response }}"
