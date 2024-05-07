@@ -3,6 +3,8 @@ LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
 LoadModule rewrite_module modules/mod_rewrite.so
 LoadModule expires_module modules/mod_expires.so
 
+# This is essential if you are in http behind an httpS reverse proxy:
+# Faking the schema to build httpS urls and avoid "Mixed content" issues.
 SetEnvIf X-Forwarded-Proto "https" HTTPS=on
 
 <VirtualHost *:80>
@@ -22,46 +24,47 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
 
         RewriteBase /
 
-        # Redirect root to index
-        RewriteRule ^/?$ /index [L]
+        # Rules to RUN ojs in domain's root (and admin in /install folder):
+        # # Redirect root to index
+        # RewriteRule ^/?$ /index [L]
 
-        ## Force httpS (basically to reach the API):
-        RewriteCond %{HTTPS}  !=on
-        RewriteCond %{REQUEST_URI} api\/v1\/
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^/?(.*) index.php/{{ dojo.id }}/$1 [L,R=307]
+        # ## Force httpS (won't be necessary when OJS allows to force the protocol):
+        # RewriteCond %{HTTPS}  !=on
+        # RewriteCond %{REQUEST_URI} api\/v1\/
+        # RewriteCond %{REQUEST_FILENAME} !-f
+        # RewriteRule ^/?(.*) https://%{SERVER_NAME}/index.php/{{ dojo.id }}/$1 [L,R=307]
 
-        # Rewrite API calls to subdomain journals (avoid double redirection)
-        RewriteCond %{REQUEST_URI} {{ dojo.id }}\/api\/v1\/
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ index.php/{{ dojo.id }}$1 [L,R=307]
+        # # To reach Admin pages
+        # RewriteCond %{REQUEST_URI} ^/index/
+        # RewriteCond %{REQUEST_FILENAME} !-f
+        # RewriteRule ^/?(.*) {{ base_url_index }}/index.php/$1 [L,R=307]
 
-        # Rewrite API calls to subdomain journals
-        RewriteCond %{REQUEST_URI} {{ dojo.id }}\/api\/v1\/
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ index.php/{{ dojo.id }}/$1 [L,R=307]
+        # # Rewrite API calls to subdomain journals (avoid double redirection)
+        # RewriteCond %{REQUEST_URI} {{ dojo.id }}\/api\/v1\/
+        # RewriteCond %{REQUEST_FILENAME} !-f
+        # RewriteRule ^(.*)$ index.php/{{ dojo.id }}$1 [L,R=307]
 
-        # Remes the short journal's rule:
-        RewriteCond %{REQUEST_URI} !/{{ dojo.id }}/index.php
-        RewriteCond %{REQUEST_FILENAME} !-d
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ index.php/{{ dojo.id }}/$1 [QSA,L]
+        # # Rewrite API calls to subdomain journals
+        # RewriteCond %{REQUEST_URI} api\/v1\/
+        # RewriteCond %{REQUEST_FILENAME} !-f
+        # RewriteRule ^(.*)$ index.php/{{ dojo.id }}/$1 [L,R=307]
 
-        # This removes index.php from the url (apache 2.2 and new ones)
-        RewriteCond %{REQUEST_URI} !/index.php
-        RewriteCond %{REQUEST_FILENAME} !-d
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
-
-        # # Remove index.php/journalContext from the url (set base_url[] in config.inc.php)
+        # # Remes the short journal's rule:
+        # RewriteCond %{REQUEST_URI} !/{{ dojo.id }}/index.php
         # RewriteCond %{REQUEST_FILENAME} !-d
         # RewriteCond %{REQUEST_FILENAME} !-f
         # RewriteRule ^(.*)$ index.php/{{ dojo.id }}/$1 [QSA,L]
 
-        # # Remove index.php from the url
-        # RewriteCond %{REQUEST_FILENAME} !-d
-        # RewriteCond %{REQUEST_FILENAME} !-f
-        # RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+        # Rules to INSTALL:
+        # $$$call$$ redirection to journal
+        RewriteCond %{REQUEST_URI} ^\/\$\$\$call\$\$\$
+        RewriteRule ^(.*)$ https://%{SERVER_NAME}/index.php/{{ dojo.id }}/$1 [L,R=307]
+
+        # This removes index.php from the url
+        RewriteCond %{REQUEST_URI} !/index.php
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
     </Directory>
 
     # LogLevel alert rewrite:trace2
@@ -70,6 +73,8 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
     CustomLog  /var/log/apache2/access.log combined
 </VirtualHost>
 
+# Keeping this to show how to configure virtual host if containers include certificates 
+# UNTESTED and could collide with former rules.
 <VirtualHost *:443>
     ServerName localhost
     ServerAlias {{ dojo.domain }}
@@ -95,7 +100,7 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
         RewriteRule ^(.*)$ index.php/$1 [QSA,L]
     </Directory>
 
-    LogLevel alert rewrite:trace2
+    # LogLevel alert rewrite:trace2
 
     ErrorLog  /var/log/apache2/error.log
     CustomLog  /var/log/apache2/access.log combined
