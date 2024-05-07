@@ -48,8 +48,10 @@ datetime_format_long    = "%B %e, %Y - %I:%M %p"
 time_format             = "%I:%M %p"
 disable_path_info       = {{ pkp.general.disable_path_info | default('Off') | safe }}
 allow_url_fopen         = {{ pkp.general.allow_url_fopen | default('Off') | safe }}
+{% if pkp.general.base_url_index is defined %}
 base_url[index]         = "{{ pkp.general.base_url_index | default('') }}"
 base_url[{{ dojo.id }}] = "{{ pkp.general.base_url_journal | default('') }}"
+{% endif %}
 restful_urls            = {{ pkp.general.restful_urls | default('Off') | safe }}
 ; allowed_hosts         = '["myjournal.tld", "anotherjournal.tld", "mylibrary.tld"]'
 allowed_hosts           = '{{ pkp.general.allowed_hosts | default('') | safe }}'

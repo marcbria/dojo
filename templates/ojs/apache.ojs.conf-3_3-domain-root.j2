@@ -33,12 +33,12 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
         # RewriteCond %{REQUEST_URI} api\/v1\/
         # RewriteCond %{REQUEST_FILENAME} !-f
         # RewriteRule ^/?(.*) https://%{SERVER_NAME}/index.php/{{ dojo.id }}/$1 [L,R=307]
-
+{% if pkp.general.base_url_index is defined %}
         # # To reach Admin pages
         # RewriteCond %{REQUEST_URI} ^/index/
         # RewriteCond %{REQUEST_FILENAME} !-f
-        # RewriteRule ^/?(.*) {{ base_url_index }}/index.php/$1 [L,R=307]
-
+        # RewriteRule ^/?(.*) {{ pkp.general.base_url_index }}/index.php/$1 [L,R=307]
+{% endif %}
         # # Rewrite API calls to subdomain journals (avoid double redirection)
         # RewriteCond %{REQUEST_URI} {{ dojo.id }}\/api\/v1\/
         # RewriteCond %{REQUEST_FILENAME} !-f

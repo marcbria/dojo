@@ -2,7 +2,7 @@
 - name: Create an APACHE virtual host file from the site's diccionary vars.
   hosts: all
   become: yes
-  gather_facts: no
+  gather_facts: yes
   vars:
     siteParam: "{{ site }}"
     fileCreation: "{{ ansible_date_time.iso8601 }}"
