@@ -40,7 +40,7 @@
         state: directory
         force: yes
 
-    - name: Definir la cadena de petición
+    - name: Define the petition's querystring
       set_fact:
         installString: >
           installing=0
@@ -62,30 +62,30 @@
           &enableBeacon={{ allVars.pkp.general.enable_beacon | default('0') | urlencode }}
         # &additionalLocales%5B%5D={{ allVars.pkp.install.additionalLocales | default('en_US') | urlencode }}
 
-# Example of a call:
-# installing=0
-# &adminUsername=admin
-# &adminPassword=vaultPwd
-# &adminPassword2=vaultPwd
-# &adminEmail=marc.bria%40gmail.com
-# &locale=es_ES
-# &additionalLocales%5B%5D=ca_ES
-# &additionalLocales%5B%5D=en_US
-# &additionalLocales%5B%5D=es_ES
-# &clientCharset=utf-8
-# &connectionCharset=utf8
-# &filesDir=%2Fvar%2Fwww%2Ffiles
-# &databaseDriver=mysqli
-# &databaseHost=db
-# &databaseUsername=ojs
-# &databasePassword=vaultPwd
-# &databaseName=ojs
-# &oaiRepositoryId=ojs.testing.precarietat.net
+        # Example of a call:
+        # installing=0
+        # &adminUsername=admin
+        # &adminPassword=vaultPwd
+        # &adminPassword2=vaultPwd
+        # &adminEmail=marc.bria%40gmail.com
+        # &locale=es_ES
+        # &additionalLocales%5B%5D=ca_ES
+        # &additionalLocales%5B%5D=en_US
+        # &additionalLocales%5B%5D=es_ES
+        # &clientCharset=utf-8
+        # &connectionCharset=utf8
+        # &filesDir=%2Fvar%2Fwww%2Ffiles
+        # &databaseDriver=mysqli
+        # &databaseHost=db
+        # &databaseUsername=ojs
+        # &databasePassword=vaultPwd
+        # &databaseName=ojs
+        # &oaiRepositoryId=ojs.testing.precarietat.net
 
 
-    - name: Ejecutar instalación de OJS
+    - name: Run the OJS installation
       uri:
-        url: "{{ allVars.pkp.general.base_url }}/index/install/install"
+        url: "{{ allVars.pkp.general.base_url }}/index.php/index/install/install"
         method: POST
         body: "{{ installString }}"
         body_format: "raw"
@@ -95,7 +95,7 @@
         follow_redirects: all
       register: response
 
-    # - name: Se ha realizado la siguiente petición a OJS, el siguiente resultado
+    # - name: Show the petition and the response
     #   debug:
     #     msg:
     #       - ">> PETITION:"
