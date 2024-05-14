@@ -2,13 +2,14 @@
 
 List of howto actions you can do with `dojo`:
 
-- [The basics](#the-basics)
+[The basics](#the-basics)
 1. [Clone this repository](#clone-this-repository)
 2. [Install "just" helper](#install-just-helper)
 3. [Create your inventory of servers](#create-your-inventory-of-servers)
 4. [Set up your underlying infrastructure](#set-up-your-underlying-infrastructure)
 5. [Install the reverse proxy](#install-the-reverse-proxy) (TBD)
-- [The actions](#the-actions)
+
+[The actions](#the-actions)
 6. [Create and install a Journal](#create-and-install-a-journal)
 7. [Create and edit your Vault](#create-and-edit-your-vault)
 
@@ -44,10 +45,12 @@ Create your own `inventory/hosts.yml` adding your remoteServer name.
 $ cd dojo
 $ mkdir inventory
 $ vim inventory/hosts.yml
+```
 
 An example of inventory:
 
 ```
+---
 all:
   vars:
     ansible_user: marc
@@ -118,6 +121,47 @@ $ vim inventory/sites/$JOURNAL            # Create the journal dictionary (store
 $ just dojo-create $JOURNAL $SERVER       # Creates the site based on dictionary.
 $ just dojo-manage $JOURNAL $SERVER up    # Raises the site (OJS container and DB).
 $ just dojo-run install $JOURNAL $SERVER  # Installs OJS with dictionary data (via curl)
+```
+
+### Create the journal dictionary 
+
+Create a file in inventory/sites/journalname.yml
+
+Example of content:
+
+```
+dojo:
+  id: journalname                       # This MUST be lowercase.
+  tool: ojs
+  version: "stable-3_3_0"
+  versionFamily: "3_3_0"
+  domain: "foo.net"
+  type: domain
+  
+proxy:
+  domains: "`foo.net`,`journalname`"
+
+database:
+  tool: mariadb
+  version: "10.2"
+  host: db
+  user: ojs
+  name: ojs
+  driver: mysqli
+
+images:
+  db:  "{{ database.tool }}:{{ database.version }}"
+  app: "pkpofficial/{{ dojo.tool }}:{{ dojo.version }}"
+
+pkp:
+  general:
+    installed: Off
+    base_url: "https://{{ dojo.domain }}"
+    scheduled_tasks: On
+  database:
+    host:     "{{ database.host }}"
+    username: "{{ database.user }}"
+    driver:   "{{ database.driver }}"
 ```
 
 ### Create and edit your Vault
