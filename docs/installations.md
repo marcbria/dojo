@@ -19,6 +19,12 @@ Admin's url:   https://ada-revista04.precarietat.net/index/admin
 
 ### Actions
 
+0. Set some env variables (not mandatory but makes scripts generic and easier to read):
+```
+$ SERVER=fooServer
+$ JOURNAL=journalname
+```
+
 1. **Create your dictionary**
 
 Set your dictionary with the data of your journal.
@@ -70,17 +76,17 @@ pkp:
     password: "{{ database.pass }}"
 ```
 
-Save this as `journalname.yml` in your inventory/sites folder.
+Save this as `$JOURNAL.yml` in your inventory/sites folder.
 
-2. Create your site:
-`$ just dojo-create journalname $SERVER;`
+2. Create your site (see step 0 to set env variables):
+`$ just dojo-create $JOURNAL $SERVER;`
 
 3. Raise and install your new journal:
-`$ just dojo-manage journalname $SERVER up; just dojo-run install journalname $SERVER;`
+`$ just dojo-manage $JOURNAL $SERVER up; just dojo-run install $JOURNAL $SERVER;`
 
 4. Create your new journal with "journalname" as the url slug.
 
 5. Uncomment your volumes/config/apache.conf and restart:
-`$ just dojo-manage journalname $SERVER restart;`
+`$ just dojo-manage $JOURNAL $SERVER restart;`
 
 6. Complete your journal's installation.

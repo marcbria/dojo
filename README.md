@@ -123,7 +123,8 @@ Again, it's not mandatory, but this project uses git as a **single source of tru
 
 ## Installation
 
-(This is how it will work, but not full implemented yet)
+(This is how it will work, but it's not full implemented yet)
+
 
 #### Ingredients
 
@@ -134,23 +135,29 @@ Again, it's not mandatory, but this project uses git as a **single source of tru
 
 Instructions are detailed in the "[Installation Manual](#InstallationManual)" but, from a bird's eye view, the process is divided in 3 parts:
 
-**Basic requirements:**
+**Basic requirements: [completed]**
+
 1. Clone this repository.
 2. Create your own `inventory/hosts.yml` adding your remoteServer name.
 3. Recommended: Install [just](https://github.com/casey/just#packages) version 1.23 or higher.
 
-**Set up your underlying infrastructure:**
+**Set up your underlying infrastructure: [completed]**
+
 4. Use `just` to install the underlaying infrastructure.
 5. Install the reverse proxy.
 
-**Create journal:**
+**Create journal:  [completed]**
+
 6. Create your first journal's dictionary.
 7. Create your ansible-vault add edit your journal's passwd.
 8. Build your fist journal.
 9. Visit your new journal in your browser and finish your installation.
 
-**Extend your service:**
+
+**Extend your service:  [workInProgress]**
+
 10. Read more about this project and decide what other tools you also like to install.
+
 
 ### Tooling
 
@@ -184,9 +191,10 @@ If you prefer to run accions without any helper, or you like to adapt it, review
 Add more playbooks:
 - [x] To install and configure traefik.
 - [ ] To install and configure an OJS journal (on any url).
+- [ ] To set journal's config from dictionary (API or DB injection) 
 - [ ] To install and configure an OMP monograph (on any url).
 - [ ] Review infrastructure and extra playbooks.
-- [ ] Structure the justfile better.
+- [x] Structure the justfile better.
 - [ ] To install and configure monitor tooling.
 - [ ] To install and configure backup tool.
 
@@ -218,19 +226,19 @@ $ vim inventory/hosts.yml
 
 4. Use `just` to install the underlaying infrastructure.
 ```
-$ just infra-install-ansible                            # Install ansible in your local machine.
+$ just infra-install-ansible                      # Install ansible in local machine.
 
-$ REMOTESERVER=<remoteServer>                           # Set your removte server from inventory/hosts.yml
-$ just infra-play info ps $REMOTESERVER -K              # Test if you can reach your remote server.
-$ just infra-dist-upgrade $REMOTESERVER                 # Update the server (-K implicit)
+$ REMOTESERVER=<remoteServer>                     # Set env-vars to make it more readable
+$ just infra-run ps $REMOTESERVER -K              # Test if remote server is reachable.
+$ just infra-dist-upgrade $REMOTESERVER           # Update the server.
 
-$ just infra-play run install-basic $REMOTESERVER -K    # Essential tooling (curl,rsync,pip...)
+$ just infra-run install-basic $REMOTESERVER -K   # Essential tooling (curl,rsync,pip...)
 
-$ just infra-play run install-docker $REMOTESERVER -K   # Install docker & docker-compose.
-$ just infra-play info docker $REMOTESERVER -K          # Test docker and docker-compose installations.
+$ just infra-run install-docker $REMOTESERVER -K  # Install docker & docker-compose.
+$ just infra-run info docker $REMOTESERVER -K     # Test docker and docker-compose.
 
-$ just infra-play run create-user $REMOTESERVER         # Create docker user and group and folders.
-$ just infra-play run create-folders $REMOTESERVER      # Creates the required folder structure.
+$ just infra-run create-user $REMOTESERVER        # Create docker user/group and folders.
+$ just infra-run create-folders $REMOTESERVER     # Creates the required folder structure.
 ```
 
 
@@ -238,12 +246,12 @@ $ just infra-play run create-folders $REMOTESERVER      # Creates the required f
 
 5. Install the reverse proxy:
 ```
-vim ./inventory/services/traefik.yml                    # Edit your proxy's dictionary.
+vim ./inventory/services/traefik.yml              # Edit your proxy's dictionary.
 just service-create traefik $REMOTESERVER
 ```
 6. Create your first journal's dictionary
 ```
-$ JOURNAL=<your_journal>                        # Capital letters not allowed in JOURNAL tag.
+$ JOURNAL=<journalname>                           # Use lowercase for your journal's ID.
 $ mv sites/journalname.yml sites/$JOURNAL.yml
 $ vim sites/$JOURNAL.yml
 ```
@@ -254,9 +262,14 @@ $ just dojo-vault edit $JOURNAL
 ```
 8. Build your fist journal:
 ```
-just dojo-create $JOURNAL
 ```
-9. Visit your new journal in your browser.
+$ just dojo-create $JOURNAL $SERVER               # Creates the site based on dictionary.
+$ just dojo-manage $JOURNAL $SERVER up            # Raises the site (OJS container and DB).
+$ just dojo-run install $JOURNAL $SERVER          # Installs OJS with dictionary data (curl)
+```
+
+```
+9. Visit your new OJS in your browser and create a new journal (TBD automatize this part too, based on dictionary data).
 
 
 #### Extend your service
