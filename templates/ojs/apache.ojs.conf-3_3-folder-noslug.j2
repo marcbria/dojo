@@ -17,10 +17,9 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
 
     # OJS is pysically installed in the container's webroot
     DocumentRoot /var/www/html
-
-    # ... BUT, the URL includes a folder.
-    # Trick 02: Apache will ignore the folder prefix and server webroot files.
-    Alias /{{ dojo.id }} /var/www/html 
+    # BUT, the URL includes a folder.
+    # Trick 02: Apache will ignore the folder prefix to serve webroot files.
+    Alias /{{ dojo.id }} /var/www/html
 
     <Directory /var/www/html>
         Options FollowSymLinks
