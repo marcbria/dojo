@@ -3,14 +3,14 @@
 List of howto actions you can do with `dojo`:
 
 - [The basics](#the-basics)
-    - 1. [Clone this repository](#clone-this-repository)
-    - 2. [Install "just" helper](#install-just-helper)
-    - 3. [Create your inventory of servers](#create-your-inventory-of-servers)
-    - 4. [Set up your underlying infrastructure](#set-up-your-underlying-infrastructure)
-    - 5. [Install the reverse proxy](#install-the-reverse-proxy) (TBD)
+    1. [Clone this repository](#clone-this-repository)
+    2. [Install "just" helper](#install-just-helper)
+    3. [Create your inventory of servers](#create-your-inventory-of-servers)
+    4. [Set up your underlying infrastructure](#set-up-your-underlying-infrastructure)
+    5. [Install the reverse proxy](#install-the-reverse-proxy) (TBD)
 - [The actions](#the-actions)
-    - [Create and install a Journal](#create-and-install-a-journal)
-    - [Create and edit your Vault](#create-and-edit-your-vault)
+    6. [Create and install a Journal](#create-and-install-a-journal)
+    7. [Create and edit your Vault](#create-and-edit-your-vault)
 
 
 ## The basics
@@ -48,7 +48,7 @@ $ vim inventory/hosts.yml
 An example of inventory:
 
 ```
----
+\-\-\-
 all:
   vars:
     ansible_user: marc
@@ -155,3 +155,8 @@ vault:
   test:
     fooPass: "AllIsFine"
 ```
+
+
+### Install a service
+
+(TBD)
