@@ -10,6 +10,7 @@ List of howto actions you can do with `dojo`:
 5. [Install the reverse proxy](#install-the-reverse-proxy) (TBD)
 
 [The actions](#the-actions)
+
 6. [Create and install a Journal](#create-and-install-a-journal)
 7. [Create and edit your Vault](#create-and-edit-your-vault)
 
@@ -71,9 +72,7 @@ all:
           ansible_host: 192.168.0.1
 ```
 
-
-# Take a look to [those examples](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/yaml_inventory.html#examples) to create your inventory file.
-```
+Take a look to [those examples](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/yaml_inventory.html#examples) to create your own inventory file.
 
 
 ### Set up your underlying infrastructure
