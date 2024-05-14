@@ -242,7 +242,7 @@ $ just infra-run create-folders $REMOTESERVER     # Creates the required folder 
 ```
 
 
-#### Create journal
+#### Create a journal
 
 5. Install the reverse proxy:
 ```
@@ -257,8 +257,8 @@ $ vim sites/$JOURNAL.yml
 ```
 7. Create your ansible-vault add edit your journal's passwd.
 ```
-$ just dojo-vault create $JOURNAL
-$ just dojo-vault edit $JOURNAL
+$ just dojo-vault create
+$ just dojo-vault edit
 ```
 8. Build your fist journal:
 ```
