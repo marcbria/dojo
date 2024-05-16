@@ -10,23 +10,23 @@
     - ./configs/dojo.yml
     - ./services/{{ service }}.yml
   tasks:
-    - name: Load vars from service.yml
+    - name: Load global vars from dojo.yml
       include_vars:
         file: ./configs/dojo.yml
         name: dojoVars
 
-    - name: Load vars from service.yml
+    - name: Load generic vars from service.yml
       include_vars:
         file: ./services/{{ service }}.yml
         name: serviceGenericVars
 
-    - name: If exists, load vars from service-host.yml
+    - name: If exists, load specific vars from service-host.yml
       include_vars:
         file: ./services/{{ service }}-{{ ansible_hostname }}.yml
         name: serviceHostVars
       ignore_errors: yes
       
-    - name: Combine serviceGenericVars and serviceHostVars
+    - name: Combine dojo > serviceGenericVars > serviceHostVars (by this order)
       set_fact:
         allVars: "{{ dojoVars | combine(serviceGenericVars, recursive=True) | combine(serviceHostVars, recursive=True) | default({}) }}"
 
