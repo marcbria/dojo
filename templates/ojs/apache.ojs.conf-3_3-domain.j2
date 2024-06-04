@@ -1,3 +1,14 @@
+## This set of rules was created for single-tenant journals installed in a domain 
+## or a subdomain's WITH the journalContext (ie: https://subdomain.foo.org/journalname)
+## behind a reverse proxy, but running in a container without ssl.
+##
+## Some notes:
+## - Non final redirections need to be 307.
+## - Conflictive redirections include the protocol (httpS) to avoid "mixed content".
+## - API calls are captured to be redirected to site or journal.
+## - Root folder is for the site (single-tenant).
+## - Journal context is /journalSlug subfolder.
+
 # Load modules
 LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
 LoadModule rewrite_module modules/mod_rewrite.so
@@ -15,6 +26,14 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
 
     RewriteEngine On
     AcceptPathInfo On
+
+    # Uncomment to clarify who is answering with the error: 
+    # ErrorDocument 404 "Error 404 at: [{{ dojo.id }}]"
+    # ErrorDocument 500 "Error 500 at: [{{ dojo.id }}]"
+
+    # OJS is pysically installed in the container's webroot
+    DocumentRoot /var/www/html
+
     <Directory /var/www/html>
         Options FollowSymLinks
         AllowOverride all
@@ -24,38 +43,46 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
 
         RewriteBase /
 
-        # Rules to RUN ojs in domain's root (and admin in /install folder):
-        # # Redirect root to index
-        # RewriteRule ^/?$ /index [L]
+{% if allVars.pkp.general.installed | default('Off') == 'On' %}
+        #########################################################
+        # Rules for a domain/subdomain journal installed at root
+        #########################################################
 
-        # ## Force httpS (won't be necessary when OJS allows to force the protocol):
-        # RewriteCond %{HTTPS}  !=on
-        # RewriteCond %{REQUEST_URI} api\/v1\/
-        # RewriteCond %{REQUEST_FILENAME} !-f
-        # RewriteRule ^/?(.*) https://%{SERVER_NAME}/index.php/{{ dojo.id }}/$1 [L,R=307]
-{% if pkp.general.base_url_index is defined %}
-        # # To reach Admin pages
-        # RewriteCond %{REQUEST_URI} ^/index/
-        # RewriteCond %{REQUEST_FILENAME} !-f
-        # RewriteRule ^/?(.*) {{ pkp.general.base_url_index }}/index.php/$1 [L,R=307]
-{% endif %}
-        # # Rewrite API calls to subdomain journals (avoid double redirection)
-        # RewriteCond %{REQUEST_URI} {{ dojo.id }}\/api\/v1\/
-        # RewriteCond %{REQUEST_FILENAME} !-f
-        # RewriteRule ^(.*)$ index.php/{{ dojo.id }}$1 [L,R=307]
+        # Redirects root to index
+        RewriteRule ^/?$ https://{{ dojo.domain }}/index [L]
 
-        # # Rewrite API calls to subdomain journals
-        # RewriteCond %{REQUEST_URI} api\/v1\/
-        # RewriteCond %{REQUEST_FILENAME} !-f
-        # RewriteRule ^(.*)$ index.php/{{ dojo.id }}/$1 [L,R=307]
+        # Redirects API calls forcing httpS:
+        RewriteCond %{HTTPS}  !=on
+        RewriteCond %{REQUEST_URI} api\/v1\/
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^/?(.*) https://{{ dojo.domain }}/index.php/{{ dojo.id }}/$1 [L,R=307]
 
-        # # Remes the short journal's rule:
-        # RewriteCond %{REQUEST_URI} !/{{ dojo.id }}/index.php
-        # RewriteCond %{REQUEST_FILENAME} !-d
-        # RewriteCond %{REQUEST_FILENAME} !-f
-        # RewriteRule ^(.*)$ index.php/{{ dojo.id }}/$1 [QSA,L]
+    {% if pkp.general.base_url_index is defined %}
+        # To reach Admin pages
+        RewriteCond %{REQUEST_URI} ^/index/
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^/?(.*) {{ pkp.general.base_url_index }}/index.php/$1 [L,R=307]
+    {% endif %}
 
+        # Rewrite API calls to subdomain journals (avoid double redirection)
+        RewriteCond %{REQUEST_URI} {{ dojo.id }}\/api\/v1\/
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/{{ dojo.id }}$1 [L,R=307]
+
+        # Rewrite API calls to subdomain journals
+        RewriteCond %{REQUEST_URI} api\/v1\/
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/{{ dojo.id }}/$1 [L,R=307]
+
+        # Remes the short journal's rule:
+        RewriteCond %{REQUEST_URI} !/{{ dojo.id }}/index.php
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/{{ dojo.id }}/$1 [QSA,L]
+{% else %}
+        ########################
         # Rules to INSTALL:
+        ########################
         # $$$call$$ redirection to journal
         RewriteCond %{REQUEST_URI} ^\/\$\$\$call\$\$\$
         RewriteRule ^(.*)$ https://%{SERVER_NAME}/index.php/{{ dojo.id }}/$1 [L,R=307]
@@ -65,6 +92,7 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteCond %{REQUEST_FILENAME} !-f
         RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+{% endif %}
     </Directory>
 
     # LogLevel alert rewrite:trace2
