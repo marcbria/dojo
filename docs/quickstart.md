@@ -114,7 +114,7 @@ How to meet the requirements: https://github.com/marcbria/dojo?tab=readme-ov-fil
 **Instructions:**
 
 ```
-$ SERVER='adauab';JOURNAL='revista07'     # Set some env-vars to generalize the steps.
+$ SERVER='adauab';JOURNAL='journalname'   # Set some env-vars to generalize the steps.
 $ vim inventory/sites/$JOURNAL            # Create the journal dictionary (stores ALL configs)
 
 $ just dojo-create $JOURNAL $SERVER       # Creates the site based on dictionary.
@@ -136,7 +136,7 @@ dojo:
   versionFamily: "3_3_0"
   domain: "foo.net"
   type: domain
-  
+
 proxy:
   domains: "`foo.net`,`journalname`"
 
