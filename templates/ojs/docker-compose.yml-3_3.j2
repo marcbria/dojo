@@ -51,15 +51,6 @@ services:
       # - ./config/apache.htaccess:/var/www/html/.htaccess
       # - ./volumes/config/php.custom.ini:/etc/php7/conf.d/0-custom.ini
 
-      # Plugins shared and read-only:
-      # - ../common/plugins:/var/www/html/plugins:ro
-      # - ../common/themes/redi:/var/www/html/common/themes/redi:ro
-      # - ../common/images:/var/www/html/common/images:ro
-      # - ../common/typos:/var/www/html/common/typos:ro
-
-      # Plugins on container:
-      # - ./volumes/plugins:/var/www/html/plugins
-      # - ./volumes/themes/redi:/var/www/html/plugins/themes/redi
     restart: unless-stopped
 
     networks:

@@ -26,14 +26,34 @@ services:
       - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.tls=true"
       - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.tls.certresolver=leresolver"
 
+{% if allVars.app.ports.redirect is defined %}
       # HTTP routers:
       # - "traefik.http.routers.{{ allVars.dojo.id | lower }}.rule={{ traefik_rule }}"
       # - "traefik.http.routers.{{ allVars.dojo.id | lower }}.entrypoints=webinsecure"
       # - "traefik.http.routers.{{ allVars.dojo.id | lower }}.middlewares={{ allVars.dojo.id | lower }}-redirect"
 
-      # Redirect Scheme HTTP -> HTTPS:
+      # Redirect Scheme HTTP -> HTTPS (if not done globably in traefik)
       # - "traefik.http.middlewares.{{ allVars.dojo.id | lower }}-redirect.redirectscheme.scheme=https"
       # - "traefik.http.middlewares.{{ allVars.dojo.id | lower }}-redirect.redirectscheme.permanent=true"
+{% endif %}
+
+    volumes:
+{% if allVars.plugins.type == 'shared-plugins' %}
+      # Read-only shared folder for Plugins (ie: plugins/3_3):
+      - ../shared/plugins/{{ allVars.dojo.versionFamily.rsplit('_', 1)[0] }}:/var/www/html/plugins:ro
+{% elif allVars.plugins.type == 'shared-theme' %}
+      # Read-only shared folder for Themes (ie: themes/3_3):
+      - ../shared/themes/{{ allVars.dojo.versionFamily.rsplit('_', 1)[0] }}/redi:/var/www/html/plugins/themes/redi:ro
+{% elif allVars.plugins.type == 'volume-plugins' %}
+      # Writable plugins on container:
+      - ./volumes/plugins:/var/www/html/plugins
+{% elif allVars.plugins.type == 'volume-theme' %}
+      # Writable themes on container:
+      - ./volumes/themes/redi:/var/www/html/plugins/themes/redi
+{% endif %}
+      - ../shared/images:/var/www/html/common/images:ro
+      - ../shared/typos:/var/www/html/common/typos:ro
+
 
     networks:
       - proxy
