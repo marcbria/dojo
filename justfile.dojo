@@ -9,13 +9,13 @@ dojo:
 dojo-tldr:
     # Sample of calls:
     @ echo ""
-    # $ just dojo-help                                      # Just in case you like to read
-    # $ just list dojo                                      # For a detailed list of actions
+    # $ just dojo-help                                 # Just in case you like to read
+    # $ just list dojo                                 # For a detailed list of actions
 
-    # $ just dojo-play create-journal journalname $SERVER   # Get a full OJS installed
-    # $ just dojo-play config journalname $SERVER           # Creates a config.inc.php for journalName in the remoteServer.
-    @ # TBD: $ dojo backup journalname                 # Backup a full journal
-    @ # TBD: $ dojo clone journalname journalclone     # Clone a journal
+    # $ just dojo-run create-journal $JOURNAL $SERVER  # Get a full OJS installed (define vars first)
+    # $ just dojo-run config $JOURNAL $SERVER          # Creates a config.inc.php for journalName in the remoteServer.
+    @ # TBD: $ dojo backup $JOURNAL                    # Backup a full journal
+    @ # TBD: $ dojo clone $JOURNAL journalclone        # Clone a journal
     @ # TBD: $ dojo upgrade journalclone 3.4.0-6       # Upgrade a journal to the s
     @ # TBD: $ dojo start journalclone                 # Starts a journal
     @ # TBD: $ dojo stop journalclone                  # Stop a journal
