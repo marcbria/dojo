@@ -3,11 +3,14 @@
 | **WARNING:** This is an ongoing project. |
 |:--|
 | Features could change, be unstable or not even tested. |
-| Final version is planned to be released at the end of April. |
+| A minimal viable product is planned to be released at the end of ~~April~~ June. |
 
 TL;DR; The aim of this project is to offer the PKP community a way to host its applications (OJS, OMP...) on-premises, in a simple, standardised and resilient way.
 
 To do this, the project offer a set of tools to convert a brand new Debian (or any other Debian based distribution), to and dedicated server able to host, maintain and upgrade any PKP application and also to include all the additional tools to manage the service.
+
+Here you can see a demo showning how a journal is created and installed:
+<iframe src="https://player.vimeo.com/video/946092633" width="640" height="360" frameborder="0" allowfullscreen></iframe>
 
 Project is created with the following pillars in mind:
 - **Standarization:** All decisions regarding to technologies and development are taken thinking in stadards first. When there is no standards to apply, the decisions are homogeneous.
