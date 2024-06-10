@@ -1,4 +1,6 @@
-## This set of rules was created for single-tenant journals with a folder url
+## Template: ojs/apache.ojs.conf-3_3-folder-noslug.j2
+## 
+## This set of rules were created for single-tenant journals with a folder url
 ## with the journalContext hidden (ie: https://foo.org/folderSlug) behind a
 ## reverse proxy, but running in a container without ssl.
 ##
@@ -8,6 +10,9 @@
 ## - API calls are captured to be redirected to site or journal.
 ## - Root folder is for the journal (single-tenant).
 ## - Admin pages are redirected to /index subfolder.
+##
+## Journal root is: {{ allVars.pkp.general.base_url_journal }}
+## Site's root is:  {{ allVars.pkp.general.base_url_index }}
 
 # Load modules
 LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
@@ -20,22 +25,22 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
 
 <VirtualHost *:80>
     ServerName localhost
-    ServerAlias {{ dojo.domain }}
-    ServerAlias {{ dojo.id }}
+    ServerAlias {{ allVars.dojo.domain }}
+    ServerAlias {{ allVars.dojo.id }}
 
     RewriteEngine On
     AcceptPathInfo On
 
     # Uncomment to clarify who is answering with the error: 
-    # ErrorDocument 404 "Error 404 at: [{{ dojo.id }}]"
-    # ErrorDocument 500 "Error 500 at: [{{ dojo.id }}]"
+    # ErrorDocument 404 "Error 404 at: [{{ allVars.dojo.id }}]"
+    # ErrorDocument 500 "Error 500 at: [{{ allVars.dojo.id }}]"
 
     # OJS is pysically installed in the container's webroot
     DocumentRoot /var/www/html
 
     # BUT, the URL includes a folder.
     # Trick 02: Apache will ignore the folder prefix to serve webroot files.
-    Alias /{{ proxy.pathprefix }} /var/www/html
+    Alias /{{ allVars.proxy.pathprefix }} /var/www/html
 
     <Directory /var/www/html>
         Options FollowSymLinks
@@ -45,35 +50,39 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
         DirectoryIndex index.php index.html
 
         # Trick 03: Apache will always preserve the first /folderSlug (in relative redirections).
-        RewriteBase /{{ proxy.pathprefix }}
+        RewriteBase /{{ allVars.proxy.pathprefix }}
 
         # Redirects root to index
-        RewriteRule ^/?$ https://{{ dojo.domain }}/{{ proxy.pathprefix }}/index [L,R=307]
+        RewriteRule ^/?$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index [L,R=307]
 
         # Redirects regular API calls to journal context
-        RewriteCond %{REQUEST_URI} ^\/{{ dojo.id}}\/api\/v1
+        RewriteCond %{REQUEST_URI} ^\/{{ allVars.dojo.id}}\/api\/v1
         RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ https://{{ dojo.domain }}/{{ dojo.id}}/index.php/{{ proxy.pathprefix }}/$1 [QSA,L,R=307]
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.dojo.id}}/index.php/{{ allVars.proxy.pathprefix }}/$1 [QSA,L,R=307]
 
         # Redirects new "_API" calls to site
         # See: https://docs.pkp.sfu.ca/dev/api/ojs/3.3#tag/Access
-        RewriteCond %{REQUEST_URI} ^\/{{ proxy.pathprefix }}\/_\/api\/v1\/
+        RewriteCond %{REQUEST_URI} ^\/{{ allVars.proxy.pathprefix }}\/_\/api\/v1\/
         RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ https://{{ dojo.domain }}/{{ proxy.pathprefix }}/index.php/$1 [QSA,L,R=307]
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/$1 [QSA,L,R=307]
 
-{% if pkp.general.base_url_index is defined %}
+    {% if allVars.pkp.general.base_url_index is defined %}
+    # To reach Admin pages 
+        # TBD: Make it generic. Now only folderSlug/index is filtered.
+
         # Redirect Admin pages
-        RewriteCond %{REQUEST_URI} ^\/{{ proxy.pathprefix }}\/index\/
+        RewriteCond %{REQUEST_URI} ^\/{{ allVars.proxy.pathprefix }}\/index\/
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ https://{{ dojo.domain }}/{{ proxy.pathprefix }}/index.php/$1 [QSA,L,R=307]
-{% endif %}
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/$1 [QSA,L,R=307]
+    {% endif %}
+
 
         # Redirects root folder to journal context
-        RewriteCond %{REQUEST_URI} !/{{ proxy.pathprefix }}/index.php
+        RewriteCond %{REQUEST_URI} !/{{ allVars.proxy.pathprefix }}/index.php
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ index.php/{{ dojo.id }}/$1 [QSA,L]
+        RewriteRule ^(.*)$ index.php/{{ allVars.dojo.id }}/$1 [QSA,L]
 
         # RESTful rule: Includes index.php (if is not done yet)
         RewriteCond %{REQUEST_URI} !/index.php
@@ -94,8 +103,8 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
 # UNTESTED and could collide with former rules.
 <VirtualHost *:443>
     ServerName localhost
-    ServerAlias {{ dojo.domain }}
-    ServerAlias {{ dojo.id }}
+    ServerAlias {{ allVars.dojo.domain }}
+    ServerAlias {{ allVars.dojo.id }}
     DocumentRoot /var/www/html
 
     SSLEngine on

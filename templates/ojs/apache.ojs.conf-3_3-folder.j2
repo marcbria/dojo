@@ -1,3 +1,19 @@
+## Template: ojs/apache.ojs.conf-3_3-folder.j2
+## 
+## This set of rules were created for single-tenant journals with a folder url
+## with the journalContext visible (ie: https://foo.org/folderSlug/journalContext)
+## behind a reverse proxy, but running in a container without ssl.
+##
+## Some notes:
+## - Non final redirections need to be 307.
+## - Conflictive redirections include the protocol (httpS) to avoid "mixed content".
+## - API calls are captured to be redirected to site or journal.
+## - Root folder is for the journal (single-tenant).
+## - Admin pages are redirected to /index subfolder.
+##
+## Journal root is: {{ allVars.pkp.general.base_url_journal }}
+## Site's root is:  {{ allVars.pkp.general.base_url_index }}
+
 # Load modules
 LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
 LoadModule rewrite_module modules/mod_rewrite.so
@@ -9,8 +25,8 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
 
 <VirtualHost *:80>
     ServerName localhost
-    ServerAlias {{ dojo.domain }}
-    ServerAlias {{ dojo.id }}
+    ServerAlias {{ allVars.dojo.domain }}
+    ServerAlias {{ allVars.dojo.id }}
 
     RewriteEngine On
     AcceptPathInfo On
@@ -19,7 +35,7 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
     DocumentRoot /var/www/html
     # BUT, the URL includes a folder.
     # Trick 02: Apache will ignore the folder prefix to serve webroot files.
-    Alias /{{ dojo.id }} /var/www/html
+    Alias /{{ allVars.dojo.id }} /var/www/html
 
     <Directory /var/www/html>
         Options FollowSymLinks
@@ -34,7 +50,7 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
         RewriteCond %{REQUEST_URI} !/index.php
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ {{ dojo.id }}/index.php/$1 [QSA,L]
+        RewriteRule ^(.*)$ {{ allVars.dojo.id }}/index.php/$1 [QSA,L]
 
     </Directory>
 
@@ -48,8 +64,8 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
 # UNTESTED and could collide with former rules.
 <VirtualHost *:443>
     ServerName localhost
-    ServerAlias {{ dojo.domain }}
-    ServerAlias {{ dojo.id }}
+    ServerAlias {{ allVars.dojo.domain }}
+    ServerAlias {{ allVars.dojo.id }}
     DocumentRoot /var/www/html
 
     SSLEngine on
