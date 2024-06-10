@@ -15,20 +15,6 @@
     #           baseHost > siteGeneric > siteHost > dojoVars.
     - include: setAllVars.yml
   
-    # - name: DEBUG - Shows the result of the combination
-    #   debug:
-    #     msg: "{{ allVars }}"
-
-    # - name: Convert versionFamily to major_minor format
-    #   set_fact:
-    #     versionMajorMinor: "{{ allVars.dojo.versionFamily.split('_')[0] }}_{{ allVars.dojo.versionFamily.split('_')[1] }}"
-
-    - name: Ensure site directory exists
-      file:
-        path: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
-        state: directory
-        force: yes
-
     - name: Generate docker-compose.yml file from template and dojo vars.
       template:
         src: "./templates/{{ allVars.dojo.tool }}/docker-compose.yml-{{ versionMajorMinor }}.j2"

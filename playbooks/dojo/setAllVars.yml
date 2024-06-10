@@ -31,10 +31,6 @@
   set_fact:
     allVars: "{{ dojoVars | combine(baseHostVars | default({}), siteGenericVars | default({}), siteHostVars | default({}), recursive=True) }}"
 
-- name: DEBUG - Shows the result of the combination
-  debug:
-    msg: "{{ allVars }}"
-
 - name: Convert versionFamily to major_minor format
   set_fact:
     versionMajorMinor: "{{ allVars.dojo.versionFamily.split('_')[0] }}_{{ allVars.dojo.versionFamily.split('_')[1] }}"
@@ -50,8 +46,8 @@
 #       - "src: ./templates/{{ allVars.dojo.tool }}/apache.ojs.conf-{{ versionMajorMinor }}-{{ allVars.dojo.type }}.j2"
 #       - "dest: {{ allVars.path.files.config }}/{{ allVars.dojo.id }}/apache.conf"
 
-# - name: Ensure site directory exists
-#   file:
-#     path: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
-#     state: directory
-#     force: yes
+- name: Ensure site's directory exists
+  file:
+    path: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
+    state: directory
+    force: yes

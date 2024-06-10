@@ -15,20 +15,6 @@
     #           baseHost > siteGeneric > siteHost > dojoVars.
     - include: setAllVars.yml
   
-    # - name: DEBUG - Shows the result of the combination
-    #   debug:
-    #     msg: "{{ allVars }}"
-
-    # - name: Convert versionFamily to major_minor format
-    #   set_fact:
-    #     versionMajorMinor: "{{ allVars.dojo.versionFamily.split('_')[0] }}_{{ allVars.dojo.versionFamily.split('_')[1] }}"
-
-    - name: Ensure site's config directory exists
-      file:
-        path: "{{ allVars.path.files.config }}/{{ allVars.dojo.id }}"
-        state: directory
-        force: yes
-
     - name: Generate apache-config file from template and dojo vars
       template:
         src: "./templates/{{ allVars.dojo.tool }}/apache.ojs.conf-{{ versionMajorMinor }}-{{ allVars.dojo.type }}.j2"

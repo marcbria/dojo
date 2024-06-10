@@ -15,20 +15,6 @@
     #           baseHost > siteGeneric > siteHost > dojoVars.
     - include: setAllVars.yml
   
-    # - name: DEBUG - Shows the result of the combination
-    #   debug:
-    #     msg: "{{ allVars }}"
-
-    - name: Ensure site directory exists
-      file:
-        path: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
-        state: directory
-        force: yes
-
-    # - name: Convert versionFamily to major_minor format
-    #   set_fact:
-    #     versionMajorMinor: "{{ allVars.dojo.versionFamily.split('_')[0] }}_{{ allVars.dojo.versionFamily.split('_')[1] }}"
-
     - name: Define the petition's querystring
       set_fact:
         installString: >
