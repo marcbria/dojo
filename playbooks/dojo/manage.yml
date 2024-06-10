@@ -7,7 +7,6 @@
   vars_files:
     - ./configs/dojo.yml
     - ./sites/{{ siteParam }}.yml
-
   tasks:
     - name: Check if the site directory exists
       stat:

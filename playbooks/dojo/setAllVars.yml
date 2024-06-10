@@ -1,0 +1,57 @@
+---
+# INCLUDE - Set global "allVars" array from the site's diccionaries as follows:
+#           baseHost > siteGeneric > siteHost > dojoVars.
+
+- name: Load vars from dojo.yml
+  include_vars:
+    file: ./configs/dojo.yml
+    name: dojoVars
+
+- name: If exists, load vars from base-host.yml (common to every journal in the same host)
+  include_vars:
+    file: ./sites/base-{{ ansible_hostname }}.yml
+    name: baseHostVars
+  ignore_errors: yes
+  failed_when: false
+
+- name: Load vars from site.yml (same for prod and test)
+  include_vars:
+    file: ./sites/{{ siteParam }}.yml
+    name: siteGenericVars
+  ignore_errors: yes
+
+- name: If exists, load vars from site-host.yml
+  include_vars:
+    file: ./sites/{{ siteParam }}-{{ ansible_hostname }}.yml
+    name: siteHostVars
+  ignore_errors: yes
+  failed_when: false
+
+- name: Combine/overrides Vars as follows baseHost > siteGeneric > siteHost > dojoVars
+  set_fact:
+    allVars: "{{ dojoVars | combine(baseHostVars | default({}), siteGenericVars | default({}), siteHostVars | default({}), recursive=True) }}"
+
+- name: DEBUG - Shows the result of the combination
+  debug:
+    msg: "{{ allVars }}"
+
+- name: Convert versionFamily to major_minor format
+  set_fact:
+    versionMajorMinor: "{{ allVars.dojo.versionFamily.split('_')[0] }}_{{ allVars.dojo.versionFamily.split('_')[1] }}"
+
+- name: Extracts MAJOR from versionFamily
+  set_fact:
+    versionMajor: "{{ allVars.dojo.versionFamily.split('_')[0] }}"
+
+# - name: DEBUG - Shows some vars
+#   debug:
+#     msg:
+#       - "allVars: {{ allVars }}"
+#       - "src: ./templates/{{ allVars.dojo.tool }}/apache.ojs.conf-{{ versionMajorMinor }}-{{ allVars.dojo.type }}.j2"
+#       - "dest: {{ allVars.path.files.config }}/{{ allVars.dojo.id }}/apache.conf"
+
+# - name: Ensure site directory exists
+#   file:
+#     path: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
+#     state: directory
+#     force: yes

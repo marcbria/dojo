@@ -9,29 +9,19 @@
   vars_files:
     - ./configs/dojo.yml
     - ./configs/secret.yml
-    - ./sites/{{ siteParam }}.yml
+    - ./sites/base-{{ ansible_hostname }}.yml
   tasks:
-    - name: Load vars from dojo.yml
-      include_vars:
-        file: ./configs/dojo.yml
-        name: dojoVars
+    # sets "allVars" array from the site's diccionaries as follows:
+    #           baseHost > siteGeneric > siteHost > dojoVars.
+    - include: setAllVars.yml
+  
+    # - name: DEBUG - Shows the result of the combination
+    #   debug:
+    #     msg: "{{ allVars }}"
 
-    - name: Load vars from site.yml
-      include_vars:
-        file: ./sites/{{ siteParam }}.yml
-        name: siteGenericVars
-      ignore_errors: yes
-
-    - name: If exists, load vars from site-host.yml
-      include_vars:
-        file: ./sites/{{ siteParam }}-{{ ansible_hostname }}.yml
-        name: siteHostVars
-      ignore_errors: yes
-      failed_when: false
-
-    - name: Combine siteGenericVars and siteHostVars
-      set_fact:
-        allVars: "{{ dojoVars | combine(siteGenericVars | default({}), recursive=True) | combine(siteHostVars | default({}), recursive=True) }}"
+    # - name: Convert versionFamily to major_minor format
+    #   set_fact:
+    #     versionMajorMinor: "{{ allVars.dojo.versionFamily.split('_')[0] }}_{{ allVars.dojo.versionFamily.split('_')[1] }}"
 
     - name: Ensure site directory exists
       file:
@@ -39,10 +29,6 @@
         state: directory
         force: yes
 
-    - name: Convert versionFamily to major_minor format
-      set_fact:
-        versionMajorMinor: "{{ allVars.dojo.versionFamily.split('_')[0] }}_{{ allVars.dojo.versionFamily.split('_')[1] }}"
-          
     - name: Generate docker-compose.yml file from template and dojo vars.
       template:
         src: "./templates/{{ allVars.dojo.tool }}/docker-compose.yml-{{ versionMajorMinor }}.j2"
