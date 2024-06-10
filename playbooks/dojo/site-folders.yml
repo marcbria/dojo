@@ -55,15 +55,37 @@
         state: directory
         owner: "999"
         group: "1002"
-        recurse: yes
       loop:
         - "{{ path.volumes.db }}"
+      tags:
+        - volumes_db
+
+    - name: Assign ownership for site's BD folder
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "999"
+        group: "1002"
+        recurse: yes
+      loop:
+        - "{{ path.volumes.db }}/{{ dojo.id }}"
       tags:
         - volumes_db
 
     - name: Assign ownership in Web files
       file:
         path: "{{ item.value }}"
+        state: directory
+        owner: "100"
+        group: "101"
+      with_dict: 
+        - "{{ path.files }}"
+      tags:
+        - volumes_www
+
+    - name: Assign ownership for site's Web files
+      file:
+        path: "{{ item.value }}/{{ dojo.id }}"
         state: directory
         owner: "100"
         group: "101"
