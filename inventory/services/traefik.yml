@@ -1,0 +1,58 @@
+###############################################################################
+#
+# Function: Reverse Proxy
+# Name: Traefik
+# Version: 2.11
+# Type: Required
+#
+# Description:
+# Traefik is a reverse proxy.
+# It's the responsible of taking all income trafic and derivate to
+# the different containers.
+# 
+# Documentation:
+# https://doc.traefik.io/traefik/v2.11/
+#
+###############################################################################
+
+
+dojo:
+  id: proxy                             # This MUST be lowercase.
+  tool: traefik                         # Use other proxies (at your own risk).
+  version: "v2.11"                      # Be careful with major upgrades.
+  domain: "localhost"                   # Overwriten by traefik-<server>.yml.
+  type: domain                          # Options: domain, subdomain, folder
+  
+images:
+  app: "traefik:{{ dojo.version }}"
+
+app:
+  network: "proxy"                      # Name to refer after in your apps.
+  ports:
+    http: 80
+    https: 443
+    api: 8080
+    redirect: true                      # When true, http -> https
+  api:
+    dashboard: true                     # Start a GUI in app.ports.api.
+    insecure: false                     # When true, no pwd is required.
+  pilot:
+    token: false                        # Set here your token if any.
+  certificate:
+    email: "yourMail@foo.org"           # Used for let's encrypt.
+    method: http                        # Options: https and tls (dns not yet).
+    staging: fase                       # True for "sandbox" (avoid banning).
+  debug:
+    level: "ERROR"
+  credentials:
+    username: "admin"                   # admin & htpasswd (double "$" to escape).
+    password: "$$apr1$$snawkpfe$$80McrwsF31DZr2aO6kyts1"  # Default: proxyPwd.
+  securize:                             # Set permissions to 600.
+    config: 
+      path: "{{ path.files.config }}/{{ dojo.id }}"
+      type: directory                   # Implies a recursive change.
+      mode: 600
+    environment: 
+      path: "{{ path.base.service }}/{{ dojo.id }}/.env"
+      type: file
+      mode: 400
