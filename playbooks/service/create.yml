@@ -6,6 +6,7 @@
   vars:
     siteParam: "{{ service }}"
     fileCreation: "{{ ansible_date_time.iso8601 }}"
+    hostName: "{{ ansible_hostname }}"
   vars_files:
     - ./configs/dojo.yml
     - ./services/{{ service }}.yml
@@ -22,7 +23,7 @@
 
     - name: If exists, load specific vars from service-host.yml
       include_vars:
-        file: ./services/{{ service }}-{{ ansible_hostname }}.yml
+        file: ./services/{{ hostName }}/{{ service }}.yml
         name: serviceHostVars
       ignore_errors: yes
       
