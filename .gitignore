@@ -1,7 +1,16 @@
 *.key
 .vault.key
 secrets
-inventory
+inventory/hosts.ini
+inventory/hosts.yml
+inventory/services/ada
+inventory/services/kalimero
+inventory/sites/ada
+inventory/sites/kalimero
+inventory/sites/test
+inventory/sites/base-ada.yml
+inventory/sites/base-kalimero.yml
+ansible.cfg
 venv
 tmp
 .git
