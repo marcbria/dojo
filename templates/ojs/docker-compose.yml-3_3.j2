@@ -28,8 +28,8 @@ services:
     volumes:
       - ./volumes/db:/var/lib/mysql
       - ./volumes/migration:/docker-entrypoint-initdb.d
+      - ./volumes/config/db.conf:/etc/mysql/conf.d/pkp.cnf
       # - ./volumes/logs/db:/var/log/mysql
-      # - ./volumes/config/db.charset.conf:/etc/mysql/conf.d/charset.cnf
     networks:
       - inside
     restart: unless-stopped

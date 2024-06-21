@@ -72,10 +72,10 @@ name                    = {{ allVars.pkp.database.name | default('ojs') | safe }
 debug                   = {{ allVars.pkp.database.debug | default('Off') | safe }}
 ; See: https://docs.pkp.sfu.ca/dev/release-notebooks/en/3.3-release-notebook#update-connection_charset
 client_charset          = utf-8
-conection_charset       = utf8
+connection_charset      = utf8
 ; port                  = 3306
-; unix_socket           = /var/run/mysqld/mysqld.sock
-; collation             = utf8_general_ci
+; unix_socket           = /var/run/mysqld/mysqld.sockconnection_charset = utf8
+; collation             = utf8mb4_general_ci
 debug                   = Off
 
 [cache]
