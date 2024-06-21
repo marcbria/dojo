@@ -105,12 +105,13 @@ dojo-run action site host *args:
 #
 # Multiplaybook: Creates a full site acording to the site's dictionary.
 dojo-create site host *args:
-    @ echo 'This will run playbooks: site-folders > config > apache > docker-compose > env > permissions.' 
+    @ echo 'This will run playbooks: site-folders > config > db > apache > docker-compose > env > permissions.' 
     @ echo "WARNING: Creating a site will overwrite data in the existing one!!"
     @ echo "Are you sure you like to run action "create" for [{{ site }}] on [{{ host }} - `dig +short {{ host }}`]?" 
     @ ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
      {{ dojoPath }}/site-folders.yml \
      {{ dojoPath }}/config.yml \
+     {{ dojoPath }}/db.yml \
      {{ dojoPath }}/docker-compose.yml \
      {{ dojoPath }}/apache.yml \
      {{ dojoPath }}/env.yml \

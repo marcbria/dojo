@@ -1,0 +1,22 @@
+---
+- name: Create DB's config file from the site's diccionary vars.
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    siteParam: "{{ site }}"
+    fileCreation: "{{ ansible_date_time.iso8601 }}"
+    hostName: "{{ ansible_hostname }}"
+  vars_files:
+    - ./configs/dojo.yml
+    - ./configs/secret.yml
+    - ./sites/base-{{ hostName }}.yml
+  tasks:
+    # sets "allVars" array from the site's diccionaries as follows:
+    #           baseHost > siteGeneric > siteHost > dojoVars.
+    - include: setAllVars.yml
+  
+    - name: Generate DB config file from template and dojo vars.
+      template:
+        src: "./templates/{{ allVars.dojo.tool }}/db.conf.j2"
+        dest: "{{ allVars.path.files.config }}/{{ allVars.dojo.id }}/db.conf"
