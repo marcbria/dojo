@@ -4,13 +4,19 @@
   gather_facts: yes
   vars:
     siteParam: "{{ site }}"
+    hostName: "{{ ansible_hostname }}"
   vars_files:
     - ./configs/dojo.yml
-    - ./sites/{{ siteParam }}.yml
+    - ./configs/secret.yml
+    - ./sites/base-{{ hostName }}.yml
   tasks:
+    # sets "allVars" array from the site's diccionaries as follows:
+    #           baseHost > siteGeneric > siteHost > dojoVars.
+    - include: setAllVars.yml
+
     - name: Check if the site directory exists
       stat:
-        path: "{{ path.base.sites }}/{{ dojo.id }}"
+        path: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
       register: site_dir_stat
 
     - name: Fail if site directory does not exist
@@ -23,7 +29,7 @@
         cmd: |
           docker compose {{ command }};
           docker compose ps
-        chdir: "{{ path.base.sites }}/{{ dojo.id }}"
+        chdir: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
       when: command in ['start', 'stop', 'restart', 'down', 'pull', 'pause', 'ps', 'unpause', 'build']
       register: docker_compose_output
 
@@ -32,7 +38,7 @@
         cmd: |
           docker compose up -d;
           docker compose ps
-        chdir: "{{ path.base.sites }}/{{ dojo.id }}"
+        chdir: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
       when: command in ['up']
       register: docker_compose_output
 
@@ -42,7 +48,7 @@
           docker compose stop;
           docker compose up -d;
           docker compose ps
-        chdir: "{{ path.base.sites }}/{{ dojo.id }}"
+        chdir: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
       when: command in ['clear']
       register: docker_compose_output
 

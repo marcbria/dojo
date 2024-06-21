@@ -1,35 +1,41 @@
 ---
-- name: Create a PKP's site folder structure based on site's diccionary vars.
+- name: Create a PKP's site folder/links structure based on site's diccionary vars.
   hosts: all
   become: yes
-  gather_facts: no
+  gather_facts: yes
   vars:
     siteParam: "{{ site }}"
-    fileCreation: "{{ ansible_date_time.iso8601 }}"  
+    fileCreation: "{{ ansible_date_time.iso8601 }}"
+    hostName: "{{ ansible_hostname }}"
   vars_files:
     - ./configs/dojo.yml
-    - ./sites/{{ site }}.yml
+    - ./configs/secret.yml
+    - ./sites/base-{{ hostName }}.yml
   tasks:
+    # sets "allVars" array from the site's diccionaries as follows:
+    #           baseHost > siteGeneric > siteHost > dojoVars.
+    - include: setAllVars.yml
+  
     - name: Ensure journal's essential folders exists
       file:
         path: "{{ item }}"
         state: directory
         mode: 0744
-        owner: "{{ user.run }}"
-        group: "{{ user.group }}"
+        owner: "{{ allVars.user.run }}"
+        group: "{{ allVars.user.group }}"
         force: yes
       loop:
-        - "{{ path.base.sites }}/{{ dojo.id }}"
-        - "{{ path.storage.backups }}/{{ dojo.id }}"
-        - "{{ path.storage.volumes }}/files"
+        - "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
+        - "{{ allVars.path.storage.backups }}/{{ allVars.dojo.id }}"
+        - "{{ allVars.path.storage.volumes }}/files"
 
     - name: Create journal's volume folders
       file:
-        path: "{{ item.value }}/{{ dojo.id }}"
+        path: "{{ item.value }}/{{ allVars.dojo.id }}"
         state: directory
         mode: 0744
-        owner: "{{ user.run }}"
-        group: "{{ user.group }}"
+        owner: "{{ allVars.user.run }}"
+        group: "{{ allVars.user.group }}"
         recurse: yes
       with_dict: 
         - "{{ path.volumes }}"
@@ -38,14 +44,14 @@
 
     - name: Create journal's volume folders for files
       file:
-        path: "{{ item.value }}/{{ dojo.id }}"
+        path: "{{ item.value }}/{{ allVars.dojo.id }}"
         state: directory
         mode: 0744
-        owner: "{{ user.run }}"
-        group: "{{ user.group }}"
+        owner: "{{ allVars.user.run }}"
+        group: "{{ allVars.user.group }}"
         recurse: yes
       with_dict: 
-        - "{{ path.files }}"
+        - "{{ allVars.path.files }}"
       tags:
         - files_directories
 
@@ -56,7 +62,7 @@
         owner: "999"
         group: "1002"
       loop:
-        - "{{ path.volumes.db }}"
+        - "{{ allVars.path.volumes.db }}"
       tags:
         - volumes_db
 
@@ -68,7 +74,7 @@
         group: "1002"
         recurse: yes
       loop:
-        - "{{ path.volumes.db }}/{{ dojo.id }}"
+        - "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id }}"
       tags:
         - volumes_db
 
@@ -79,13 +85,13 @@
         owner: "100"
         group: "101"
       with_dict: 
-        - "{{ path.files }}"
+        - "{{ allVars.path.files }}"
       tags:
         - volumes_www
 
     - name: Assign ownership for site's Web files
       file:
-        path: "{{ item.value }}/{{ dojo.id }}"
+        path: "{{ item.value }}/{{ allVars.dojo.id }}"
         state: directory
         owner: "100"
         group: "101"
@@ -101,9 +107,9 @@
         dest: "{{ item.link }}"
         state: link
       loop: 
-        - { link: "{{ path.base.sites }}/{{ dojo.id }}/volumes", target: "{{ path.volumes.all }}/{{ dojo.id }}" }
-        - { link: "{{ path.volumes.all }}/{{ dojo.id }}/db", target: "{{ path.volumes.db }}/{{ dojo.id }}" }
-        - { link: "{{ path.volumes.all }}/{{ dojo.id }}/logs", target: "{{ path.volumes.logs }}/{{ dojo.id }}" }
-        - { link: "{{ path.volumes.all }}/{{ dojo.id }}/config", target: "{{ path.files.config }}/{{ dojo.id }}" }
-        - { link: "{{ path.volumes.all }}/{{ dojo.id }}/public", target: "{{ path.files.public }}/{{ dojo.id }}" }
-        - { link: "{{ path.volumes.all }}/{{ dojo.id }}/private", target: "{{ path.files.private }}/{{ dojo.id }}" }
+        - { link: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}/volumes", target: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/db", target: "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/logs", target: "{{ allVars.path.volumes.logs }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/config", target: "{{ allVars.path.files.config }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/public", target: "{{ allVars.path.files.public }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/private", target: "{{ allVars.path.files.private }}/{{ allVars.dojo.id }}" }

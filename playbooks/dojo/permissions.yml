@@ -1,14 +1,20 @@
 - name: Set permissions in journal's folders structure
   hosts: all
   become: true
-  gather_facts: no
+  gather_facts: yes
   vars:
     siteParam: "{{ site }}"
+    fileCreation: "{{ ansible_date_time.iso8601 }}"
+    hostName: "{{ ansible_hostname }}"
   vars_files:
     - ./configs/dojo.yml
-    - ./sites/{{ site }}.yml
+    - ./configs/secret.yml
+    - ./sites/base-{{ hostName }}.yml
   tasks:
-
+    # sets "allVars" array from the site's diccionaries as follows:
+    #           baseHost > siteGeneric > siteHost > dojoVars.
+    - include: setAllVars.yml
+  
     - name: Assign user and group for BD folders
       file:
         path: "{{ item }}"
@@ -18,7 +24,7 @@
         group: "1002"
         recurse: yes
       loop:
-        - "{{ path.volumes.db }}/{{ dojo.id | lower}}"
+        - "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id | lower}}"
       tags:
         - volumes_db
 
@@ -31,8 +37,8 @@
         group: "101"
         recurse: yes
       loop:
-        - "{{ path.files.config }}/{{ dojo.id | lower }}"
-        - "{{ path.files.public }}/{{ dojo.id | lower }}"
-        - "{{ path.files.private }}/{{ dojo.id | lower }}"
+        - "{{ allVars.path.files.config }}/{{ allVars.dojo.id | lower }}"
+        - "{{ allVars.path.files.public }}/{{ allVars.dojo.id | lower }}"
+        - "{{ allVars.path.files.private }}/{{ allVars.dojo.id | lower }}"
       tags:
         - volumes_www
