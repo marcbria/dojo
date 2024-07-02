@@ -1,0 +1,17 @@
+#########################################################################
+#
+# Template:     (dojo)/templates/config.db.j2
+# Host:         (site)/volumes/config/db.custom.cnf
+# Container:    /etc/mysql/conf.d/db.custom.cnf
+#
+# Site:         {{ siteParam }}
+# Tool:         {{ allVars.dojo.tool }}
+# Version:      {{ allVars.dojo.version }}
+# Creation:     {{ fileCreation }}
+#
+#########################################################################
+
+[mysqld]
+character-set-server    = {{ allVars.database.character_set_server | default('utf8mb4') | safe }}
+collation-server        = {{ allVars.database.collation_server | default('utf8mb4_general_ci') | safe }}
+skip-character-set-client-handshake

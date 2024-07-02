@@ -18,5 +18,5 @@
   
     - name: Generate DB config file from template and dojo vars.
       template:
-        src: "./templates/{{ allVars.dojo.tool }}/db.conf.j2"
-        dest: "{{ allVars.path.files.config }}/{{ allVars.dojo.id }}/db.conf"
+        src: "./templates/{{ allVars.dojo.tool }}/config.db.j2"
+        dest: "{{ allVars.path.files.config }}/{{ allVars.dojo.id }}/db.custom.cnf"
