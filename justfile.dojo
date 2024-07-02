@@ -14,6 +14,7 @@ dojo-tldr:
 
     # $ just dojo-run create-journal $JOURNAL $SERVER  # Get a full OJS installed (define vars first)
     # $ just dojo-run config $JOURNAL $SERVER          # Creates a config.inc.php for journalName in the remoteServer.
+    # $ just dojo-run config.php $JOURNAL $SERVER      # Creates a php.custom.ini for journalName in the remoteServer.
     @ # TBD: $ dojo backup $JOURNAL                    # Backup a full journal
     @ # TBD: $ dojo clone $JOURNAL journalclone        # Clone a journal
     @ # TBD: $ dojo upgrade journalclone 3.4.0-6       # Upgrade a journal to the s
@@ -97,11 +98,14 @@ _dojo-site-old action name:
 # 
 # Runs an action (playbook) with the specified site (dictionary) in the selected host.
 dojo-run action site host *args:
-    ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/{{ vaultKey }} {{ dojoPath }}/{{ action }}.yml -e "site={{ site }}" {{ args }}
+    ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/{{ vaultKey }} {{ dojoPath }}/{{ action }}.yml \
+     -e "site={{ site }}" \
+     -e "ansible_become_password=$(cat ./configs/.vault.key)" \
+     {{ args }}
 
 
 # Creates a full site with acording to the dictionary in sites/<site>.yml 
-# Following playbooks will be called: site-folders > config > apache > docker-compose
+# Following playbooks will be called: site-folders > config > db > apache > docker-compose
 #
 # Multiplaybook: Creates a full site acording to the site's dictionary.
 dojo-create site host *args:
@@ -109,17 +113,78 @@ dojo-create site host *args:
     @ echo "WARNING: Creating a site will overwrite data in the existing one!!"
     @ echo "Are you sure you like to run action "create" for [{{ site }}] on [{{ host }} - `dig +short {{ host }}`]?" 
     @ ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
-     {{ dojoPath }}/site-folders.yml \
-     {{ dojoPath }}/config.yml \
-     {{ dojoPath }}/db.yml \
-     {{ dojoPath }}/docker-compose.yml \
-     {{ dojoPath }}/apache.yml \
-     {{ dojoPath }}/env.yml \
-     {{ dojoPath }}/permissions.yml \
-     -e "site={{ site }}" -K {{ args }}
+      {{ dojoPath }}/site-folders.yml \
+      {{ dojoPath }}/config.yml \
+      {{ dojoPath }}/config.db.yml \
+      {{ dojoPath }}/config.php.yml \
+      {{ dojoPath }}/docker-compose.yml \
+      {{ dojoPath }}/apache.yml \
+      {{ dojoPath }}/env.yml \
+      {{ dojoPath }}/permissions.yml \
+      -e "site={{ site }}" \
+      -e "ansible_become_password=$(cat ./configs/.vault.key)" \
+      -K {{ args }}
 
+# Creates or recreates all the sites from "siteList" file, acording to the dictionaries in sites/<site>.yml 
+# Script also calls sync-ugrade at the end to ensure data is sync and OJS is upgraded to last version.
+# If you only like to run once, you can do it calling "dojo-create" job and "sync-upgrade" playbook.
+# IMPORTANT: Sudo password won't be requested (it's taken from configs/.vault.key).
+#
+# Multiplaybook: Creates or recreates all sites listed in "siteList".
+dojo-create-batch siteList host *args:
+    @ echo 'This will run playbooks: site-folders > config > db > apache > docker-compose > env > permissions > sync-ugrade.' 
+    @ echo "WARNING: Creating sites will overwrite data for the existing one!!"
+    @ read -p "Are you sure you like to run action "create" for ALL SITES in [{{ siteList }}] on [{{ host }} - `dig +short {{ host }}`]? [y/N] " confirm; \
+    if [ ${confirm:-no} = 'y' ]; then \
+        while IFS= read -r site; do \
+            echo ""; \
+            echo "==============================================="; \
+            echo "---> BUILDING SITE: $site"; \
+            echo "==============================================="; \
+            echo "COMMAND:"; \
+                echo "ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
+                {{ dojoPath }}/site-folders.yml \
+                {{ dojoPath }}/config.yml \
+                {{ dojoPath }}/config.db.yml \
+                {{ dojoPath }}/config.php.yml \
+                {{ dojoPath }}/docker-compose.yml \
+                {{ dojoPath }}/apache.yml \
+                {{ dojoPath }}/env.yml \
+                {{ dojoPath }}/permissions.yml \
+                {{ dojoPath }}/sync-upgrade.yml \
+                -e \"site=$site ansible_become_password=[./configs/.vault.key]\" \
+                {{ args }}"; \
+            echo "LOG:"; \
+                ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
+                {{ dojoPath }}/site-folders.yml \
+                {{ dojoPath }}/config.yml \
+                {{ dojoPath }}/config.db.yml \
+                {{ dojoPath }}/config.php.yml \
+                {{ dojoPath }}/docker-compose.yml \
+                {{ dojoPath }}/apache.yml \
+                {{ dojoPath }}/env.yml \
+                {{ dojoPath }}/permissions.yml \
+                {{ dojoPath }}/sync-upgrade.yml \
+                -e "site=$site" \
+                -e "ansible_become_password=$(cat ./configs/.vault.key)" \
+                {{ args }}; \
+        done < {{ siteList }}; \
+    else \
+        echo "EXIT: Well done! A coward is good for two battles."; \
+    fi
+
+
+#fi 2>&1 | tee -i -a batchCreation.log;
+#
 # Manages the site
 dojo-manage site host command *args:
     ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
-     {{ dojoPath }}/manage.yml \
-     -e "site={{ site }}" -e "host={{ host }}"  -e "command={{ command }}" -K {{ args }}
+      {{ dojoPath }}/manage.yml \
+      -e "site={{ site }}" \
+      -e "ansible_become_password=$(cat ./configs/.vault.key)" \
+      -e "host={{ host }}"  \
+      -e "command={{ command }}" \
+      {{ args }}
+
+
+    
