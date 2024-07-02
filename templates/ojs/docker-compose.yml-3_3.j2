@@ -28,7 +28,7 @@ services:
     volumes:
       - ./volumes/db:/var/lib/mysql
       - ./volumes/migration:/docker-entrypoint-initdb.d
-      - ./volumes/config/db.conf:/etc/mysql/conf.d/pkp.cnf
+      - ./volumes/config/db.custom.cnf:/etc/mysql/conf.d/db.custom.cnf
       # - ./volumes/logs/db:/var/log/mysql
     networks:
       - inside
@@ -43,14 +43,15 @@ services:
     volumes:
       # Sync time between docker and host:
       - /etc/localtime:/etc/localtime
+      # Files and logs:
       - ./volumes/private:/var/www/files
       - ./volumes/public:/var/www/html/public
       - ./volumes/logs/app:/var/log/apache2
+      # Config files:
       - ./volumes/config/config.inc.php:/var/www/html/config.inc.php
       - ./volumes/config/apache.conf:/etc/apache2/conf.d/{{ allVars.dojo.tool }}.conf
+      - ./volumes/config/php.custom.ini:/etc/php81/conf.d/0-ojs.ini
       # - ./config/apache.htaccess:/var/www/html/.htaccess
-      # - ./volumes/config/php.custom.ini:/etc/php7/conf.d/0-custom.ini
-
     restart: unless-stopped
 
     networks:
