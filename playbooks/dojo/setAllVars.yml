@@ -43,9 +43,10 @@
 # - name: DEBUG - Shows some vars
 #   debug:
 #     msg:
-#       - "allVars: {{ allVars }}"
-#       - "src: ./templates/{{ allVars.dojo.tool }}/apache.ojs.conf-{{ versionMajorMinor }}-{{ allVars.dojo.type }}.j2"
-#       - "dest: {{ allVars.path.files.config }}/{{ allVars.dojo.id }}/apache.conf"
+#       - "GETVARS: ./sites/{{ hostName }}/{{ siteParam }}.yml" 
+#       - "ALLVARS: {{ allVars }}"
+#       - "SRC: ./templates/{{ allVars.dojo.tool }}/apache.ojs.conf-{{ versionMajorMinor }}-{{ allVars.dojo.type }}.j2"
+#       - "DEST: {{ allVars.path.files.config }}/{{ allVars.dojo.id }}/apache.conf"
 
 - name: Ensure site's directory exists
   file:
