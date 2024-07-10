@@ -15,3 +15,4 @@
 character-set-server    = {{ allVars.database.character_set_server | default('utf8mb4') | safe }}
 collation-server        = {{ allVars.database.collation_server | default('utf8mb4_general_ci') | safe }}
 skip-character-set-client-handshake
+innodb_use_native_aio   = 0
