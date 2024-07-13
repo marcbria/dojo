@@ -10,6 +10,7 @@ inventory/sites/kalimero
 inventory/sites/test
 inventory/sites/base-ada.yml
 inventory/sites/base-kalimero.yml
+inventory/redi
 ansible.cfg
 venv
 tmp
@@ -17,4 +18,4 @@ tmp
 *.swp
 2delete
 logs
-batchSync-*
+*batchSync-*
