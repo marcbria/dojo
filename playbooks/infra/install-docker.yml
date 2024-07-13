@@ -1,3 +1,4 @@
+---
 - name: Installs Docker and Docker Compose using the ansible-docker role
   hosts: all
   become: yes

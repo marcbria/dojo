@@ -2,6 +2,7 @@
 - name: Update and upgrade Debian packages and get summary
   hosts: all
   become: yes
+
   tasks:
     - name: Update package list
       apt:
