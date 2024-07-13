@@ -35,7 +35,7 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
     DocumentRoot /var/www/html
     # BUT, the URL includes a folder.
     # Trick 02: Apache will ignore the folder prefix to serve webroot files.
-    Alias /{{ allVars.dojo.id }} /var/www/html
+    Alias /{{ allVars.proxy.pathprefix }} /var/www/html
 
     <Directory /var/www/html>
         Options FollowSymLinks
@@ -50,7 +50,7 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
         RewriteCond %{REQUEST_URI} !/index.php
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ {{ allVars.dojo.id }}/index.php/$1 [QSA,L]
+        RewriteRule ^(.*)$ {{ allVars.proxy.pathprefix }}/index.php/$1 [QSA,L]
 
     </Directory>
 

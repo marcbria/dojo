@@ -56,9 +56,9 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
         RewriteRule ^/?$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index [L,R=307]
 
         # Redirects regular API calls to journal context
-        RewriteCond %{REQUEST_URI} ^\/{{ allVars.dojo.id}}\/api\/v1
+        RewriteCond %{REQUEST_URI} ^\/{{ allVars.proxy.pathprefix }}\/api\/v1
         RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.dojo.id}}/index.php/{{ allVars.proxy.pathprefix }}/$1 [QSA,L,R=307]
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/{{ allVars.proxy.pathprefix }}/$1 [QSA,L,R=307]
 
         # Redirects new "_API" calls to site
         # See: https://docs.pkp.sfu.ca/dev/api/ojs/3.3#tag/Access
@@ -77,12 +77,11 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
         RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/$1 [QSA,L,R=307]
     {% endif %}
 
-
         # Redirects root folder to journal context
         RewriteCond %{REQUEST_URI} !/{{ allVars.proxy.pathprefix }}/index.php
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ index.php/{{ allVars.dojo.id }}/$1 [QSA,L]
+        RewriteRule ^(.*)$ index.php/{{ allVars.proxy.pathprefix }}/$1 [QSA,L]
 
         # RESTful rule: Includes index.php (if is not done yet)
         RewriteCond %{REQUEST_URI} !/index.php
