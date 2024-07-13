@@ -8,6 +8,7 @@ remoteHost          := 'testing'            # Set your default remote server.
 rootPath            := `pwd`
 vaultPath           := './configs/secret.yml'
 vaultKey            := './configs/.vault.key'
+inventoryPath       := rootPath / 'inventory'
 
 # Infrastructure vars
 infraPath           := rootPath / 'playbooks/infra'

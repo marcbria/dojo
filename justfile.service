@@ -50,7 +50,7 @@ service-vault action:
 # 
 # Runs an action (playbook) with the specified site (dictionary) in the selected host.
 service-run action site host *args:
-    ansible-playbook -i {{ host }}, --vault-password-file {{ servicePath }}/{{ vaultKey }} {{ dojoPath }}/{{ action }}.yml -e "site={{ site }}" {{ args }}
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ servicePath }}/{{ vaultKey }} {{ dojoPath }}/{{ action }}.yml -e "site={{ site }}" {{ args }}
 
 
 # Creates a full service acording to the dictionary in inventory/services/<service>.yml 
@@ -59,13 +59,13 @@ service-create service host *args:
     @ echo "WARNING: Creating a service will overwrite existing one."
     @ echo "Are you sure you like to run playbook create.yml \
     for [{{ service }}] on [{{ host }}]?" && \
-    ansible-playbook -i {{ host }}, --vault-password-file {{ servicePath }}/{{ vaultKey }} \
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ servicePath }}/{{ vaultKey }} \
      {{ servicePath }}/create.yml \
      -e "service={{ service }}" -e "host={{ host }}" -K {{ args }}
 
 
 # Manages the service 
 service-manage service host command *args:
-    ansible-playbook -i {{ host }}, --vault-password-file {{ servicePath }}/{{ vaultKey }} \
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ servicePath }}/{{ vaultKey }} \
      {{ servicePath }}/manage.yml \
      -e "service={{ service }}" -e "host={{ host }}"  -e "command={{ command }}" -K {{ args }}

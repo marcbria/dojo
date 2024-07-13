@@ -38,5 +38,5 @@ test-ls:
 # 
 # Runs an action (playbook) with the specified site (dictionary) in the selected host.
 test-run action host *args:
-    ansible-playbook -i {{ host }}, --vault-password-file \
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file \
         {{ testPath }}/{{ vaultKey }} {{ testPath }}/{{ action }}.yml -K {{ args }}

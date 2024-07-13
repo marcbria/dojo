@@ -82,7 +82,7 @@ _dojo-site-old action name:
     echo "{{ action }} - {{ name }}"
     # case ${action} in 
     #     create-config) 
-    #         ansible-playbook -i host, --vault-password-file {{ vaultKey }} ./config.yml -e "site={{ name }}" 
+    #         ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ name }} --vault-password-file {{ vaultKey }} ./config.yml -e "site={{ name }}" 
     #     ;; 
     #     create-all) 
     #         echo "Create ALL: {{ action }} - {{ name }}" 
@@ -98,7 +98,7 @@ _dojo-site-old action name:
 # 
 # Runs an action (playbook) with the specified site (dictionary) in the selected host.
 dojo-run action site host *args:
-    ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/{{ vaultKey }} {{ dojoPath }}/{{ action }}.yml \
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} {{ dojoPath }}/{{ action }}.yml \
      -e "site={{ site }}" \
      -e "ansible_become_password=$(cat ./configs/.vault.key)" \
      {{ args }}
@@ -112,7 +112,7 @@ dojo-create site host *args:
     @ echo 'This will run playbooks: site-folders > config > db > apache > docker-compose > env > permissions.' 
     @ echo "WARNING: Creating a site will overwrite data in the existing one!!"
     @ echo "Are you sure you like to run action "create" for [{{ site }}] on [{{ host }} - `dig +short {{ host }}`]?" 
-    @ ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
+    @ ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
       {{ dojoPath }}/site-folders.yml \
       {{ dojoPath }}/config.yml \
       {{ dojoPath }}/config.db.yml \
@@ -142,7 +142,7 @@ dojo-create-batch siteList host *args:
             echo "---> BUILDING SITE: $site"; \
             echo "==============================================="; \
             echo "COMMAND:"; \
-                echo "ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
+                echo "ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
                 {{ dojoPath }}/site-folders.yml \
                 {{ dojoPath }}/config.yml \
                 {{ dojoPath }}/config.db.yml \
@@ -155,7 +155,7 @@ dojo-create-batch siteList host *args:
                 -e \"site=$site ansible_become_password=[./configs/.vault.key]\" \
                 {{ args }}"; \
             echo "LOG:"; \
-                ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
+                ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
                 {{ dojoPath }}/site-folders.yml \
                 {{ dojoPath }}/config.yml \
                 {{ dojoPath }}/config.db.yml \
@@ -178,7 +178,7 @@ dojo-create-batch siteList host *args:
 #
 # Manages the site
 dojo-manage site host command *args:
-    ansible-playbook -i {{ host }}, --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
       {{ dojoPath }}/manage.yml \
       -e "site={{ site }}" \
       -e "ansible_become_password=$(cat ./configs/.vault.key)" \

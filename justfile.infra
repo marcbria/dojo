@@ -47,7 +47,7 @@ infra-install-ansible:
 
 # Runs an action (playbook) from /playbooks/infra as root.
 infra-run action host *args:
-    ansible-playbook -i {{ host }}, {{ infraPath }}/{{ action }}.yml -K {{ args }}
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} {{ infraPath }}/{{ action }}.yml -K {{ args }}
 
 
 # Shows the description of the specified playbook. Run "just infra-list" for a list.
@@ -57,9 +57,9 @@ infra-show playbook:
 
 # Runs a dist-upgrade, remove unused dependences and reboot.
 infra-dist-upgrade host:
-    ansible-playbook -i {{ host }}, {{ infraPath }}/dist-upgrade.yml -K
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} {{ infraPath }}/dist-upgrade.yml -K
 
 
 # Runs an "apt update" and "apt ugrade" and show the result.
 infra-update-upgrade host:
-    ansible-playbook -i {{ host }}, {{ infraPath }}/update-upgrade.yml -K
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} {{ infraPath }}/update-upgrade.yml -K
