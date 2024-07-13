@@ -70,6 +70,8 @@ all:
       hosts:
         test01:
           ansible_host: 192.168.0.1
+        localhost:
+          ansible_connection: local
 ```
 
 Take a look to [those examples](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/yaml_inventory.html#examples) to create your own inventory file.
@@ -83,16 +85,15 @@ With `just` you can install ALL the underlaying infrastructure as follows:
 $ just infra-install-ansible                      # Install ansible in local machine.
 
 $ REMOTESERVER=<remoteServer>                     # Set env-vars to make it more readable
-$ just infra-run ps $REMOTESERVER -K              # Test if remote server is reachable.
+$ just infra-run info-ps $REMOTESERVER -K         # Test if remote server is reachable.
 $ just infra-dist-upgrade $REMOTESERVER           # Update the server.
 
 $ just infra-run install-basic $REMOTESERVER -K   # Essential tooling (curl,rsync,pip...)
 
 $ just infra-run install-docker $REMOTESERVER -K  # Install docker & docker-compose.
-$ just infra-run info docker $REMOTESERVER -K     # Test docker and docker-compose.
+$ just infra-run info-docker $REMOTESERVER -K     # Test docker and docker-compose.
 
 $ just infra-run create-user $REMOTESERVER        # Create docker user/group and folders.
-$ just infra-run create-folders $REMOTESERVER     # Creates the required folder structure.
 ```
 
 ### Install the reverse proxy
