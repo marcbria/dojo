@@ -11,7 +11,7 @@ To do this, the project offer a set of tools to convert a brand new Debian (or a
 
 Here you can see a demo showning how a journal is created and installed:
 
-https://player.vimeo.com/video/946092633
+[See video in Vimeo](https://player.vimeo.com/video/946092633)
 
 Project is created with the following pillars in mind:
 - **Standarization:** All decisions regarding to technologies and development are taken thinking in stadards first. When there is no standards to apply, the decisions are homogeneous.
