@@ -122,27 +122,27 @@ allowed_html            = "{{ allVars.pkp.security.allowed_html | default('a[hre
 
 [email]
 smtp                    = {{ allVars.pkp.email.smtp | default('Off') | safe }}
-; smtp_server             = "{{ allVars.pkp.email.smtp_server | default('mail.example.com') | safe }}"
-; smtp_port               = "{{ allVars.pkp.email.smtp_port | default('25') | safe }}"
-; smtp_auth               = "{{ allVars.pkp.email.smtp_auth | default('') | safe }}"
-; smtp_username           = "{{ allVars.pkp.email.smtp_username | default('') | safe }}"
-; smtp_password           = "{{ allVars.pkp.email.smtp_password | default('') | safe }}"
-; smtp_authtype           = "{{ allVars.pkp.email.smtp_authtype | default('') | safe }}"
-; smtp_oauth_provider     = "{{ allVars.pkp.email.smtp_oauth_provider | default('') | safe }}"
-; smtp_oauth_email        = "{{ allVars.pkp.email.smtp_oauth_email | default('') | safe }}"
-; smtp_oauth_clientid     = "{{ allVars.pkp.email.smtp_oauth_clientid | default('') | safe }}"
-; smtp_oauth_clientsecret = "{{ allVars.pkp.email.smtp_oauth_clientsecret | default('') | safe }}"
-; smtp_oauth_refreshtoken = "{{ allVars.pkp.email.smtp_oauth_refreshtoken | default('') | safe }}"
-; smtp_suppress_cert_check = "{{ allVars.pkp.email.smtp_suppress_cert_check | default('On') | safe }}"
-; allow_envelope_sender   = "{{ allVars.pkp.email.allow_envelope_sender | default('Off') | safe }}"
-; default_envelope_sender = "{{ allVars.pkp.email.default_envelope_sender | default('my_address@my_host.com') | safe }}"
-; force_default_envelope_sender = "{{ allVars.pkp.email.force_default_envelope_sender | default('Off') | safe }}"
-; force_dmarc_compliant_from = "{{ allVars.pkp.email.force_dmarc_compliant_from | default('Off') | safe }}"
-; dmarc_compliant_from_displayname = "{{ allVars.pkp.email.dmarc_compliant_from_displayname | default('%n via %s') | safe }}"
-; time_between_emails     = "{{ allVars.pkp.email.time_between_emails | default('3600') | safe }}"
-; max_recipients          = "{{ allVars.pkp.email.max_recipients | default('10') | safe }}"
-; require_validation      = "{{ allVars.pkp.email.require_validation | default('Off') | safe }}"
-; validation_timeout      = "{{ allVars.pkp.email.validation_timeout | default('14') | safe }}"
+smtp_server             = "{{ allVars.pkp.email.smtp_server | default('mail.example.com') | safe }}"
+smtp_port               = "{{ allVars.pkp.email.smtp_port | default('25') | safe }}"
+smtp_auth               = "{{ allVars.pkp.email.smtp_auth | default('') | safe }}"
+smtp_username           = "{{ allVars.pkp.email.smtp_username | default('') | safe }}"
+smtp_password           = "{{ vault.general.pkp.SMTP_PASS | default('') | safe }}"
+smtp_authtype           = "{{ allVars.pkp.email.smtp_authtype | default('') | safe }}"
+smtp_oauth_provider     = "{{ allVars.pkp.email.smtp_oauth_provider | default('') | safe }}"
+smtp_oauth_email        = "{{ allVars.pkp.email.smtp_oauth_email | default('') | safe }}"
+smtp_oauth_clientid     = "{{ allVars.pkp.email.smtp_oauth_clientid | default('') | safe }}"
+smtp_oauth_clientsecret = "{{ allVars.pkp.email.smtp_oauth_clientsecret | default('') | safe }}"
+smtp_oauth_refreshtoken = "{{ allVars.pkp.email.smtp_oauth_refreshtoken | default('') | safe }}"
+smtp_suppress_cert_check = "{{ allVars.pkp.email.smtp_suppress_cert_check | default('On') | safe }}"
+allow_envelope_sender   = "{{ allVars.pkp.email.allow_envelope_sender | default('Off') | safe }}"
+default_envelope_sender = "{{ allVars.pkp.email.default_envelope_sender | default('my_address@my_host.com') | safe }}"
+force_default_envelope_sender = "{{ allVars.pkp.email.force_default_envelope_sender | default('Off') | safe }}"
+force_dmarc_compliant_from = "{{ allVars.pkp.email.force_dmarc_compliant_from | default('Off') | safe }}"
+dmarc_compliant_from_displayname = "{{ allVars.pkp.email.dmarc_compliant_from_displayname | default('%n via %s') | safe }}"
+time_between_emails     = "{{ allVars.pkp.email.time_between_emails | default('3600') | safe }}"
+max_recipients          = "{{ allVars.pkp.email.max_recipients | default('10') | safe }}"
+require_validation      = "{{ allVars.pkp.email.require_validation | default('Off') | safe }}"
+validation_timeout      = "{{ allVars.pkp.email.validation_timeout | default('14') | safe }}"
 
 [search]
 min_word_length         = {{ allVars.pkp.search.min_word_length | default('3') | safe }}
@@ -156,7 +156,7 @@ results_per_keyword     = {{ allVars.pkp.search.results_per_keyword | default('5
 
 [oai]
 oai                     = {{ allVars.pkp.oai.oai | default ('On') | safe }}
-repository_id           = ojs.{{ allVars.dojo.domain | default ('localhost') | safe }}
+repository_id           = {{ allVars.pkp.oai.id | default ('ojs.localhost') | safe }}
 oai_max_records         = {{ allVars.pkp.oai.oai_max_records | default ('100') | safe }}
 
 [interface]
