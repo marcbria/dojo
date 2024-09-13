@@ -1,0 +1,20 @@
+dojo:
+  id: studiaaurea                   # This MUST be lowercase.
+  domain: "ada-studiaaurea.precarietat.net"
+  type: domain-noslug               # How the url will be managed?
+
+plugins:
+  type: shared-plugins              # How pluguins will be managed?
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`ada-studiaaurea.precarietat.net`"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://ada-studiaaurea.precarietat.net"
+    base_url_index: "https://ada-studiaaurea.precarietat.net/index"
+    base_url_journal: "https://ada-studiaaurea.precarietat.net"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"

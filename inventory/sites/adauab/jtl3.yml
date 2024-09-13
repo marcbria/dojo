@@ -1,0 +1,25 @@
+## Objetivo: Revista réplica de jtl3
+## Modelo de revista: folder + RESTful + noSlug
+## URL: https://ada-revistes.precarietat.net/jtl3
+
+dojo:
+  id: jtl3                          # This MUST be lowercase.
+  domain: "ada-revistes.precarietat.net"
+  type: folder-noslug               # How the url will be managed?
+
+plugins:
+  type: shared-plugins              # How pluguins will be managed?
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`ada-revistes.precarietat.net`"
+  pathprefix: "jtl3"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://ada-revistes.precarietat.net/jtl3"
+    base_url_index: "https://ada-revistes.precarietat.net/jtl3/index"
+    base_url_journal: "https://ada-revistes.precarietat.net/jtl3"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"

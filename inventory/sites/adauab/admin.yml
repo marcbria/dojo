@@ -1,0 +1,20 @@
+dojo:
+  id: admin                         # This MUST be lowercase.
+  domain: "ada-admin.precarietat.net"
+  type: domain-noslug               # How the url will be managed?
+
+plugins:
+  type: shared-plugins              # How pluguins will be managed?
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`ada-admin.precarietat.net`"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://ada-admin.precarietat.net"
+    base_url_index: "https://ada-admin.precarietat.net/index"
+    base_url_journal: "https://ada-admin.precarietat.net"
+    scheduled_tasks: "Off"
+    restful_urls: "On"
+    enable_beacon: "Off"

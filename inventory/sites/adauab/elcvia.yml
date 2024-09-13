@@ -1,0 +1,20 @@
+dojo:
+  id: elcvia                       # This MUST be lowercase.
+  domain: "ada-elcvia.precarietat.net"
+  type: domain-noslug               # How the url will be managed?
+
+plugins:
+  type: shared-plugins              # How pluguins will be managed?
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`ada-elcvia.precarietat.net`"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://ada-elcvia.precarietat.net"
+    base_url_index: "https://ada-elcvia.precarietat.net/index"
+    base_url_journal: "https://ada-elcvia.precarietat.net"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"

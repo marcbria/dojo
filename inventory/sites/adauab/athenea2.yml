@@ -1,0 +1,20 @@
+dojo:
+  id: athenea                       # This MUST be lowercase.
+  domain: "atheneadigital.net"
+  type: domain-noslug               # How the url will be managed?
+
+plugins:
+  type: shared-plugins              # How pluguins will be managed?
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`atheneadigital.net`"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://atheneadigital.net"
+    base_url_index: "https://atheneadigital.net/index"
+    base_url_journal: "https://atheneadigital.net"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"

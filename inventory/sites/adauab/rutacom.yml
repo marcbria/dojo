@@ -1,0 +1,25 @@
+## Objetivo: Revista réplica de rutacom
+## Modelo de revista: folder + RESTful + noSlug
+## URL: https://ada-revistes.precarietat.net/rutacom
+
+dojo:
+  id: rutacom                       # This MUST be lowercase.
+  domain: "ada-revistes.precarietat.net"
+  type: folder-noslug               # How the url will be managed?
+
+plugins:
+  type: shared-plugins              # How pluguins will be managed?
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`ada-revistes.precarietat.net`"
+  pathprefix: "rutacom"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://ada-revistes.precarietat.net/rutacom"
+    base_url_index: "https://ada-revistes.precarietat.net/rutacom/index"
+    base_url_journal: "https://ada-revistes.precarietat.net/rutacom"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"

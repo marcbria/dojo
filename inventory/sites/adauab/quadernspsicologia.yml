@@ -1,0 +1,20 @@
+dojo:
+  id: quadernspsicologia                       # This MUST be lowercase.
+  domain: "ada-quadernspsicologia.precarietat.net"
+  type: domain-noslug               # How the url will be managed?
+
+plugins:
+  type: shared-plugins              # How pluguins will be managed?
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`ada-quadernspsicologia.precarietat.net`"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://ada-quadernspsicologia.precarietat.net"
+    base_url_index: "https://ada-quadernspsicologia.precarietat.net/index"
+    base_url_journal: "https://ada-quadernspsicologia.precarietat.net"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"

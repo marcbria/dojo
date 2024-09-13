@@ -1,0 +1,101 @@
+# This is the base configuration for all sites in this host.
+# Set here all the vars that WILL BE THE SAME for all your journals.
+#
+# About dictionary preferece: When creating Dictionary keep in mind that...
+# - Variables are combined/overriden as follows: baseHost (this file) > siteGeneric > siteHost > dojoVars
+# - Refered variables (ie: proxy.domains) are only possible between sections (ansible limitation) and see next...
+# - IMPORTANT: Refered variables need to be reset if the origin changes (ie: if you change dojo.domain in <site>.yml)
+# - When applies, variables follows names and structure from config.inc.php sections.
+# - Some sections are intentionaly left empty as a reference.
+
+dojo:
+  id: demo                # This MUST be lowercase. To be defined in journalname.yml
+  tool: ojs
+#  version: "stable-3_3_0"
+  version: "3_3_0-17"
+  versionFamily: "3_3_0"
+  domain: "sub.foo.org"   # Overwride in journalname.yml
+  type: domain            # How the url will be managed?
+                          # domain: Domain or subdomain (ie: https://sub.foo.org/journal)
+                          # domain-noslug: Remove journalSlug (ie: https://sub.foo.org)
+                          # folder: Folder installation (ie: https://foo.org/folder/journal)
+                          # folder-noslug: Remove journalSlug (ie: https://foo.org/folder)
+
+plugins:
+  type: shared-plugins    # How pluguins will be managed?
+                          # - shared-plugins: All plugins are common.
+                          # - shared-themes: Only themes folder is common.
+                          # - volume-plugins: Persistent volume will for all plugins.
+                          # - volume-themes: Persistent volume for themes.
+                          # - container: Volatile plugins in the container (Default).
+
+# TBD in journalname.yml
+proxy:
+  domains: "`{{ dojo.domain }}`"
+
+database:
+  tool: mariadb
+  version: "10.2"
+  host: "db"              # Server DB host.
+  user: "ojs"             # DB user.
+  pass: "vaultPwd"        # REPLACED by real pwd set in ansible vault.
+  name: "ojs"             # DB name.
+  driver: "mysqli"
+  character_set_server: "utf8mb4"
+  collation_server: "utf8mb4_general_ci"
+
+php:
+  memory_limit: 128M
+  max_execution_time: 300
+  file_uploads: 'On'
+  post_max_size: 20M
+  upload_max_filesize: 20M
+
+  # Large dumps
+  # upload_max_filesize = 500M
+  # post_max_size = 500M
+  # memory_limit = -1
+  # max_execution_time = 0
+
+images:
+  db:  "{{ database.tool }}:{{ database.version }}"
+  app: "pkpofficial/{{ dojo.tool }}:{{ dojo.version }}"
+
+# Sections and variables named as in config.inc.php
+pkp:
+  install:
+    user: admin
+    mail: "marc.bria@uab.cat"
+    pass: "vaultPwd"                    # REPLACED by real pwd in ansible Vault (just dojo-vault edit)
+  general:
+    installed: "On"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"
+  database:
+    host:     "{{ database.host }}"
+    driver:   "{{ database.driver }}"
+    username: "{{ database.user }}"
+    password: "{{ database.pass }}"     # REPLACED by real pwd in ansible Vault (just dojo-vault edit)
+  i18n:
+    locale: en_US
+    client_charset: utf-8
+    connection_charset: utf8
+  email:
+    smtp: "Off"
+    smtp_server: "smtps.uab.cat"
+    smtp_port: "587"
+    # smtp_auth: "ssl"
+    smtp_username: "revistesdigitals"
+    smtp_password: "vaultPwd"           # REPLACED by real pwd in ansible Vault (just dojo-vault edit)
+    smtp_suppress_cert_check: "On"
+    allow_envelope_sender: "On"
+    default_envelope_sender: "sp.revistes.digitals@uab.cat"
+    force_default_envelope_sender: "On"
+    force_dmarc_compliant_from: "On" 
+    dmarc_compliant_from_displayname: "%n via Servei de Publicacions (UAB)"
+    time_between_emails: "3600"
+    max_recipients: "10"
+    require_validation: "On"
+    validation_timeout: "21"
+
