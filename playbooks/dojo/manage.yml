@@ -3,8 +3,8 @@
   become: yes
   gather_facts: yes
   vars:
+    hostName: "{{ host }}"
     siteParam: "{{ site }}"
-    hostName: "{{ ansible_hostname }}"
   vars_files:
     - ./configs/dojo.yml
     - ./configs/secret.yml

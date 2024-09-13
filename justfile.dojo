@@ -15,6 +15,7 @@ dojo-tldr:
     # $ just dojo-run create-journal $JOURNAL $SERVER  # Get a full OJS installed (define vars first)
     # $ just dojo-run config $JOURNAL $SERVER          # Creates a config.inc.php for journalName in the remoteServer.
     # $ just dojo-run config.php $JOURNAL $SERVER      # Creates a php.custom.ini for journalName in the remoteServer.
+    # $ just dojo-manage $JOURNAL $SERVER restart      # Creates a php.custom.ini for journalName in the remoteServer.
     @ # TBD: $ dojo backup $JOURNAL                    # Backup a full journal
     @ # TBD: $ dojo clone $JOURNAL journalclone        # Clone a journal
     @ # TBD: $ dojo upgrade journalclone 3.4.0-6       # Upgrade a journal to the s
@@ -99,8 +100,9 @@ _dojo-site-old action name:
 # Runs an action (playbook) with the specified site (dictionary) in the selected host.
 dojo-run action site host *args:
     ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} {{ dojoPath }}/{{ action }}.yml \
+     -e "host={{ host }}" \
      -e "site={{ site }}" \
-     -e "ansible_become_password=$(cat ./configs/.vault.key)" \
+     -e "ansible_become_password=$(cat ./configs/{{ host }}.vault.key)" \
      {{ args }}
 
 
@@ -121,14 +123,15 @@ dojo-create site host *args:
       {{ dojoPath }}/apache.yml \
       {{ dojoPath }}/env.yml \
       {{ dojoPath }}/permissions.yml \
+      -e "host={{ host }}" \
       -e "site={{ site }}" \
-      -e "ansible_become_password=$(cat ./configs/.vault.key)" \
+      -e "ansible_become_password=$(cat ./configs/{{ host }}.vault.key)" \
       -K {{ args }}
 
 # Creates or recreates all the sites from "siteList" file, acording to the dictionaries in sites/<site>.yml 
 # Script also calls sync-ugrade at the end to ensure data is sync and OJS is upgraded to last version.
 # If you only like to run once, you can do it calling "dojo-create" job and "sync-upgrade" playbook.
-# IMPORTANT: Sudo password won't be requested (it's taken from configs/.vault.key).
+# IMPORTANT: Sudo password won't be requested (it's taken from configs/{hostname}.vault.key).
 #
 # Multiplaybook: Creates or recreates all sites listed in "siteList".
 dojo-create-batch siteList host *args:
@@ -152,7 +155,8 @@ dojo-create-batch siteList host *args:
                 {{ dojoPath }}/env.yml \
                 {{ dojoPath }}/permissions.yml \
                 {{ dojoPath }}/sync-upgrade.yml \
-                -e \"site=$site ansible_become_password=[./configs/.vault.key]\" \
+                -e "host={{ host }}" \
+                -e \"site=$site ansible_become_password=[./configs/{{ host }}.vault.key]\" \
                 {{ args }}"; \
             echo "LOG:"; \
                 ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
@@ -165,8 +169,9 @@ dojo-create-batch siteList host *args:
                 {{ dojoPath }}/env.yml \
                 {{ dojoPath }}/permissions.yml \
                 {{ dojoPath }}/sync-upgrade.yml \
+                -e "host={{ host }}" \
                 -e "site=$site" \
-                -e "ansible_become_password=$(cat ./configs/.vault.key)" \
+                -e "ansible_become_password=$(cat ./configs/{{ host }}.vault.key)" \
                 {{ args }}; \
         done < {{ siteList }}; \
     else \
@@ -180,9 +185,9 @@ dojo-create-batch siteList host *args:
 dojo-manage site host command *args:
     ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
       {{ dojoPath }}/manage.yml \
+      -e "host={{ host }}" \
       -e "site={{ site }}" \
-      -e "ansible_become_password=$(cat ./configs/.vault.key)" \
-      -e "host={{ host }}"  \
+      -e "ansible_become_password=$(cat ./configs/{{ host }}.vault.key)" \
       -e "command={{ command }}" \
       {{ args }}
 
