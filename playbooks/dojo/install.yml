@@ -14,7 +14,7 @@
   tasks:
     # sets "allVars" array from the site's diccionaries as follows:
     #           baseHost > siteGeneric > siteHost > dojoVars.
-    - include: setAllVars.yml
+    - include_tasks: setAllVars.yml
   
     - name: Define the petition's querystring
       set_fact:
