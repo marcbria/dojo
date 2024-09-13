@@ -3,15 +3,14 @@
 secrets
 inventory/hosts.ini
 inventory/hosts.yml
-inventory/services/ada
+inventory/services/adauab
 inventory/services/kalimero
-inventory/sites/ada
+inventory/sites/adauab
 inventory/sites/kalimero
 inventory/sites/test
 inventory/sites/base-ada.yml
 inventory/sites/base-kalimero.yml
 inventory/redi
-inventory/services/adauab/plausible.yml
 ansible.cfg
 venv
 tmp
