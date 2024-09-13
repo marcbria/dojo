@@ -11,6 +11,7 @@ inventory/sites/test
 inventory/sites/base-ada.yml
 inventory/sites/base-kalimero.yml
 inventory/redi
+inventory/services/adauab/plausible.yml
 ansible.cfg
 venv
 tmp
@@ -19,3 +20,4 @@ tmp
 2delete
 logs
 *batchSync-*
+configs/secret.yml
