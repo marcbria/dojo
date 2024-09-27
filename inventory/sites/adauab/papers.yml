@@ -1,20 +1,32 @@
 dojo:
   id: papers                       # This MUST be lowercase.
-  domain: "ada-papers.precarietat.net"
+  domain: "papers.uab.cat"
   type: domain-noslug               # How the url will be managed?
+  version: "3_2_1-4"
+  versionFamily: "3_2_1"
 
 plugins:
   type: shared-plugins              # How pluguins will be managed?
 
 proxy:                              # Refered vars should be overridden.
-  domains: "`ada-papers.precarietat.net`"
+  domains: "`papers.uab.cat`,`papers.uab.es`"
+
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_2_1"
 
 pkp:
   general:
     installed: "On"
-    base_url: "https://ada-papers.precarietat.net"
-    base_url_index: "https://ada-papers.precarietat.net/index"
-    base_url_journal: "https://ada-papers.precarietat.net"
+    base_url: "https://papers.uab.cat"
+    base_url_index: "https://papers.uab.cat/index"
+    base_url_journal: "https://papers.uab.cat"
     scheduled_tasks: "On"
     restful_urls: "On"
-    enable_beacon: "Off"
+    enable_beacon: "On"
+  email:
+    smtp: "On"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via Papers (UAB)"
+  oai:
+    id: papers.revistes.uab.cat
+

@@ -2,12 +2,17 @@ dojo:
   id: dag                           # This MUST be lowercase.
   domain: "dag.revista.uab.cat"
   type: domain-noslug               # How the url will be managed?
+  version: "3_3_0-17"
+  versionFamily: "3_3_0"
 
 plugins:
   type: shared-plugins              # How pluguins will be managed?
 
 proxy:                              # Refered vars should be overridden.
   domains: "`dag.revista.uab.cat`,`dag.revista.uab.es`"
+
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_3_0"
 
 pkp:
   general:

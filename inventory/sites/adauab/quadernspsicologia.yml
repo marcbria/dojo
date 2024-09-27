@@ -1,20 +1,30 @@
 dojo:
   id: quadernspsicologia                       # This MUST be lowercase.
-  domain: "ada-quadernspsicologia.precarietat.net"
+  domain: "quadernsdepsicologia.cat"
   type: domain-noslug               # How the url will be managed?
+  version: "3_3_0-19"
+  versionFamily: "3_3_0"
 
 plugins:
   type: shared-plugins              # How pluguins will be managed?
 
 proxy:                              # Refered vars should be overridden.
-  domains: "`ada-quadernspsicologia.precarietat.net`"
+  domains: "`quadernsdepsicologia.cat`,`www.quadernsdepsicologia.cat`"
+
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_3_0"
 
 pkp:
   general:
     installed: "On"
-    base_url: "https://ada-quadernspsicologia.precarietat.net"
-    base_url_index: "https://ada-quadernspsicologia.precarietat.net/index"
-    base_url_journal: "https://ada-quadernspsicologia.precarietat.net"
+    base_url: "https://quadernsdepsicologia.cat"
+    base_url_index: "https://quadernsdepsicologia.cat/index"
+    base_url_journal: "https://quadernsdepsicologia.cat"
     scheduled_tasks: "On"
     restful_urls: "On"
     enable_beacon: "Off"
+  email:
+    smtp: "On"
+    dmarc_compliant_from_displayname: "%n via Quaderns de Psicologia (UAB)"
+  oai:
+    id: quadernspsicologia.revistes.uab.cat

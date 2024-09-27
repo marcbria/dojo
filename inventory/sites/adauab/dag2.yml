@@ -2,12 +2,17 @@ dojo:
   id: dag2                           # This MUST be lowercase.
   domain: "ada-dag2.precarietat.net"
   type: domain-noslug               # How the url will be managed?
+  version: "3_2_1-4"
+  versionFamily: "3_2_0"
 
 plugins:
   type: shared-plugins              # How pluguins will be managed?
 
 proxy:                              # Refered vars should be overridden.
   domains: "`ada-dag2.precarietat.net`"
+
+images:
+  app: "pkpofficial/{{ dojo.tool }}:3_2_1-4"
 
 pkp:
   general:

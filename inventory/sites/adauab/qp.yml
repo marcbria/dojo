@@ -1,13 +1,18 @@
 dojo:
   id: qp                       # This MUST be lowercase.
-  domain: "ada-qp.precarietat.net"
+  domain: "questionespublicitarias.es"
   type: domain-noslug               # How the url will be managed?
+  version: "3_2_1-4"
+  versionFamily: "3_2_1"
 
 plugins:
   type: shared-plugins              # How pluguins will be managed?
 
 proxy:                              # Refered vars should be overridden.
-  domains: "`ada-qp.precarietat.net`"
+  domains: "`questionespublicitarias.es`,`www.questionespublicitarias.es`"
+
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_2_1"
 
 pkp:
   general:
@@ -18,3 +23,9 @@ pkp:
     scheduled_tasks: "On"
     restful_urls: "On"
     enable_beacon: "Off"
+  email:
+    smtp: "On"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via Questiones Publicitarias (UAB)"
+  oai:
+    id: qp.revistes.uab.cat

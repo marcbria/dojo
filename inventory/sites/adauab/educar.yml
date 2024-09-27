@@ -1,20 +1,27 @@
 dojo:
   id: educar                       # This MUST be lowercase.
-  domain: "ada-educar.precarietat.net"
+  domain: "educar.uab.cat"
   type: domain-noslug               # How the url will be managed?
 
 plugins:
   type: shared-plugins              # How pluguins will be managed?
 
 proxy:                              # Refered vars should be overridden.
-  domains: "`ada-educar.precarietat.net`"
+  domains: "`educar.uab.cat`,`educar.uab.es`"
 
 pkp:
   general:
     installed: "On"
-    base_url: "https://ada-educar.precarietat.net"
-    base_url_index: "https://ada-educar.precarietat.net/index"
-    base_url_journal: "https://ada-educar.precarietat.net"
+    base_url: "https://educar.uab.cat"
+    base_url_index: "https://educar.uab.cat/index"
+    base_url_journal: "https://educar.uab.cat"
     scheduled_tasks: "On"
     restful_urls: "On"
-    enable_beacon: "Off"
+    enable_beacon: "On"
+  email:
+    smtp: "On"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via Educar (UAB)"
+  oai:
+    id: educar.revistes.uab.cat
+

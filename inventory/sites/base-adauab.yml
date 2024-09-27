@@ -12,8 +12,10 @@ dojo:
   id: demo                # This MUST be lowercase. To be defined in journalname.yml
   tool: ojs
 #  version: "stable-3_3_0"
-  version: "3_3_0-17"
-  versionFamily: "3_3_0"
+#  version: "3_3_0-17"
+  version: "3_2_1-4"
+#  versionFamily: "3_3_0"
+  versionFamily: "3_2_1"
   domain: "sub.foo.org"   # Overwride in journalname.yml
   type: domain            # How the url will be managed?
                           # domain: Domain or subdomain (ie: https://sub.foo.org/journal)

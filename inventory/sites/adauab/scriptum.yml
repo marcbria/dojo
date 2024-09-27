@@ -1,20 +1,33 @@
+## Objetivo: Revista en pruebas de scriptum.uab.cat 
+## Modelo de revista: domain + RESTful + noSlug
+## URL: https://scriptum.uab.cat
+
 dojo:
   id: scriptum                      # This MUST be lowercase.
-  domain: "ada-scriptum.precarietat.net"
+  domain: "scriptum.uab.cat"
   type: domain-noslug               # How the url will be managed?
+  version: "3_3_0-19"
+  versionFamily: "3_3_0"
 
 plugins:
   type: shared-plugins              # How pluguins will be managed?
 
 proxy:                              # Refered vars should be overridden.
-  domains: "`ada-scriptum.precarietat.net`"
+  domains: "`scriptum.uab.cat`,`scriptum.uab.es`"
+
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_3_0"
 
 pkp:
   general:
     installed: "On"
-    base_url: "https://ada-scriptum.precarietat.net"
-    base_url_index: "https://ada-scriptum.precarietat.net/index"
-    base_url_journal: "https://ada-scriptum.precarietat.net"
+    base_url: "https://scriptum.uab.cat"
+    base_url_index: "https://scriptum.uab.cat/index"
+    base_url_journal: "https://scriptum.uab.cat"
     scheduled_tasks: "On"
     restful_urls: "On"
-    enable_beacon: "Off"
+    enable_beacon: "On"
+  email:
+    smtp: "On"
+    dmarc_compliant_from_displayname: "%n via Scriptum Digital (UAB)"
+
