@@ -42,6 +42,11 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
     # Trick 02: Apache will ignore the folder prefix to serve webroot files.
     Alias /{{ allVars.proxy.pathprefix }} /var/www/html
 
+{% if allVars.proxy.alias is defined %}
+    # A secondary Alias was requested:
+    Alias /{{ allVars.proxy.alias }} /var/www/html
+{% endif %}
+
     <Directory /var/www/html>
         Options FollowSymLinks
         AllowOverride all
