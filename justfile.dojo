@@ -106,6 +106,68 @@ dojo-run action site host *args:
      {{ args }}
 
 
+# Runs the specified action against all the sites from "siteList" file, acording to the dictionaries in sites/<site>.yml 
+# Detailed output will be stored in a log file.
+# If you only like to run once, you can do it calling "dojo-run" playbook.
+# IMPORTANT: Sudo password won't be requested (it's taken from configs/{hostname}.vault.key).
+dojo-batch-run siteList host action *args:
+    #!/usr/bin/env sh
+
+    # Path to store the detailed log:
+    logFile="logs/$(date +'%Y%m%d-%H%M')_{{ host }}-batch_{{ action }}.log";
+
+    totalStart=$(date +%s);
+
+    # Show the action and asks for confirmation
+    echo '=====================================================================================';
+    echo 'SERVER: {{ host }}';
+    echo 'ACTION: {{ action }}';
+    echo 'ARGS: {{ args }}';
+    echo 'SITELIST: {{ siteList }}';
+    echo "LOGS: $logFile";
+    echo '=====================================================================================';
+    echo '';
+    echo 'WARNING: Some actions could be destructive.';
+    read -p 'Are you sure you like to run this batch process? [y/N] ' confirm; 
+    echo '';
+
+    if [ ${confirm:-no} = 'y' ]; then 
+        while IFS= read -r site; do 
+            siteStart=$(date +%s);
+            echo "";
+            echo "-----------------------------------------------";
+            echo "---> SITE: $site";
+            # echo "DEBUG COMMAND:";
+            # echo "ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
+            #     {{ dojoPath }}/{{ action }}.yml \
+            #     -e \"host={{ host }}\" \
+            #     -e \"site=$site ansible_become_password=[./configs/{{ host }}.vault.key]\" \
+            #     {{ args }}";
+            ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
+                {{ dojoPath }}/{{ action }}.yml \
+                -e "host={{ host }}" \
+                -e "site=$site" \
+                -e "ansible_become_password=$(cat ./configs/{{ host }}.vault.key)" \
+                {{ args }} >> $logFile 2>&1;
+            siteEnd=$(date +%s);
+            siteDuration=$(( siteEnd - siteStart ));
+            echo "Completed in $siteDuration seconds.";
+            echo "-----------------------------------------------";
+        done < {{ siteList }};
+        totalEnd=$(date +%s);
+        totalDuration=$(( totalEnd - totalStart ));
+        echo '';
+        echo '=====================================================================================';
+        echo "Batch process completed in $totalDuration seconds.";
+        echo "Full logs at: $logFile";
+        echo '=====================================================================================';
+    else
+        echo "EXIT: Well done! A coward is good for two battles.";
+    fi
+
+
+
+
 # Creates a full site with acording to the dictionary in sites/<site>.yml 
 # Following playbooks will be called: site-folders > config > db > apache > docker-compose
 #
@@ -130,11 +192,12 @@ dojo-create site host *args:
 
 # Creates or recreates all the sites from "siteList" file, acording to the dictionaries in sites/<site>.yml 
 # Script also calls sync-ugrade at the end to ensure data is sync and OJS is upgraded to last version.
+# Files will be overwiten 
 # If you only like to run once, you can do it calling "dojo-create" job and "sync-upgrade" playbook.
 # IMPORTANT: Sudo password won't be requested (it's taken from configs/{hostname}.vault.key).
 #
 # Multiplaybook: Creates or recreates all sites listed in "siteList".
-dojo-create-batch siteList host *args:
+dojo-batch-create-ugrade siteList host *args:
     @ echo 'This will run playbooks: site-folders > config > db > apache > docker-compose > env > permissions > sync-ugrade.' 
     @ echo "WARNING: Creating sites will overwrite data for the existing one!!"
     @ read -p "Are you sure you like to run action "create" for ALL SITES in [{{ siteList }}] on [{{ host }} - `dig +short {{ host }}`]? [y/N] " confirm; \
@@ -177,6 +240,9 @@ dojo-create-batch siteList host *args:
     else \
         echo "EXIT: Well done! A coward is good for two battles."; \
     fi
+
+
+
 
 
 #fi 2>&1 | tee -i -a batchCreation.log;
