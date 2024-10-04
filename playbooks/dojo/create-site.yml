@@ -1,0 +1,42 @@
+---
+- name: Creates [{{ site }}] site at [{{ host }}] running playbooks site-folders > config > db > apache > docker-compose > env > permissions.
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    hostName: "{{ host }}"
+    siteParam: "{{ site }}"
+    fileCreation: "{{ ansible_date_time.iso8601 }}"
+  vars_files:
+    - ./configs/dojo.yml
+    - ./configs/secret.yml
+    - ./sites/base-{{ hostName }}.yml
+  tasks:
+
+    # Sets "allVars" array from the site's diccionaries as follows:
+    #       baseHost > siteGeneric > siteHost > dojoVars.
+    - include_tasks: setAllVars.yml
+  
+# Creates and set permissions for site-folders
+- import_playbook: site-folders.yml
+
+# Creates OJS config file
+- import_playbook: config.yml
+
+# Creates DB config file
+- import_playbook: config.db.yml
+
+# Creates config.php file
+- import_playbook: config.php.yml
+
+# Creates all docker-compose files.
+- import_playbook: docker-compose.yml
+
+# Creats apache config file
+- import_playbook: apache.yml
+
+# Cerates env file
+- import_playbook: env.yml
+
+# Ensures folders permissions
+- import_playbook: permissions.yml
