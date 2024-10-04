@@ -1,17 +1,10 @@
-## Objetivo: Revista réplica de quadernsitalia
-## Modelo de revista: folder + RESTful + noSlug
-## URL: https://ada-revistes.precarietat.net/quadernsitalia
-
 dojo:
   id: quadernsitalia                # This MUST be lowercase.
   domain: "ada-revistes.precarietat.net"
   type: folder-noslug               # How the url will be managed?
 
-plugins:
-  type: shared-plugins              # How pluguins will be managed?
-
 proxy:                              # Refered vars should be overridden.
-  domains: "`ada-revistes.precarietat.net`"
+  domains: "`ada-revistes.precarietat.net`,`revistes.uab.cat`,`revistes.uab.es`"
   pathprefix: "quadernsitalia"
 
 pkp:
@@ -23,3 +16,9 @@ pkp:
     scheduled_tasks: "On"
     restful_urls: "On"
     enable_beacon: "Off"
+  email:
+    smtp: "Off"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via Quaderns d'Italià (UAB)"
+  oai:
+    id: quadernsitalia.revistes.uab.cat

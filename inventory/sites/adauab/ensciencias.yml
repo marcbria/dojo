@@ -3,9 +3,6 @@ dojo:
   domain: "ensciencias.uab.cat"
   type: domain-noslug               # How the url will be managed?
 
-plugins:
-  type: shared-plugins              # How pluguins will be managed?
-
 proxy:                              # Refered vars should be overridden.
   domains: "`ensciencias.uab.cat`,`ensciencias.uab.es`"
 
@@ -24,4 +21,3 @@ pkp:
     dmarc_compliant_from_displayname: "%n via Enseñanza de las Ciencias (UAB)"
   oai:
     id: ensciencias.revistes.uab.cat
-

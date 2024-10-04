@@ -1,3 +1,5 @@
+# Versió: stable-3_3_0
+
 dojo:
   id: quadernspsicologia                       # This MUST be lowercase.
   domain: "quadernsdepsicologia.cat"
@@ -5,14 +7,11 @@ dojo:
   version: "3_3_0-19"
   versionFamily: "3_3_0"
 
-plugins:
-  type: shared-plugins              # How pluguins will be managed?
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_3_0"
 
 proxy:                              # Refered vars should be overridden.
   domains: "`quadernsdepsicologia.cat`,`www.quadernsdepsicologia.cat`"
-
-images:
-  app: "pkpofficial/{{ dojo.tool }}:stable-3_3_0"
 
 pkp:
   general:

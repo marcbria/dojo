@@ -1,14 +1,7 @@
-## Objetivo: Revista en PRODUCCIÓN de studiaaurea.com 
-## Modelo de revista: domain + RESTful + noSlug
-## URL: https://sutidaaurea.com
-
 dojo:
   id: studiaaurea                   # This MUST be lowercase.
   domain: "studiaaurea.com"
   type: domain-noslug               # How the url will be managed?
-
-plugins:
-  type: shared-plugins              # How pluguins will be managed?
 
 proxy:                              # Refered vars should be overridden.
   domains: "`studiaaurea.com`,`www.studiaaurea.com`"

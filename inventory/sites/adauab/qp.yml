@@ -5,21 +5,19 @@ dojo:
   version: "3_2_1-4"
   versionFamily: "3_2_1"
 
-plugins:
-  type: shared-plugins              # How pluguins will be managed?
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_2_1"
+
 
 proxy:                              # Refered vars should be overridden.
   domains: "`questionespublicitarias.es`,`www.questionespublicitarias.es`"
 
-images:
-  app: "pkpofficial/{{ dojo.tool }}:stable-3_2_1"
-
 pkp:
   general:
     installed: "On"
-    base_url: "https://ada-qp.precarietat.net"
-    base_url_index: "https://ada-qp.precarietat.net/index"
-    base_url_journal: "https://ada-qp.precarietat.net"
+    base_url: "https://questionespublicitarias.es"
+    base_url_index: "https://questionespublicitarias.es/index"
+    base_url_journal: "https://questionespublicitarias.es"
     scheduled_tasks: "On"
     restful_urls: "On"
     enable_beacon: "Off"

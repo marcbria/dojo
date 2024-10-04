@@ -1,10 +1,14 @@
+# Versió: stable-3_3_0
+
 dojo:
   id: derechoygenero                # This MUST be lowercase.
   domain: "derechoygenero.uab.es"
   type: domain-noslug               # How the url will be managed?
+  version: "3_3_0-19"
+  versionFamily: "3_3_0"
 
-plugins:
-  type: shared-plugins              # How pluguins will be managed?
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_3_0"
 
 proxy:                              # Refered vars should be overridden.
   domains: "`derechoygenero.uab.es`,`derechoygenero.uab.cat`"
@@ -21,3 +25,5 @@ pkp:
   email:
     smtp: "On"
     dmarc_compliant_from_displayname: "%n via Derecho y Género (UAB)"
+  oai:
+    id: derechoygenero.revistes.uab.cat

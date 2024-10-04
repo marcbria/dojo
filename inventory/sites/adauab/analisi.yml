@@ -3,11 +3,8 @@ dojo:
   domain: "ada-analisi.precarietat.net"
   type: domain-noslug               # How the url will be managed?
 
-plugins:
-  type: shared-plugins              # How pluguins will be managed?
-
 proxy:                              # Refered vars should be overridden.
-  domains: "`ada-analisi.precarietat.net`"
+  domains: "`ada-analisi.precarietat.net`,`analisi.cat`,`www.analisi.cat`"
 
 pkp:
   general:
@@ -18,3 +15,9 @@ pkp:
     scheduled_tasks: "On"
     restful_urls: "On"
     enable_beacon: "Off"
+  email:
+    smtp: "Off"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via Analisi (UAB)"
+  oai:
+    id: analisi.revistes.uab.cat

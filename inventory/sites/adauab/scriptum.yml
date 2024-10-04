@@ -1,6 +1,4 @@
-## Objetivo: Revista en pruebas de scriptum.uab.cat 
-## Modelo de revista: domain + RESTful + noSlug
-## URL: https://scriptum.uab.cat
+# Versió: stable-3_3_0
 
 dojo:
   id: scriptum                      # This MUST be lowercase.
@@ -9,14 +7,11 @@ dojo:
   version: "3_3_0-19"
   versionFamily: "3_3_0"
 
-plugins:
-  type: shared-plugins              # How pluguins will be managed?
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_3_0"
 
 proxy:                              # Refered vars should be overridden.
   domains: "`scriptum.uab.cat`,`scriptum.uab.es`"
-
-images:
-  app: "pkpofficial/{{ dojo.tool }}:stable-3_3_0"
 
 pkp:
   general:
@@ -30,4 +25,5 @@ pkp:
   email:
     smtp: "On"
     dmarc_compliant_from_displayname: "%n via Scriptum Digital (UAB)"
-
+  oai:
+    id: scriptum.revistes.uab.cat

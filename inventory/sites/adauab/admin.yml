@@ -5,9 +5,6 @@ dojo:
   version: "3_3_0-19"
   versionFamily: "3_3_0"
 
-plugins:
-  type: shared-plugins              # How pluguins will be managed?
-
 proxy:                              # Refered vars should be overridden.
   domains: "`ada-admin33.precarietat.net`"
 

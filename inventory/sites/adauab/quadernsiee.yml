@@ -1,17 +1,10 @@
-## Objetivo: Revista réplica de quadernsiee
-## Modelo de revista: folder + RESTful + noSlug
-## URL: https://ada-revistes.precarietat.net/quadernsiee
-
 dojo:
-  id: quadernsiee                    # This MUST be lowercase.
+  id: quadernsiee                   # This MUST be lowercase.
   domain: "ada-revistes.precarietat.net"
   type: folder-noslug               # How the url will be managed?
 
-plugins:
-  type: shared-plugins              # How pluguins will be managed?
-
 proxy:                              # Refered vars should be overridden.
-  domains: "`ada-revistes.precarietat.net`"
+  domains: "`ada-revistes.precarietat.net`,`revistes.uab.cat`,`revistes.uab.es`"
   pathprefix: "quadernsiee"
 
 pkp:
@@ -23,3 +16,9 @@ pkp:
     scheduled_tasks: "On"
     restful_urls: "On"
     enable_beacon: "Off"
+  email:
+    smtp: "Off"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via Quaderns IEE (UAB)"
+  oai:
+    id: quadernsiee.revistes.uab.cat

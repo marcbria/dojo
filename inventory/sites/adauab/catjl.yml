@@ -1,18 +1,14 @@
-## Objetivo: Revista réplica de catJL
-## Modelo de revista: folder + RESTful + noSlug
-## URL: https://ada-revistes.precarietat.net/catjl
+# Special pathPrefixRegExp
 
 dojo:
-  id: catjl                    # This MUST be lowercase.
+  id: catjl                         # This MUST be lowercase.
   domain: "ada-revistes.precarietat.net"
   type: folder-noslug               # How the url will be managed?
-
-plugins:
-  type: shared-plugins              # How pluguins will be managed?
 
 proxy:                              # Refered vars should be overridden.
   domains: "`ada-revistes.precarietat.net`"
   pathprefix: "catjl"
+  alias: "catJL"                    # Captured by traefik and redirected by apache to pathprefix.
 
 pkp:
   general:
@@ -23,3 +19,9 @@ pkp:
     scheduled_tasks: "On"
     restful_urls: "On"
     enable_beacon: "Off"
+  email:
+    smtp: "Off"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via Catalan JoL (UAB)"
+  oai:
+    id: catJL.revistes.uab.cat

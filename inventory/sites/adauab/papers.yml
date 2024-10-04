@@ -1,18 +1,17 @@
+# Versió: stable-3_2_1
+
 dojo:
   id: papers                       # This MUST be lowercase.
   domain: "papers.uab.cat"
   type: domain-noslug               # How the url will be managed?
-  version: "3_2_1-4"
+  version: "3_2_1-5"
   versionFamily: "3_2_1"
-
-plugins:
-  type: shared-plugins              # How pluguins will be managed?
-
-proxy:                              # Refered vars should be overridden.
-  domains: "`papers.uab.cat`,`papers.uab.es`"
 
 images:
   app: "pkpofficial/{{ dojo.tool }}:stable-3_2_1"
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`papers.uab.cat`,`papers.uab.es`"
 
 pkp:
   general:
