@@ -10,7 +10,10 @@
 #########################################################################
 
 {% set traefik_rule = "Host(" + allVars.proxy.domains + ")" %}
-{% if allVars.proxy.pathprefix is defined %}
+
+{% if allVars.proxy.alias is defined and allVars.proxy.pathprefix is defined %}
+{%   set traefik_rule = traefik_rule + " && (PathPrefix(`/" + allVars.proxy.pathprefix + "`) || PathPrefix(`/" + allVars.proxy.alias + "`))" %}
+{% elif allVars.proxy.pathprefix is defined %}
 {%   set traefik_rule = traefik_rule + " && PathPrefix(`/" + allVars.proxy.pathprefix + "`)" %}
 {% endif %}
 
