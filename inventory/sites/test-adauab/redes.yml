@@ -1,0 +1,24 @@
+dojo:
+  id: redes                         # This MUST be lowercase.
+  domain: "ada-revistes.precarietat.net"
+  type: folder-noslug               # How the url will be managed?
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`ada-revistes.precarietat.net`,`revistes.uab.cat`,`revistes.uab.es`"
+  pathprefix: "redes"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://ada-revistes.precarietat.net/redes"
+    base_url_index: "https://ada-revistes.precarietat.net/redes/index"
+    base_url_journal: "https://ada-revistes.precarietat.net/redes"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"
+  email:
+    smtp: "Off"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via Redes (UAB)"
+  oai:
+    id: redes.revistes.uab.cat

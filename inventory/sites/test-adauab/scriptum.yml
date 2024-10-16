@@ -1,0 +1,29 @@
+# Versió: stable-3_3_0
+
+dojo:
+  id: scriptum                      # This MUST be lowercase.
+  domain: "scriptum.uab.cat"
+  type: domain-noslug               # How the url will be managed?
+  version: "3_3_0-19"
+  versionFamily: "3_3_0"
+
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_3_0"
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`scriptum.uab.cat`,`scriptum.uab.es`"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://scriptum.uab.cat"
+    base_url_index: "https://scriptum.uab.cat/index"
+    base_url_journal: "https://scriptum.uab.cat"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "On"
+  email:
+    smtp: "On"
+    dmarc_compliant_from_displayname: "%n via Scriptum Digital (UAB)"
+  oai:
+    id: scriptum.revistes.uab.cat

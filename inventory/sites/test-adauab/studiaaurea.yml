@@ -1,0 +1,24 @@
+dojo:
+  id: studiaaurea                   # This MUST be lowercase.
+  domain: "studiaaurea.com"
+  type: domain-noslug               # How the url will be managed?
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`studiaaurea.com`,`www.studiaaurea.com`"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://studiaaurea.com"
+    base_url_index: "https://studiaaurea.com"
+    base_url_journal: "https://studiaaurea.com"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"
+  email:
+    smtp: "On"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via Studia Aurea (UAB)"
+  oai:
+    id: studiaaurea.revistes.uab.cat
+

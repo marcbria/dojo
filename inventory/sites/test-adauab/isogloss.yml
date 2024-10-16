@@ -1,0 +1,30 @@
+# Memory limit & execution time changes for the upgrade
+
+dojo:
+  id: isogloss                      # This MUST be lowercase.
+  domain: "ada-revistes.precarietat.net"
+  type: folder-noslug               # How the url will be managed?
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`ada-revistes.precarietat.net`,`revistes.uab.cat`,`revistes.uab.es`"
+  pathprefix: "isogloss"
+
+php:
+  memory_limit: 1024M
+  max_execution_time: 600
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://ada-revistes.precarietat.net/isogloss"
+    base_url_index: "https://ada-revistes.precarietat.net/isogloss/index"
+    base_url_journal: "https://ada-revistes.precarietat.net/isogloss"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"
+  email:
+    smtp: "Off"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via Isogloss (UAB)"
+  oai:
+    id: isogloss.revistes.uab.cat

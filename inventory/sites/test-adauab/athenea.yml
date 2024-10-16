@@ -1,0 +1,29 @@
+# Versió: stable-3_3_0
+
+dojo:
+  id: athenea                       # This MUST be lowercase.
+  domain: "atheneadigital.net"
+  type: domain-noslug               # How the url will be managed?
+  version: "3_3_0-19"
+  versionFamily: "3_3_0"
+
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_3_0"
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`atheneadigital.net`,`www.atheneadigital.net`"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://atheneadigital.net"
+    base_url_index: "https://atheneadigital.net/index"
+    base_url_journal: "https://atheneadigital.net"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "On"
+  email:
+    smtp: "On"
+    dmarc_compliant_from_displayname: "%n via Athenea Digital (UAB)"
+  oai:
+    id: athenea.revistes.uab.cat

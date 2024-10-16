@@ -1,0 +1,29 @@
+# Versió: stable-3_3_0
+
+dojo:
+  id: dag                           # This MUST be lowercase.
+  domain: "dag.revista.uab.cat"
+  type: domain-noslug               # How the url will be managed?
+  version: "3_3_0-19"
+  versionFamily: "3_3_0"
+
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_3_0"
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`dag.revista.uab.cat`,`dag.revista.uab.es`"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://dag.revista.uab.cat"
+    base_url_index: "https://dag.revista.uab.cat/index"
+    base_url_journal: "https://dag.revista.uab.cat"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"
+  email:
+    smtp: "On"
+    dmarc_compliant_from_displayname: "%n via DAG (UAB)"
+  oai:
+    id: dag.revistes.uab.cat

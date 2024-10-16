@@ -1,22 +1,22 @@
 dojo:
   id: elcvia                       # This MUST be lowercase.
-  domain: "ada-elcvia.precarietat.net"
+  domain: "elcvia.cvc.uab.cat"
   type: domain-noslug               # How the url will be managed?
 
 proxy:                              # Refered vars should be overridden.
-  domains: "`ada-elcvia.precarietat.net`,`elcvia.cvc.uab.cat`,`elcvia.cvc.uab.es`"
+  domains: "`elcvia.cvc.uab.cat`,`elcvia.cvc.uab.es`,`elcvia.uab.cat`,`elcvia.uab.es`"
 
 pkp:
   general:
     installed: "On"
-    base_url: "https://ada-elcvia.precarietat.net"
-    base_url_index: "https://ada-elcvia.precarietat.net/index"
-    base_url_journal: "https://ada-elcvia.precarietat.net"
+    base_url: "https://elcvia.cvc.uab.cat"
+    base_url_index: "https://elcvia.cvc.uab.cat/index"
+    base_url_journal: "https://elcvia.cvc.uab.cat"
     scheduled_tasks: "On"
     restful_urls: "On"
-    enable_beacon: "Off"
+    enable_beacon: "On"
   email:
-    smtp: "Off"
+    smtp: "On"
     smtp_auth: "tls"
     dmarc_compliant_from_displayname: "%n via Elcvia (UAB)"
   oai:

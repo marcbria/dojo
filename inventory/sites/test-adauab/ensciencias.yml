@@ -1,0 +1,23 @@
+dojo:
+  id: ensciencias                   # This MUST be lowercase.
+  domain: "ensciencias.uab.cat"
+  type: domain-noslug               # How the url will be managed?
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`ensciencias.uab.cat`,`ensciencias.uab.es`"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://ensciencias.uab.cat"
+    base_url_index: "https://ensciencias.uab.cat/index"
+    base_url_journal: "https://ensciencias.uab.cat"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "On"
+  email:
+    smtp: "On"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via Enseñanza de las Ciencias (UAB)"
+  oai:
+    id: ensciencias.revistes.uab.cat

@@ -2,25 +2,25 @@
 
 dojo:
   id: catjl                         # This MUST be lowercase.
-  domain: "ada-revistes.precarietat.net"
+  domain: "revistes.uab.cat"
   type: folder-noslug               # How the url will be managed?
 
 proxy:                              # Refered vars should be overridden.
-  domains: "`ada-revistes.precarietat.net`"
+  domains: "`revistes.uab.cat`,`revistes.uab.es`"
   pathprefix: "catjl"
   alias: "catJL"                    # Captured by traefik and redirected by apache to pathprefix.
 
 pkp:
   general:
     installed: "On"
-    base_url: "https://ada-revistes.precarietat.net/catjl"
-    base_url_index: "https://ada-revistes.precarietat.net/catjl/index"
-    base_url_journal: "https://ada-revistes.precarietat.net/catjl"
+    base_url: "https://revistes.uab.cat/catjl"
+    base_url_index: "https://revistes.uab.cat/catjl/index"
+    base_url_journal: "https://revistes.uab.cat/catjl"
     scheduled_tasks: "On"
     restful_urls: "On"
-    enable_beacon: "Off"
+    enable_beacon: "On"
   email:
-    smtp: "Off"
+    smtp: "On"
     smtp_auth: "tls"
     dmarc_compliant_from_displayname: "%n via Catalan JoL (UAB)"
   oai:

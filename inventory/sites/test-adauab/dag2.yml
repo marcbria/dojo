@@ -1,0 +1,30 @@
+# Versió: 3.2.1-4
+# Replica a ADA
+
+dojo:
+  id: dag2                          # This MUST be lowercase.
+  domain: "ada-dag2.precarietat.net"
+  type: domain-noslug               # How the url will be managed?
+  version: "3_2_1-4"
+  versionFamily: "3_2_0"
+
+images:
+  app: "pkpofficial/{{ dojo.tool }}:3_2_1-4"
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`ada-dag2.precarietat.net`"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://ada-dag2.precarietat.net"
+    base_url_index: "https://ada-dag2.precarietat.net/index"
+    base_url_journal: "https://ada-dag2.precarietat.net"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"
+  email:
+    smtp: "On"
+    dmarc_compliant_from_displayname: "%n via DAG TEST-ADA (UAB)"
+  oai:
+    id: dag2.test.revistes.uab.cat

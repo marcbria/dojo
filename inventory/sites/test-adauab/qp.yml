@@ -1,0 +1,29 @@
+dojo:
+  id: qp                       # This MUST be lowercase.
+  domain: "questionespublicitarias.es"
+  type: domain-noslug               # How the url will be managed?
+  version: "3_2_1-4"
+  versionFamily: "3_2_1"
+
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_2_1"
+
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`questionespublicitarias.es`,`www.questionespublicitarias.es`"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://questionespublicitarias.es"
+    base_url_index: "https://questionespublicitarias.es/index"
+    base_url_journal: "https://questionespublicitarias.es"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"
+  email:
+    smtp: "On"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via Questiones Publicitarias (UAB)"
+  oai:
+    id: qp.revistes.uab.cat

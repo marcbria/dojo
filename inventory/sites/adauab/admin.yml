@@ -19,4 +19,4 @@ pkp:
     base_url_journal: "https://ada-admin33.precarietat.net"
     scheduled_tasks: "Off"
     restful_urls: "On"
-    enable_beacon: "Off"
+    enable_beacon: "On"

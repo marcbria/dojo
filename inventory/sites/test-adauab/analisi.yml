@@ -1,0 +1,23 @@
+dojo:
+  id: analisi                       # This MUST be lowercase.
+  domain: "ada-analisi.precarietat.net"
+  type: domain-noslug               # How the url will be managed?
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`ada-analisi.precarietat.net`,`analisi.cat`,`www.analisi.cat`"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://ada-analisi.precarietat.net"
+    base_url_index: "https://ada-analisi.precarietat.net/index"
+    base_url_journal: "https://ada-analisi.precarietat.net"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"
+  email:
+    smtp: "Off"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via Analisi (UAB)"
+  oai:
+    id: analisi.revistes.uab.cat

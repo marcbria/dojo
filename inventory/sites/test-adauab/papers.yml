@@ -1,0 +1,31 @@
+# Versió: stable-3_2_1
+
+dojo:
+  id: papers                       # This MUST be lowercase.
+  domain: "papers.uab.cat"
+  type: domain-noslug               # How the url will be managed?
+  version: "3_2_1-5"
+  versionFamily: "3_2_1"
+
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_2_1"
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`papers.uab.cat`,`papers.uab.es`"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://papers.uab.cat"
+    base_url_index: "https://papers.uab.cat/index"
+    base_url_journal: "https://papers.uab.cat"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "On"
+  email:
+    smtp: "On"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via Papers (UAB)"
+  oai:
+    id: papers.revistes.uab.cat
+

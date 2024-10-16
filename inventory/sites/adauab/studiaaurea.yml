@@ -14,7 +14,7 @@ pkp:
     base_url_journal: "https://studiaaurea.com"
     scheduled_tasks: "On"
     restful_urls: "On"
-    enable_beacon: "Off"
+    enable_beacon: "On"
   email:
     smtp: "On"
     smtp_auth: "tls"

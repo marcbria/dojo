@@ -21,7 +21,7 @@ pkp:
     base_url_journal: "https://derechoygenero.uab.es"
     scheduled_tasks: "On"
     restful_urls: "On"
-    enable_beacon: "Off"
+    enable_beacon: "On"
   email:
     smtp: "On"
     dmarc_compliant_from_displayname: "%n via Derecho y Género (UAB)"

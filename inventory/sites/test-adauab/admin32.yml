@@ -1,0 +1,22 @@
+dojo:
+  id: admin32                       # This MUST be lowercase.
+  domain: "ada-admin32.precarietat.net"
+  type: domain-noslug               # How the url will be managed?
+  version: "3_2_1-4"
+  versionFamily: "3_2_1"
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`ada-admin32.precarietat.net`"
+
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_2_1"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://ada-admin32.precarietat.net"
+    base_url_index: "https://ada-admin32.precarietat.net/index"
+    base_url_journal: "https://ada-admin32.precarietat.net"
+    scheduled_tasks: "Off"
+    restful_urls: "On"
+    enable_beacon: "Off"

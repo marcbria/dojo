@@ -1,0 +1,24 @@
+dojo:
+  id: dea                           # This MUST be lowercase.
+  domain: "ada-revistes.precarietat.net"
+  type: folder-noslug               # How the url will be managed?
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`ada-revistes.precarietat.net`,`revistes.uab.cat`,`revistes.uab.es`"
+  pathprefix: "dea"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://ada-revistes.precarietat.net/dea"
+    base_url_index: "https://ada-revistes.precarietat.net/dea/index"
+    base_url_journal: "https://ada-revistes.precarietat.net/dea"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"
+  email:
+    smtp: "Off"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via DDante e l'Arte (UAB)"
+  oai:
+    id: dea.revistes.uab.cat

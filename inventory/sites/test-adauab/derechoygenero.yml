@@ -1,0 +1,29 @@
+# Versió: stable-3_3_0
+
+dojo:
+  id: derechoygenero                # This MUST be lowercase.
+  domain: "derechoygenero.uab.es"
+  type: domain-noslug               # How the url will be managed?
+  version: "3_3_0-19"
+  versionFamily: "3_3_0"
+
+images:
+  app: "pkpofficial/{{ dojo.tool }}:stable-3_3_0"
+
+proxy:                              # Refered vars should be overridden.
+  domains: "`derechoygenero.uab.es`,`derechoygenero.uab.cat`"
+
+pkp:
+  general:
+    installed: "On"
+    base_url: "https://derechoygenero.uab.es"
+    base_url_index: "https://derechoygenero.uab.es/index"
+    base_url_journal: "https://derechoygenero.uab.es"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"
+  email:
+    smtp: "On"
+    dmarc_compliant_from_displayname: "%n via Derecho y Género (UAB)"
+  oai:
+    id: derechoygenero.revistes.uab.cat

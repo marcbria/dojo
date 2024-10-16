@@ -2,7 +2,7 @@
 
 dojo:
   id: arqueotext                    # This MUST be lowercase.
-  domain: "ada-revistes.precarietat.net"
+  domain: "revistes.uab.cat"
   type: folder-noslug               # How the url will be managed?
   version: "3_3_0-19"
   versionFamily: "3_3_0"
@@ -11,20 +11,20 @@ images:
   app: "pkpofficial/{{ dojo.tool }}:stable-3_3_0"
 
 proxy:                              # Refered vars should be overridden.
-  domains: "`ada-revistes.precarietat.net`,`revistes.uab.cat`,`revistes.uab.es`"
+  domains: "`revistes.uab.cat`,`revistes.uab.es`"
   pathprefix: "arqueotext"
 
 pkp:
   general:
     installed: "On"
-    base_url: "https://ada-revistes.precarietat.net/arqueotext"
-    base_url_index: "https://ada-revistes.precarietat.net/arqueotext/index"
-    base_url_journal: "https://ada-revistes.precarietat.net/arqueotext"
+    base_url: "https://revistes.uab.cat/arqueotext"
+    base_url_index: "https://revistes.uab.cat/arqueotext/index"
+    base_url_journal: "https://revistes.uab.cat/arqueotext"
     scheduled_tasks: "On"
     restful_urls: "On"
-    enable_beacon: "Off"
+    enable_beacon: "On"
   email:
-    smtp: "Off"
+    smtp: "On"
     dmarc_compliant_from_displayname: "%n via Arqueotext (UAB)"
   oai:
     id: arqueotext.revistes.uab.cat

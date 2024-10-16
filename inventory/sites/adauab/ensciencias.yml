@@ -6,6 +6,10 @@ dojo:
 proxy:                              # Refered vars should be overridden.
   domains: "`ensciencias.uab.cat`,`ensciencias.uab.es`"
 
+php:
+  memory_limit: 256M
+  max_execution_time: 300
+
 pkp:
   general:
     installed: "On"
