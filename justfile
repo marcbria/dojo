@@ -35,9 +35,9 @@ _default:
     @ echo "  - dojo: To create, upgrade and manage PKP applications (ojs, omp)."
     @ echo "  - test: To test and debug this script."
     @ echo ""
-    @ echo "  > Run 'just [type]' for a type-specific list of actions."
-    @ echo "  > Run 'just tldr' for a list of common calls."
-    @ echo "  > Run 'just readme' for a detailed explanation."
+    @ echo "  > Run 'just [type]' for a type-specific list of actions (ie: just infra)"
+    @ echo "  > Run 'just [type]-tldr' for a list of common calls.    (ie: just dojo-tldr)"
+    @ echo "  > Run 'just [type]-help' for a detailed explanation.    (ie: just service-help)"
 
 
 # Shows the list of playbooks.
