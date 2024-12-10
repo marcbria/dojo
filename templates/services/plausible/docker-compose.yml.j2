@@ -1,0 +1,385 @@
+#########################################################################
+#
+# General settings
+# File: docker-compose.yml
+#
+# Site:      {{ service }}
+# Tool:      {{ allVars.dojo.tool }}
+# Version:   {{ allVars.dojo.version }}
+# Creation:  {{ fileCreation }}
+#
+#########################################################################
+
+
+services:
+  plausible_db:
+    image: postgres:{{ allVars.images.db | default('16-alpine') | safe }}
+    restart: unless-stopped
+    volumes:
+      - ./volumes/db:/var/lib/postgresql/data                    # change
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      start_period: 1m
+
+  plausible_events_db:
+    image: clickhouse/clickhouse-server:{{ allVars.images.events | default('24.3.3.102-alpine') | safe }}
+    restart: unless-stopped
+    volumes:
+      - event-data:/var/lib/clickhouse
+      - event-logs:/var/log/clickhouse-server
+      - ./volumes/config/clickhouse/logs.xml:/etc/clickhouse-server/config.d/logs.xml:ro                        # change
+      # This makes ClickHouse bind to IPv4 only, since Docker doesn't enable IPv6 in bridge networks by default.
+      # Fixes "Listen [::]:9000 failed: Address family for hostname not supported" warnings.
+      - ./volumes/config/clickhouse/ipv4-only.xml:/etc/clickhouse-server/config.d/ipv4-only.xml:ro              # change
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 -O - http://127.0.0.1:8123/ping || exit 1"]
+      start_period: 1m
+
+  plausible:
+    image: ghcr.io/plausible/community-edition:{{ allVars.images.plausible | default('v2.1.4') | safe }}
+    image: ghcr.io/plausible/community-edition:v2.1.4
+    restart: unless-stopped
+    command: sh -c "/entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run"
+    depends_on:
+      plausible_db:
+        condition: service_healthy
+      plausible_events_db:
+        condition: service_healthy
+    volumes:
+      - plausible-data:/var/lib/plausible
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    environment:
+      - TMPDIR=/var/lib/plausible/tmp
+      # required: https://github.com/plausible/community-edition/wiki/configuration#required
+      - BASE_URL=${BASE_URL}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      # optional: https://github.com/plausible/community-edition/wiki/configuration#optional
+      # registration: https://github.com/plausible/community-edition/wiki/configuration#registration
+      - TOTP_VAULT_KEY
+      - DISABLE_REGISTRATION
+      - ENABLE_EMAIL_VERIFICATION
+      # web: https://github.com/plausible/community-edition/wiki/configuration#web
+      - HTTP_PORT
+      - HTTPS_PORT
+      # databases: https://github.com/plausible/community-edition/wiki/configuration#database
+      - DATABASE_URL
+      - CLICKHOUSE_DATABASE_URL
+      # Google: https://github.com/plausible/community-edition/wiki/configuration#google
+      - GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET
+      # geolocation: https://github.com/plausible/community-edition/wiki/configuration#ip-geolocation
+      - IP_GEOLOCATION_DB
+      - GEONAMES_SOURCE_FILE
+      - MAXMIND_LICENSE_KEY
+      - MAXMIND_EDITION
+      # email: https://github.com/plausible/community-edition/wiki/configuration#email
+      - MAILER_ADAPTER
+      - MAILER_EMAIL
+      - MAILER_NAME
+      - SMTP_HOST_ADDR
+      - SMTP_HOST_PORT
+      - SMTP_USER_NAME
+      - SMTP_USER_PWD
+      - SMTP_HOST_SSL_ENABLED
+      - POSTMARK_API_KEY
+      - MAILGUN_API_KEY
+      - MAILGUN_DOMAIN
+      - MAILGUN_BASE_URI
+      - MANDRILL_API_KEY
+      - SENDGRID_API_KEY
+
+volumes:
+  db-data:
+  event-data:
+  event-logs:
+  plausible-data:
+
+
+
+
+
+
+
+
+
+
+
+
+
+services:
+
+  mail:
+    image: {{ allVars.images.mail }}
+    restart: unless-stopped
+
+  db:
+    # Plausible v2.0.0 was tested against PostgreSQL versions 12, 13, and 14
+    # https://github.com/plausible/analytics/blob/v2.0.0/.github/workflows/elixir.yml#L16
+    image: {{ allVars.images.db }}
+    restart: unless-stopped
+    volumes:
+      - ./volumes/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+
+  events_db:
+    image: {{ allVars.images.events }}
+    restart: unless-stopped
+    volumes:
+      - event-data:/var/lib/clickhouse
+      - ./volumes/config/clickhouse-config.xml:/etc/clickhouse-server/config.d/logging.xml:ro
+      - ./volumes/config/clickhouse-user-config.xml:/etc/clickhouse-server/users.d/logging.xml:ro
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+  app:
+    image: {{ allVars.images.app }}
+    restart: unless-stopped
+    command: sh -c "sleep 10 && /entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run"
+    depends_on:
+      - db
+      - events_db
+      - mail
+    ports:
+      - 127.0.0.1:8000:8000
+    env_file:
+      - .env
+
+volumes:
+  event-data:
+    driver: local
+
+
+
+
+
+
+
+
+-------------------------
+
+services:
+  mail:
+    image: bytemark/smtp
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - internal
+
+  plausible_db:
+    # supported versions are 12, 13, and 14
+    image: postgres:14-alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./volumes/db-data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  plausible_events_db:
+    image: clickhouse/clickhouse-server:22.6-alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - event-data:/var/lib/clickhouse
+      - ./volumes/clickhouse/clickhouse-config.xml:/etc/clickhouse-server/config.d/logging.xml:ro
+      - ./volumes/clickhouse/clickhouse-user-config.xml:/etc/clickhouse-server/users.d/logging.xml:ro
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    networks:
+      - internal
+
+  plausible:
+    #image: plausible/analytics:latest
+    image: plausible/analytics:v1.5
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: sh -c "sleep 10 && /entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run"
+    depends_on:
+      - plausible_db
+      - plausible_events_db
+      - mail
+#    ports:
+#      - 8000:8000
+#    env_file:
+#      - plausible-conf.env
+    networks:
+      - internal
+      - proxy
+
+volumes:
+#  db-data:
+#    driver: local
+  event-data:
+    driver: local
+  geoip:
+    driver: local
+
+networks:
+  internal:
+  proxy:
+    external: true
+
+
+
+
+
+
+
+
+
+
+---------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+version: '3.8'
+
+services:
+
+  app:
+    # The official Traefik docker image (v.2)
+    image: traefik:{{ allVars.dojo.version | default('2.11') | safe }}
+    container_name: ${COMPOSE_PROJECT_NAME:-{{ allVars.dojo.id | safe | string | lower }}}
+    # security_opt:
+    #  - no-new-privileges:true
+    restart: always
+    volumes:
+      # So that Traefik can listen to Docker events
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # tls-certificates path (TLS)
+      - ./volumes/config/certificates/acme:/etc/traefik/acme
+      # Static certificates
+      - ./volumes/config/certificates/host:/etc/traefik/host
+      # Dynamc providers
+      - ./volumes/config/providers:/etc/traefik/providers
+    ports:
+      - ${HTTP_PORT:-80}:{{ allVars.app.ports.http | default('80') | safe }}
+      - ${HTTPS_PORT:-443}:{{ allVars.app.ports.https | default('443') | safe }}
+      - ${API_HTTP_PORT:-8080}:{{ allVars.app.ports.api | default('8080') | safe }}
+    command:
+      ###########################################
+      #   Static Configuration harnessing CLI   #
+      ###########################################
+      # Activate dashboard.
+      - "--api.dashboard={{ allVars.app.api.dashboard | safe | string | lower }}"
+      - "--api.insecure={{ allVars.app.api.insecure | safe | string | lower }}"
+{% if app.pilot.token %}
+      - "--pilot.token={{ allVars.app.pilot.token | safe }}"
+{% endif %}
+
+      # Log level in traefik logs (Default: ERROR)
+      - "--log.level=${DEBUG_LEVEL:-INFO}"
+
+      # Enable Docker backend with default settings.
+      - "--providers.docker=true"
+      # Do not expose containers by default.
+      - "--providers.docker.exposedbydefault=false"
+      # Default Docker network used.
+      - "--providers.docker.network={{ allVars.app.network | default('proxy') | safe}}"
+
+      # Dynamic providers:
+      - "--providers.file.directory=/etc/traefik/providers"
+      - "--providers.file.watch=true"
+
+      # --entrypoints.<name>.address for ports
+      # 80 (i.e., name = webinsercure)
+      - "--entrypoints.webinsecure.address=:{{ allVars.app.ports.http | default('80') | safe }}"
+      # 443 (i.e., name = websecure)
+      - "--entrypoints.websecure.address=:{{ allVars.app.ports.https | default('443') | safe }}"
+
+{% if app.ports.redirect %}
+      # Redirection to https: Link in your container to be applied.
+      - "--entrypoints.webinsecure.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.webinsecure.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.webinsecure.http.redirections.entrypoint.permanent=true"
+{% endif %}
+
+      # Certificatesresolvers (HTTP, TLS, DNS mutualy exclusive)
+{% if app.certificate.method == 'http' %}
+      # Via HTTP: RECOMENDED - Be sure port 80 (webinsecure) is open.
+      - "--certificatesresolvers.leresolver.acme.httpchallenge=true"
+      - "--certificatesresolvers.leresolver.acme.httpchallenge.entrypoint=webinsecure"
+{% elif app.certificate.method == 'tls' %}
+      # Via TLS: DEPRECATED by Let's Encrypt.
+      - "--certificatesresolvers.leresolver.acme.tlschallenge=true"
+{% elif app.certificate.method == 'dns' %}
+      # Via DNS: Not tested.
+      - "--certificatesresolvers.leresolver.acme.dnschallenge=true"
+{% endif %}
+{% if app.certificate.staging %}
+      # Staging server to test without hitting letsencrypt limits.
+      # From: https://doc.traefik.io/traefik/https/acme/#caserver
+      - "--certificatesResolvers.leresolver.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
+{% endif %}
+      # Email address used for registration
+      - "--certificatesresolvers.leresolver.acme.email={{ allVars.app.certificate.email | safe }}"
+      - "--certificatesresolvers.leresolver.acme.storage=/etc/traefik/acme/acme.json"
+
+    networks:
+      # This is the network over which Traefik communicates with other containers.
+      - {{ allVars.app.network | default('proxy') | safe}}
+
+    labels:
+      ################################################
+      #   Dynamic configuration with Docker Labels   #
+      ################################################
+      # You can tell Traefik to consider (or not) this container by setting traefik.enable to true or false.
+      # We need it for the dashboard
+      traefik.enable: true
+
+      # Dashboard
+      traefik.http.routers.traefik.entrypoints: websecure
+      traefik.http.routers.traefik.rule: Host(`${DASHBOARD_DOMAIN:-{{ allVars.dojo.domain | safe }}}`)
+      traefik.http.routers.traefik.service: api@internal
+      traefik.http.routers.traefik.tls.certresolver: leresolver
+
+      # Declaring the user list
+      #
+      # Note=all dollar signs in the hash need to be doubled for escaping.
+      # To create user:password pair, it's possible to use this command:
+      # echo $(htpasswd -nb user password) and then save user and password in
+      # the .env file
+      #
+{% if app.credentials %}
+      traefik.http.routers.traefik.middlewares: traefik-auth
+      # traefik.http.middlewares.traefik-auth.basicauth.users: ${DASHBOARD_USERNAME}:${DASHBOARD_PASSWORD}
+      traefik.http.middlewares.traefik-auth.basicauth.users: {{ allVars.app.credentials.username }}:{{ allVars.app.credentials.password }}
+{% endif %}
+
+networks:
+  {{ allVars.app.network | default('proxy') | safe}}:
+    external: true
