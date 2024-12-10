@@ -13,6 +13,7 @@
     # sets "allVars" array from the site's diccionaries as follows:
     #           baseHost > siteGeneric > siteHost > dojoVars.
     - include_tasks: setAllVars.yml
+      when: allVars.dojo.id is not defined
 
     - name: Check if the site directory exists
       stat:

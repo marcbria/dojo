@@ -15,6 +15,7 @@
     # sets "allVars" array from the site's diccionaries as follows:
     #           baseHost > siteGeneric > siteHost > dojoVars.
     - include_tasks: setAllVars.yml
+      when: allVars.dojo.id is not defined
   
     - name: Check if the site directory exists
       stat:
@@ -26,13 +27,13 @@
         msg: "Site directory does not exist: run dojo-create first."
       when: not site_dir_stat.stat.exists
 
-    - name: Syncs remote folders (public and private) and last DB dump. 
-      command: "/home/marc/serverMigration/getRemoteVol.sh {{ allVars.dojo.id }}"
+    # - name: Syncs remote folders (public and private) and last DB dump. 
+    #   command: "/home/marc/serverMigration/getRemoteVol.sh {{ allVars.dojo.id }}"
 
-    - name: List contents of /srv/volumes/db/{{ allVars.dojo.id }} before deletion
-      shell: ls -l "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}/volumes/db/"
-      register: before_deletion_output
-      ignore_errors: yes
+    # - name: List contents of /srv/volumes/db/{{ allVars.dojo.id }} before deletion
+    #   shell: ls -l "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}/volumes/db/"
+    #   register: before_deletion_output
+    #   ignore_errors: yes
 
     # - debug: DB folder of journal [{{ allVars.dojo.id }}]
     #     var: before_deletion_output.stdout_lines
@@ -72,7 +73,7 @@
         msg: "MySQL readiness confirmed."
       when: docker_compose_output.rc == 0
 
-    - name: Upgrades to OJS 3.3
+    - name: Checks and Upgrades OJS
       shell: |
         docker exec ojs_app_{{ allVars.dojo.id }} php tools/upgrade.php check 2>&1 | tee volumes/logs/upgrade3.log;
         docker exec ojs_app_{{ allVars.dojo.id }} php tools/upgrade.php upgrade 2>&1 | tee -a volumes/logs/upgrade3.log;
