@@ -1,0 +1,23 @@
+# ID settings for {{ dojo.id }} :
+COMPOSE_PROJECT_NAME={{ allVars.dojo.id | lower }}
+PROJECT_DOMAIN={{ allVars.dojo.domain }}
+SERVERNAME=$PROJECT_DOMAIN
+
+# Warning: Dockerfile is not taking this variable yet.
+# OMP_BRANCH=omp-stable-3_1_2-0
+
+# Remember this zto fill your installation form in a clean installation
+MYSQL_ROOT_PASSWORD={{ vault.general.database.MYSQL_ROOT_PASSWORD }}
+MYSQL_USER={{ allVars.database.user }}
+MYSQL_PASSWORD={{ vault.general.database.MYSQL_PASSWORD }}
+MYSQL_DATABASE={{ allVars.database.name }}
+
+# OMP variables
+OMP_DB_HOST={{ allVars.database.host }}
+OMP_DB_DRIVER={{ allVars.database.driver }}
+OMP_DB_USER={{ allVars.database.user }}
+OMP_DB_PASSWORD={{ vault.general.pkp.OMP_DB_PASSWORD }}
+OMP_DB_NAME={{ allVars.database.name }}
+
+# Not used yet.
+OMP_CLI_INSTALL={{ allVars.pkp.general.installed }}

@@ -30,7 +30,7 @@ services:
       - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.tls=true"
       - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.tls.certresolver=leresolver"
 
-{% if allVars.app.ports.redirect is defined %}
+{% if app.ports.redirect is defined %}
       # HTTP routers:
       # - "traefik.http.routers.{{ allVars.dojo.id | lower }}.rule={{ traefik_rule }}"
       # - "traefik.http.routers.{{ allVars.dojo.id | lower }}.entrypoints=webinsecure"
@@ -57,12 +57,6 @@ services:
 {% endif %}
       - ../shared/images:/var/www/html/common/images:ro
       - ../shared/typos:/var/www/html/common/typos:ro
-
-{% if allVars.pkp.patch.version is defined %}{% if allVars.pkp.patch.version == '3.3' %}
-      # Patches for OJS 3_3:
-      - ../shared/patch/PKPSubmissionFileService.inc.php:/var/www/html/lib/pkp/classes/services/PKPSubmissionFileService.inc.php:ro
-      - ../shared/patch/OJSv3_3_0UpgradeMigration.inc.php:/var/www/html/classes/migration/upgrade/OJSv3_3_0UpgradeMigration.inc.php:ro
-{% endif %}{% endif %}
 
     networks:
       - proxy

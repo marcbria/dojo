@@ -2,7 +2,7 @@
 ;#
 ;# Template:     (dojo)/templates/config.php.j2
 ;# Host:         (site)/volumes/config/php.custom.ini
-;# Container:    /etc/php81/conf.d/0-ojs.ini
+;# Container:    /etc/php81/conf.d/0-omp.ini
 ;#
 ;# Site:         {{ siteParam }}
 ;# Tool:         {{ allVars.dojo.tool }}
@@ -16,7 +16,7 @@
 ;;;;;;;;;;;;;;;;;;;
 
 memory_limit           = {{ allVars.php.memory_limit | default('128MB') | safe }}
-max_execution_time     = {{ allVars.php.max_execution_time | default('180') | safe }}
+max_execution_time     = {{ allVars.php.max_execution_time | default('300') | safe }}
 file_uploads           = {{ allVars.php.file_uploads | default('On') | safe }}
 post_max_size          = {{ allVars.php.post_max_size | default('20M') | safe }}
 upload_max_filesize    = {{ allVars.php.upload_max_filesize | default('20M') | safe }}
@@ -26,13 +26,13 @@ upload_max_filesize    = {{ allVars.php.upload_max_filesize | default('20M') | s
 ; Example for opcache ;
 ;;;;;;;;;;;;;;;;;;;;;;;
 
-opcache_memory_consumption = 512
-opcache_interned_strings_buffer = 8
-opcache_max_accelerated_files = 4000
-opcache_revalidate_freq = 60
-opcache_fast_shutdown = 1
-opcache_max_file_size = 0
-opcache_enable_cli = 1
+; opcache_memory_consumption = 512
+; opcache_interned_strings_buffer = 8
+; opcache_max_accelerated_files = 4000
+; opcache_revalidate_freq = 60
+; opcache_fast_shutdown = 1
+; opcache_max_file_size = 0
+; opcache_enable_cli = 1
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;

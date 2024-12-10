@@ -1,0 +1,141 @@
+## Template: omp/apache.omp.conf-3_3-domain.j2
+## 
+## This set of rules were created for single-tenant journals installed in a domain 
+## or a subdomain's WITH the journalContext (ie: https://subdomain.foo.org/journalname)
+## behind a reverse proxy, but running in a container without ssl.
+##
+## Some notes:
+## - Non final redirections need to be 307.
+## - Conflictive redirections include the protocol (httpS) to avoid "mixed content".
+## - API calls are captured to be redirected to site or journal.
+## - Root folder is for the site (single-tenant).
+## - Journal context is /journalSlug subfolder.
+##
+## Journal root is: {{ allVars.pkp.general.base_url_journal }}
+## Site's root is:  {{ allVars.pkp.general.base_url_index }}
+
+# Load modules
+LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
+LoadModule rewrite_module modules/mod_rewrite.so
+LoadModule expires_module modules/mod_expires.so
+
+# This is essential if you are in http behind an httpS reverse proxy:
+# Faking the schema to build httpS urls and avoid "Mixed content" issues.
+SetEnvIf X-Forwarded-Proto "https" HTTPS=on
+
+<VirtualHost *:80>
+    ServerName localhost
+    ServerAlias {{ allVars.dojo.domain }}
+    ServerAlias {{ allVars.dojo.id }}
+    DocumentRoot /var/www/html
+
+    RewriteEngine On
+    AcceptPathInfo On
+
+    # Uncomment to clarify who is answering with the error: 
+    # ErrorDocument 404 "Error 404 at: [{{ allVars.dojo.id }}]"
+    # ErrorDocument 500 "Error 500 at: [{{ allVars.dojo.id }}]"
+
+    # OMP is pysically installed in the container's webroot
+    DocumentRoot /var/www/html
+
+    <Directory /var/www/html>
+        Options FollowSymLinks
+        AllowOverride all
+        Allow from all
+
+        DirectoryIndex index.php index.html
+
+        RewriteBase /
+
+{% if allVars.pkp.general.installed | default('Off') == 'On' %}
+        #########################################################
+        # Rules for a domain/subdomain journal installed at root
+        #########################################################
+
+        # Redirects root to index
+        RewriteRule ^/?$ https://{{ allVars.dojo.domain }}/index [L,R=307]
+
+        # Redirects API calls forcing httpS:
+        RewriteCond %{HTTPS}  !=on
+        RewriteCond %{REQUEST_URI} api\/v1\/
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^/?(.*) https://{{ allVars.dojo.domain }}/index.php/$1 [L,R=307]
+
+    {% if allVars.pkp.general.base_url_index is defined %}
+    # To reach Admin pages 
+        # TBD: Make it generic. Now only /index is filtered.
+        RewriteCond %{REQUEST_URI} ^/index/
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^/?(.*) https://{{ allVars.dojo.domain }}/index.php/$1 [L,R=307]
+    {% endif %}
+
+        # Rewrite API calls to subdomain journals (avoid double redirection)
+        RewriteCond %{REQUEST_URI} {{ allVars.dojo.id }}\/api\/v1\/
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/{{ allVars.dojo.id }}$1 [L,R=307]
+
+        # Rewrite API calls to subdomain journals
+        RewriteCond %{REQUEST_URI} api\/v1\/
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/{{ allVars.dojo.id }}/$1 [L,R=307]
+
+        # Remes the short journal's rule:
+        RewriteCond %{REQUEST_URI} !/{{ allVars.dojo.id }}/index.php
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/{{ allVars.dojo.id }}/$1 [QSA,L]
+{% else %}
+        ########################
+        # Rules to INSTALL:
+        ########################
+        # $$$call$$ redirection to journal
+        RewriteCond %{REQUEST_URI} ^\/\$\$\$call\$\$\$
+        RewriteRule ^(.*)$ https://%{SERVER_NAME}/index.php/{{ allVars.dojo.id }}/$1 [L,R=307]
+
+        # This removes index.php from the url
+        RewriteCond %{REQUEST_URI} !/index.php
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+{% endif %}
+    </Directory>
+
+    # LogLevel alert rewrite:trace2
+
+    ErrorLog  /var/log/apache2/error.log
+    CustomLog  /var/log/apache2/access.log combined
+</VirtualHost>
+
+# Keeping this to show how to configure virtual host if containers include certificates 
+# UNTESTED and could collide with former rules.
+<VirtualHost *:443>
+    ServerName localhost
+    ServerAlias {{ allVars.dojo.domain }}
+    ServerAlias {{ allVars.dojo.id }}
+    DocumentRoot /var/www/html
+
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/apache2/server.pem
+    SSLCertificateKeyFile /etc/ssl/apache2/server.key
+
+    PassEnv HTTPS
+    RewriteEngine on
+    AcceptPathInfo On
+
+    <Directory /var/www/html>
+        Options FollowSymLinks
+        AllowOverride all
+        Allow from all
+
+        # Remove index.php from the url
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+    </Directory>
+
+    # LogLevel alert rewrite:trace2
+
+    ErrorLog  /var/log/apache2/error.log
+    CustomLog  /var/log/apache2/access.log combined
+</VirtualHost>

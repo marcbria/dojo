@@ -1,0 +1,61 @@
+#########################################################################
+#
+# General settings
+# File: docker-compose.yml
+#
+# Site:      {{ siteParam }}
+# Tool:      {{ allVars.dojo.tool }}
+# Version:   {{ allVars.dojo.version }}
+# Creation:  {{ fileCreation }}
+#
+#########################################################################
+
+
+networks:
+  inside:
+    external: false
+
+services:
+  db:
+    image: {{ allVars.images.db }}
+    env_file:
+      - .env
+    container_name: "{{ allVars.dojo.tool }}_db_${COMPOSE_PROJECT_NAME:-demo}"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-ompPwd}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE:-omp}"
+      MYSQL_USER: "${MYSQL_USER:-omp}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD:-ompPwd}"
+    volumes:
+      - ./volumes/db:/var/lib/mysql
+      - ./volumes/migration:/docker-entrypoint-initdb.d
+      - ./volumes/config/db.custom.cnf:/etc/mysql/conf.d/db.custom.cnf
+      # - ./volumes/logs/db:/var/log/mysql
+    networks:
+      - inside
+    restart: unless-stopped
+
+  app:
+    image: {{ allVars.images.app }}
+    env_file:
+      - .env
+    container_name: "{{ allVars.dojo.tool }}_app_${COMPOSE_PROJECT_NAME:-demo}"
+    hostname: "${COMPOSE_PROJECT_NAME:-demo}"
+    volumes:
+      # Sync time between docker and host:
+      - /etc/localtime:/etc/localtime
+      # Files and logs:
+      - ./volumes/private:/var/www/files
+      - ./volumes/public:/var/www/html/public
+      - ./volumes/logs/app:/var/log/apache2
+      # Config files:
+      - ./volumes/config/config.inc.php:/var/www/html/config.inc.php
+      - ./volumes/config/apache.conf:/etc/apache2/conf.d/{{ allVars.dojo.tool }}.conf
+      - ./volumes/config/php.custom.ini:/etc/php81/conf.d/0-omp.ini
+      # - ./config/apache.htaccess:/var/www/html/.htaccess
+    restart: unless-stopped
+
+    networks:
+      - inside
+    depends_on:
+      - db
