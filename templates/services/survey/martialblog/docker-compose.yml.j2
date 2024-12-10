@@ -1,0 +1,41 @@
+#########################################################################
+#
+# General settings# File: docker-compose.yml
+#
+# Site:      {{ service }}
+# Tool:      {{ allVars.dojo.tool }}
+# Version:   {{ allVars.dojo.version }}
+# Creation:  {{ fileCreation }}
+# Origin:    https://github.com/martialblog/docker-limesurvey/blob/master/docker-compose.example.yml
+#
+#########################################################################
+
+services:
+  db:
+    image: {{ allVars.images.db | default('mysql:latest') | safe }}
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./volumes/db_import:/docker-entrypoint-initdb.d
+      - ./volumes/db:/var/lib/mysql
+    networks:
+      - inside
+
+  app:
+    image: {{ allVars.images.app | default('docker.io/martialblog/limesurvey:latest') | safe }} 
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+#      - ./volumes/config/config.php:/var/www/html/application/config/config.php
+      - ./volumes/public:/var/www/html/upload
+      - ./volumes/plugins:/var/www/html/plugins
+    depends_on:
+      - db
+    networks:
+      - inside
+
+networks:
+  inside:
+    external: false
