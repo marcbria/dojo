@@ -1,0 +1,14 @@
+# This is the base configuration for all services in this host.
+# Set here all the vars that WILL BE THE SAME for all your services.
+#
+# About dictionary preferece: When creating Dictionary keep in mind that...
+# - Variables are combined/overriden as follows: baseHost (this file) > siteGeneric > siteHost > dojoVars
+# - Refered variables (ie: proxy.domains) are only possible between sections (ansible limitation) and see next...
+# - IMPORTANT: Refered variables need to be reset if the origin changes (ie: if you change dojo.domain in <site>.yml)
+# - When applies, variables follows names and structure from config.inc.php sections.
+# - Some sections are intentionaly left empty as a reference.
+
+serverName: kalimero
+
+dojo:
+  id: demo                         # This MUST be lowercase.
