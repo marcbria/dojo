@@ -1,0 +1,32 @@
+#########################################################################
+#
+# General settings# File: docker-compose.yml
+#
+# Site:      {{ service }}
+# Tool:      {{ allVars.dojo.tool }}
+# Version:   {{ allVars.dojo.version }}
+# Creation:  {{ fileCreation }}
+#
+#########################################################################
+
+
+services:
+  mysql:
+    image: {{ allVars.images.db }}
+    restart: unless-stopped
+    volumes:
+      - ./volumes/db-import:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+  app:
+#    build:
+#      context: .
+#      dockerfile: .docker/Dockerfile
+    image: {{ allVars.images.app }}
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    ports:
+      - 8090:80
+
