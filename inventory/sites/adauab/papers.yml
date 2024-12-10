@@ -1,5 +1,3 @@
-# Versió: stable-3_2_1
-
 dojo:
   id: papers                       # This MUST be lowercase.
   domain: "papers.uab.cat"
@@ -12,6 +10,12 @@ images:
 
 proxy:                              # Refered vars should be overridden.
   domains: "`papers.uab.cat`,`papers.uab.es`"
+
+php:
+  memory_limit: 512M
+  post_max_size: 30M
+  upload_max_filesize: 30M
+  max_execution_time: 240
 
 pkp:
   general:

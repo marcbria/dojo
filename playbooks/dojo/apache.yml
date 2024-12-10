@@ -15,8 +15,9 @@
     # sets "allVars" array from the site's diccionaries as follows:
     #           baseHost > siteGeneric > siteHost > dojoVars.
     - include_tasks: setAllVars.yml
-  
+      when: allVars.dojo.id is not defined
+
     - name: Generate apache-config file from template and dojo vars
       template:
-        src: "./templates/{{ allVars.dojo.tool }}/apache.ojs.conf-{{ versionMajorMinor }}-{{ allVars.dojo.type }}.j2"
+        src: "./templates/{{ allVars.dojo.tool }}/apache.{{ allVars.dojo.tool }}.conf-{{ versionMajorMinor }}-{{ allVars.dojo.type }}.j2"
         dest: "{{ allVars.path.files.config }}/{{ allVars.dojo.id }}/apache.conf"

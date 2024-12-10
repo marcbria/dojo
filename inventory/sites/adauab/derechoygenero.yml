@@ -24,6 +24,9 @@ pkp:
     enable_beacon: "On"
   email:
     smtp: "On"
+    smtp_auth: "tls"
     dmarc_compliant_from_displayname: "%n via Derecho y Género (UAB)"
   oai:
     id: derechoygenero.revistes.uab.cat
+  patch:
+    version: "3.3"

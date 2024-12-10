@@ -23,6 +23,10 @@ dojo:
                           # folder: Folder installation (ie: https://foo.org/folder/journal)
                           # folder-noslug: Remove journalSlug (ie: https://foo.org/folder)
 
+images:
+  db:  "{{ database.tool }}:{{ database.version }}"
+  app: "pkpofficial/{{ dojo.tool }}:{{ dojo.version }}"
+
 plugins:
   type: shared-plugins    # How pluguins will be managed?
                           # - shared-plugins: All plugins are common.
@@ -59,10 +63,6 @@ php:
   # memory_limit = -1
   # max_execution_time = 0
 
-images:
-  db:  "{{ database.tool }}:{{ database.version }}"
-  app: "pkpofficial/{{ dojo.tool }}:{{ dojo.version }}"
-
 # Sections and variables named as in config.inc.php
 pkp:
   install:
@@ -88,11 +88,14 @@ pkp:
     smtp_server: "smtps.uab.cat"
     smtp_port: "587"
     # smtp_auth: "ssl"
-    smtp_username: "revistesdigitals"
+    # smtp_auth: "tls"
+    # smtp_user: "revistesdigitals"
+    smtp_username: "spapps"
     smtp_password: "vaultPwd"           # REPLACED by real pwd in ansible Vault (just dojo-vault edit)
     smtp_suppress_cert_check: "On"
     allow_envelope_sender: "On"
-    default_envelope_sender: "sp.revistes.digitals@uab.cat"
+    # default_envelope_sender: "sp.revistes.digitals@uab.cat"
+    default_envelope_sender: "sp.apps@uab.cat"
     force_default_envelope_sender: "On"
     force_dmarc_compliant_from: "On" 
     dmarc_compliant_from_displayname: "%n via Servei de Publicacions (UAB)"
@@ -100,4 +103,4 @@ pkp:
     max_recipients: "10"
     require_validation: "On"
     validation_timeout: "21"
-
+  

@@ -2,13 +2,20 @@ dojo:
   id: ensciencias                   # This MUST be lowercase.
   domain: "ensciencias.uab.cat"
   type: domain-noslug               # How the url will be managed?
+  version: "3_2_1-5"
+  versionFamily: "3_2_1"
+
+images:
+  app: "pkpofficial/ojs:stable-3_2_1"
 
 proxy:                              # Refered vars should be overridden.
   domains: "`ensciencias.uab.cat`,`ensciencias.uab.es`"
 
 php:
-  memory_limit: 256M
-  max_execution_time: 300
+  memory_limit: 512M
+  post_max_size: 30M
+  upload_max_filesize: 30M
+  max_execution_time: 240
 
 pkp:
   general:

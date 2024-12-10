@@ -4,10 +4,21 @@ dojo:
   id: periodicum                    # This MUST be lowercase.
   domain: "revistes.uab.cat"
   type: folder-noslug               # How the url will be managed?
+  version: "3_3_0-19"
+  versionFamily: "3_3_0"
+
+images:
+  app: "pkpofficial/ojs:stable-3_3_0"
 
 proxy:                              # Refered vars should be overridden.
   domains: "`revistes.uab.cat`,`revistes.uab.es`"
   pathprefix: "periodicum"
+
+php:
+  memory_limit: 256M
+  post_max_size: 40M
+  upload_max_filesize: 40M
+  max_execution_time: 240
 
 pkp:
   general:
@@ -22,5 +33,10 @@ pkp:
     smtp: "On"
     smtp_auth: "tls"
     dmarc_compliant_from_displayname: "%n via Periodicum PROVES-ADA (UAB)"
+    smtp_username: "spapps"
+    smtp_password: "vaultPwd"           # REPLACED by real pwd in ansible Vault (just dojo-vault edit)
+    default_envelope_sender: "sp.apps@uab.cat"
   oai:
     id: periodicum.revistes.uab.cat
+  patch:
+    version: "3.3"

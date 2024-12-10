@@ -8,7 +8,7 @@ dojo:
   versionFamily: "3_3_0"
 
 images:
-  app: "pkpofficial/{{ dojo.tool }}:stable-3_3_0"
+  app: "pkpofficial/ojs:stable-3_3_0"
 
 proxy:                              # Refered vars should be overridden.
   domains: "`scriptum.uab.cat`,`scriptum.uab.es`"
@@ -27,3 +27,5 @@ pkp:
     dmarc_compliant_from_displayname: "%n via Scriptum Digital (UAB)"
   oai:
     id: scriptum.revistes.uab.cat
+  patch:
+    version: "3.3"

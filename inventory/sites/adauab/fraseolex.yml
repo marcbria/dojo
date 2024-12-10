@@ -29,3 +29,5 @@ pkp:
     dmarc_compliant_from_displayname: "%n via Fraseolex (UAB)"
   oai:
     id: fraseolex.revistes.uab.cat
+  patch:
+    version: "3.3"

@@ -24,6 +24,9 @@ pkp:
     enable_beacon: "On"
   email:
     smtp: "On"
+    smtp_auth: "tls"
     dmarc_compliant_from_displayname: "%n via Quaderns de Psicologia (UAB)"
   oai:
     id: quadernspsicologia.revistes.uab.cat
+  patch:
+    version: "3.3"

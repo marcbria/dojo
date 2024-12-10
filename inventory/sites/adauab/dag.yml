@@ -8,10 +8,14 @@ dojo:
   versionFamily: "3_3_0"
 
 images:
-  app: "pkpofficial/{{ dojo.tool }}:stable-3_3_0"
+  app: "pkpofficial/ojs:stable-3_3_0"
 
 proxy:                              # Refered vars should be overridden.
   domains: "`dag.revista.uab.cat`,`dag.revista.uab.es`"
+
+php:
+  post_max_size: 30M
+  upload_max_filesize: 30M
 
 pkp:
   general:
@@ -24,6 +28,9 @@ pkp:
     enable_beacon: "On"
   email:
     smtp: "On"
+    smtp_auth: "tls"
     dmarc_compliant_from_displayname: "%n via DAG (UAB)"
   oai:
     id: dag.revistes.uab.cat
+  patch:
+    version: "3.3"
