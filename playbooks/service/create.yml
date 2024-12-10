@@ -5,111 +5,30 @@
   gather_facts: yes
   vars:
     hostName: "{{ host }}"
-    siteParam: "{{ service }}"
+    serviceParam: "{{ service }}"
     fileCreation: "{{ ansible_date_time.iso8601 }}"
   vars_files:
     - ./configs/dojo.yml
-    - ./services/{{ service }}.yml
+    - ./configs/secret.yml
+    - ./services/base-{{ hostName }}.yml
   tasks:
-    - name: Load global vars from dojo.yml
-      include_vars:
-        file: ./configs/dojo.yml
-        name: dojoVars
-
-    - name: Load generic vars from service.yml
-      include_vars:
-        file: ./services/{{ service }}.yml
-        name: serviceGenericVars
-
-    - name: If exists, load specific vars from service-host.yml
-      include_vars:
-        file: ./services/{{ hostName }}/{{ service }}.yml
-        name: serviceHostVars
-      ignore_errors: yes
-      
-    - name: Combine dojo > serviceGenericVars > serviceHostVars (by this order)
-      set_fact:
-        allVars: "{{ dojoVars | combine(serviceGenericVars, recursive=True) | combine(serviceHostVars, recursive=True) | default({}) }}"
-
-    - name: Ensure service directory exists
-      file:
-        path: "{{ path.base.service }}/{{ allVars.dojo.id }}"
-        state: directory
-        force: yes
+    # Sets "allVars" array from the service's diccionaries as follows:
+    #       baseHost > serviceGeneric > serviceHost > dojoVars.
+    - include_tasks: setAllVars.yml
 
     - name: Ensures "proxy" network exists
       shell:
         cmd: docker network create proxy
       ignore_errors: yes
 
-    - name: Generate docker-compose file from template and dojo vars
-      template:
-        src: "./templates/services/docker-compose-{{ allVars.dojo.tool }}.j2"
-        dest: "{{ path.base.service }}/{{ allVars.dojo.id }}/docker-compose.yml"
+# Creates and set permissions for service-folders
+- import_playbook: service-folders.yml
 
-    - name: Generate env file from template and dojo vars
-      template:
-        src: "./templates/services/env.j2"
-        dest: "{{ path.base.service }}/{{ allVars.dojo.id }}/.env"
+# Cerates env file
+- import_playbook: env.yml
 
-    - name: Ensure service's essential folders exists
-      file:
-        path: "{{ item }}"
-        state: directory
-        mode: 0744
-        owner: "{{ user.run }}"
-        group: "{{ user.group }}"
-        force: yes
-      loop:
-        - "{{ path.base.service }}/{{ allVars.dojo.id }}"
-        - "{{ path.storage.backups }}/{{ allVars.dojo.id }}"
-        - "{{ path.storage.volumes }}/files"
+# Creates all docker-compose files.
+- import_playbook: docker-compose.yml
 
-    - name: Create service's volume folders
-      file:
-        path: "{{ item.value }}/{{ allVars.dojo.id }}"
-        state: directory
-        mode: 0744
-        owner: "{{ user.run }}"
-        group: "{{ user.group }}"
-        recurse: yes
-      with_dict: "{{ path.volumes }}"
-      tags:
-        - volumes_directories
-
-    - name: Create service's volume folders for files
-      file:
-        path: "{{ item.value }}/{{ allVars.dojo.id }}"
-        state: directory
-        mode: 0744
-        owner: "{{ user.run }}"
-        group: "{{ user.group }}"
-        recurse: yes
-      with_dict: "{{ path.files }}"
-      tags:
-        - files_directories
-
-    - name: Create required symbolic links
-      file:
-        src: "{{ item.target }}"
-        dest: "{{ item.link }}"
-        state: link
-      loop: 
-        - { link: "{{ path.base.service }}/{{ allVars.dojo.id }}/volumes", target: "{{ path.volumes.all }}/{{ allVars.dojo.id }}" }
-        - { link: "{{ path.volumes.all }}/{{ allVars.dojo.id }}/db", target: "{{ path.volumes.db }}/{{ allVars.dojo.id }}" }
-        - { link: "{{ path.volumes.all }}/{{ allVars.dojo.id }}/logs", target: "{{ path.volumes.logs }}/{{ allVars.dojo.id }}" }
-        - { link: "{{ path.volumes.all }}/{{ allVars.dojo.id }}/config", target: "{{ path.files.config }}/{{ allVars.dojo.id }}" }
-        - { link: "{{ path.volumes.all }}/{{ allVars.dojo.id }}/public", target: "{{ path.files.public }}/{{ allVars.dojo.id }}" }
-        - { link: "{{ path.volumes.all }}/{{ allVars.dojo.id }}/private", target: "{{ path.files.private }}/{{ allVars.dojo.id }}" }
-
-    - name: Restrict permissions to securized folders
-      file:
-        path: "{{ item.value.path }}"
-        state: "{{ item.value.type | default('directory') }}"
-        mode: "{{ item.value.mode | default('600') }}"
-        owner: "{{ user.run }}"
-        group: "{{ user.group }}"
-        force: yes
-        recurse: "{{ 'yes' if item.value.type == 'directory' else 'no' }}"
-      with_dict:
-        - "{{ app.securize }}"
+# Ensures folders permissions
+- import_playbook: permissions.yml
