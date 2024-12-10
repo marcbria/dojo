@@ -1,0 +1,36 @@
+#########################################################################
+#
+# General settings
+# File: docker-compose.override.yml
+#
+# Site:      {{ service }}
+# Tool:      {{ allVars.dojo.tool }}
+# Version:   {{ allVars.dojo.version }}
+# Creation:  {{ fileCreation }}
+#
+#########################################################################
+
+
+{% set traefik_rule = "Host(" + allVars.proxy.domains + ")" %}
+{% if allVars.proxy.pathprefix is defined %}
+{%   set traefik_rule = traefik_rule + " && PathPrefix(`/" + allVars.proxy.pathprefix + "`)" %}
+{% endif %}
+
+services:
+  app:
+    labels:
+      # Enable traefik for this stack:
+      - "traefik.enable=true"
+
+      # HTTPS routers:
+      - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.rule={{ traefik_rule }}"
+      - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.entrypoints=websecure"
+      - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.tls=true"
+      - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.tls.certresolver=leresolver"
+
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
