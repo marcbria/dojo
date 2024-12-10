@@ -13,23 +13,24 @@
 
 
 user:
-  run:       "docker"
-  group:     "docker"
+  run:          "docker"
+  group:        "docker"
 
 path:
   base:
-    root:    "/home/docker"
-    sites:   "/home/docker/sites"
-    service: "/home/docker/service"
+    root:       "/home/docker"
+    sites:      "/home/docker/sites"
+    services:   "/home/docker/service"
   storage:  
-    root:    "/srv"
-    backups: "/srv/backups"
-    volumes: "/srv/volumes"
+    root:       "/srv"
+    backups:    "/srv/backups"
+    volumes:    "/srv/volumes"
   volumes:
-    all:     "/srv/volumes/all"
-    db:      "/srv/volumes/db"
-    logs:    "/srv/volumes/logs"
+    all:        "/srv/volumes/all"
+    db:         "/srv/volumes/db"
+    db_import:  "/srv/volumes/db-import"
+    logs:       "/srv/volumes/logs"
   files:
-    public:  "/srv/volumes/files/public"
-    private: "/srv/volumes/files/private"
-    config:  "/srv/volumes/files/config"
+    public:     "/srv/volumes/files/public"
+    private:    "/srv/volumes/files/private"
+    config:     "/srv/volumes/files/config"
