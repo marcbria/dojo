@@ -20,3 +20,4 @@ tmp
 logs
 *batchSync-*
 configs/secret.yml
+*.log
