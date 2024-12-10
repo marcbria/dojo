@@ -1,0 +1,51 @@
+---
+# INCLUDE - Set global "allVars" array from the service's diccionaries as follows:
+#           serviceGeneric > serviceHost > dojoVars.
+
+- name: Load vars from dojo.yml
+  include_vars:
+    file: ./configs/dojo.yml
+    name: dojoVars
+
+- name: If exists, load vars from service.yml (same for prod and test)
+  include_vars:
+    file: ./inventory/{{ serviceParam }}.yml
+    name: serviceGenericVars
+  ignore_errors: yes
+  failed_when: false
+
+- name: If exists, load vars from host/service.yml
+  include_vars:
+    file: ./inventory/{{ hostName }}/{{ serviceParam }}.yml
+    name: serviceHostVars
+  ignore_errors: yes
+  failed_when: false
+
+# Override by order: allVars = dojoVars < serviceGeneric < serviceHost
+- name: Combine/overrides dojoVars with serviceGeneric
+  set_fact:
+    # dojoVars basis overritten by serviceGenericVars
+    allVars: "{{ dojoVars | combine(serviceGenericVars | default({}), recursive=True) }}"
+
+- name: Combine/overrides allVars with serviceHost
+  set_fact:
+    # Overrides allVars with serviceHostVars
+    allVars: "{{ allVars | combine(serviceHostVars | default({}), recursive=True) }}"
+
+# - name: DEBUG - Shows some vars
+#   debug:
+#     msg:
+#       - "VARS:"
+#       - "  - serviceParam: {{ serviceParam }}"
+#       - "  - hostName: {{ hostName }}"
+#       - "FILEPATHS:"
+#       - "  - dojoVars: ./configs/dojo.yml"
+#       - "  - serviceGenericVars: ./inventory/{{ serviceParam }}.yml"
+#       - "  - serviceHostVars: ./inventory/{{ hostName }}/{{ serviceParam }}.yml"
+#       - "-------------------------------"
+#       - "dojoVars: {{ dojoVars }}"
+#       - "serviceGenericVars: {{ serviceGenericVars }}"
+#       - "serviceHostVars: {{ serviceHostVars }}"
+#       - "-------------------------------"
+#       - "ALLVARS: {{ allVars }}"
+#       - "-------------------------------"

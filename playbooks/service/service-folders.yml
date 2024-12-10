@@ -1,0 +1,119 @@
+---
+- name: Create the basic service folder/links structure based on service's diccionary vars.
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    hostName: "{{ host }}"
+    serviceParam: "{{ service }}"
+    fileCreation: "{{ ansible_date_time.iso8601 }}"
+  vars_files:
+    - ./configs/dojo.yml
+    - ./configs/secret.yml
+    - ./inventory/base-{{ hostName }}.yml
+  tasks:
+    # sets "allVars" array from the service's diccionaries as follows:
+    #           baseHost > serviceGeneric > serviceHost > dojoVars.
+    - include_tasks: setAllVars.yml
+      when: allVars.dojo.id is not defined
+  
+    - name: Ensure service's essential folders exists
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: 0744
+        owner: "{{ allVars.user.run }}"
+        group: "{{ allVars.user.group }}"
+        force: yes
+      loop:
+        - "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}"
+        - "{{ allVars.path.storage.backups }}/{{ allVars.dojo.id }}"
+        - "{{ allVars.path.storage.volumes }}/files"
+
+    - name: Create volume folders for service [{{ allVars.dojo.id }}] 
+      file:
+        path: "{{ item.value }}/{{ allVars.dojo.id }}"
+        state: directory
+        mode: 0744
+        owner: "{{ allVars.user.run }}"
+        group: "{{ allVars.user.group }}"
+        recurse: yes
+      with_dict: 
+        - "{{ path.volumes }}"
+      tags:
+        - volumes_directories
+
+    - name: Create files volume folders for service [{{ allVars.dojo.id }}]
+      file:
+        path: "{{ item.value }}/{{ allVars.dojo.id }}"
+        state: directory
+        mode: 0744
+        owner: "{{ allVars.user.run }}"
+        group: "{{ allVars.user.group }}"
+        recurse: yes
+      with_dict: 
+        - "{{ allVars.path.files }}"
+      tags:
+        - files_directories
+
+    - name: Assign ownership in general BD folders
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "999"
+        group: "1002"
+      loop:
+        - "{{ allVars.path.volumes.db }}"
+        - "{{ allVars.path.volumes.db_import }}"
+      tags:
+        - volumes_db
+
+    - name: Assign ownership for service's BD folder
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "999"
+        group: "1002"
+        recurse: yes
+      loop:
+        - "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id }}"
+        - "{{ allVars.path.volumes.db_import }}/{{ allVars.dojo.id }}"
+      tags:
+        - volumes_db
+
+    - name: Assign ownership in Web files
+      file:
+        path: "{{ item.value }}"
+        state: directory
+        owner: "100"
+        group: "101"
+      with_dict: 
+        - "{{ allVars.path.files }}"
+      tags:
+        - volumes_www
+
+    - name: Assign ownership for service's Web files
+      file:
+        path: "{{ item.value }}/{{ allVars.dojo.id }}"
+        state: directory
+        owner: "100"
+        group: "101"
+        recurse: yes
+      with_dict: 
+        - "{{ path.files }}"
+      tags:
+        - volumes_www
+
+    - name: Create required symbolic links
+      file:
+        src: "{{ item.target }}"
+        dest: "{{ item.link }}"
+        state: link
+      loop: 
+        - { link: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes", target: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/db", target: "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/db_import", target: "{{ allVars.path.volumes.db_import }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/logs", target: "{{ allVars.path.volumes.logs }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/config", target: "{{ allVars.path.files.config }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/public", target: "{{ allVars.path.files.public }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/private", target: "{{ allVars.path.files.private }}/{{ allVars.dojo.id }}" }
