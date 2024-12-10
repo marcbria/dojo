@@ -63,6 +63,11 @@ service-create service host *args:
     @ echo "WARNING: Creating a service will overwrite existing one."
     @ echo "Are you sure you like to run playbook create.yml \
     for [{{ service }}] on [{{ host }}]?" && \
+    echo 'ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ servicePath }}/{{ vaultKey }} \
+        {{ servicePath }}/create.yml \
+        -e "host={{ host }}" \
+        -e "service={{ service }}" \
+        -K {{ args }}' && \
     ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ servicePath }}/{{ vaultKey }} \
         {{ servicePath }}/create.yml \
         -e "host={{ host }}" \
