@@ -28,7 +28,7 @@ services:
       MYSQL_PASSWORD: "${MYSQL_PASSWORD:-ojsPwd}"
     volumes:
       - ./volumes/db:/var/lib/mysql
-      - ./volumes/migration:/docker-entrypoint-initdb.d
+      - ./volumes/db-import:/docker-entrypoint-initdb.d
       - ./volumes/config/db.custom.cnf:/etc/mysql/conf.d/db.custom.cnf
       # - ./volumes/logs/db:/var/log/mysql
     networks:
@@ -59,3 +59,4 @@ services:
       - inside
     depends_on:
       - db
+
