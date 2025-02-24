@@ -28,9 +28,11 @@ path:
   volumes:
     all:        "/srv/volumes/all"
     db:         "/srv/volumes/db"
-    db_import:  "/srv/volumes/db-import"
+    db_import:  "/srv/volumes/db_import"
     logs:       "/srv/volumes/logs"
   files:
     public:     "/srv/volumes/files/public"
     private:    "/srv/volumes/files/private"
     config:     "/srv/volumes/files/config"
+  code:
+    root:       "/srv/volumes/code"
