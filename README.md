@@ -223,6 +223,7 @@ $ mkdir inventory
 $ vim inventory/hosts.yml
 # Take a look to [those examples](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/yaml_inventory.html#examples) to create your inventory file.
 ```
+
 3. Recommended: Install [just](https://github.com/casey/just#packages) version 1.23 or higher.
 
 
@@ -253,30 +254,32 @@ $ just infra-run create-folders $REMOTESERVER     # Creates the required folder 
 vim ./inventory/services/traefik.yml              # Edit your proxy's dictionary.
 just service-create traefik $REMOTESERVER
 ```
+
 6. Create your first journal's dictionary
 ```
 $ JOURNAL=<journalname>                           # Use lowercase for your journal's ID.
 $ mv sites/journalname.yml sites/$JOURNAL.yml
 $ vim sites/$JOURNAL.yml
 ```
+
 7. Create your ansible-vault add edit your journal's passwd.
 ```
 $ just dojo-vault create
 $ just dojo-vault edit
 ```
+
 8. Build your fist journal:
-```
 ```
 $ just dojo-create $JOURNAL $SERVER               # Creates the site based on dictionary.
 $ just dojo-manage $JOURNAL $SERVER up            # Raises the site (OJS container and DB).
 $ just dojo-run install $JOURNAL $SERVER          # Installs OJS with dictionary data (curl)
 ```
 
-```
 9. Visit your new OJS in your browser and create a new journal (TBD automatize this part too, based on dictionary data).
 
 
 #### Extend your service
+
 10. Read more about this project and decide what other tools you also like to install.
 
 - [ ] Monitoring tool, like uptimekuma.
