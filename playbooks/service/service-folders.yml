@@ -17,7 +17,7 @@
     - include_tasks: setAllVars.yml
       when: allVars.dojo.id is not defined
   
-    - name: Ensure service's essential folders exists
+    - name: Ensure dojo's essential folders exists
       file:
         path: "{{ item }}"
         state: directory
@@ -30,7 +30,7 @@
         - "{{ allVars.path.storage.backups }}/{{ allVars.dojo.id }}"
         - "{{ allVars.path.storage.volumes }}/files"
 
-    - name: Create volume folders for service [{{ allVars.dojo.id }}] 
+    - name: Create GENERIC VOLUME folders for service [{{ allVars.dojo.id }}] 
       file:
         path: "{{ item.value }}/{{ allVars.dojo.id }}"
         state: directory
@@ -39,11 +39,25 @@
         group: "{{ allVars.user.group }}"
         recurse: yes
       with_dict: 
-        - "{{ path.volumes }}"
+        - "{{ allVars.path.volumes }}"
       tags:
         - volumes_directories
 
-    - name: Create files volume folders for service [{{ allVars.dojo.id }}]
+    - name: Create CODE VOLUME folders for service [{{ allVars.dojo.id }}] 
+      file:
+        path: "{{ allVars.path.code.root }}/{{ allVars.dojo.id }}/{{ item.key }}"
+        state: directory
+        mode: 0744
+        owner: "{{ allVars.user.run }}"
+        group: "{{ allVars.user.group }}"
+        recurse: yes
+      with_dict:
+        - "{{ allVars.path.code }}"
+      when: item.key != "root"
+      tags:
+        - volumes_directories
+
+    - name: Create FILES VOLUME folders for service [{{ allVars.dojo.id }}]
       file:
         path: "{{ item.value }}/{{ allVars.dojo.id }}"
         state: directory
@@ -109,6 +123,7 @@
         src: "{{ item.target }}"
         dest: "{{ item.link }}"
         state: link
+        force: yes
       loop: 
         - { link: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes", target: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}" }
         - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/db", target: "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id }}" }
@@ -117,3 +132,4 @@
         - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/config", target: "{{ allVars.path.files.config }}/{{ allVars.dojo.id }}" }
         - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/public", target: "{{ allVars.path.files.public }}/{{ allVars.dojo.id }}" }
         - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/private", target: "{{ allVars.path.files.private }}/{{ allVars.dojo.id }}" }
+        - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/code", target: "{{ allVars.path.code.root }}/{{ allVars.dojo.id }}" }

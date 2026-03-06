@@ -1,0 +1,52 @@
+###############################################################################
+#
+# Function: Web page
+# Name: Web Premis Assaig - Drupal
+# Server: Ada
+#
+# Description:
+# The webpage of "Premis Assaig" uppon a Drupal (vanilla).
+#
+###############################################################################
+
+
+dojo:
+  id: "template"                           # This MUST be lowercase.
+  tool: "drupal"                           # Serch and replace to set your tool.
+  version: "10"                            # Be careful with major upgrades.
+  domain: "ada-template.precarietat.net"   # Be sure fits your domain.
+  type: domain                             # Options: domain, subdomain, folder
+
+images:
+  db:  "mariadb:lts"
+  app: "drupal:10"
+
+path:
+  code:
+    modules:    "/var/www/html/modules"
+    profiles:   "/var/www/html/profiles"
+    sites:      "/var/www/html/sites"
+    themes:     "/var/www/html/themes"
+    libraries:  "/var/www/html/libraries"  
+
+proxy:
+  domains: "`ada-template.precarietat.net`"
+
+database:
+  tool: mariadb
+  host: "db"              # Server DB host.
+  user: "drupal"          # DB user.
+  pass: "vaultPwd"        # REPLACED by real pwd set in ansible vault.
+  name: "drupal"          # DB name.
+  driver: "mysqli"
+  character_set_server: "utf8mb4"
+  collation_server: "utf8mb4_general_ci"
+
+app:
+  mail: marc.bria@uab.cat
+  credentials:
+    username: admin
+    password: "ChangeMe.298"
+  secretkey: "setMe.298"
+  debug:
+    level: "ERROR"

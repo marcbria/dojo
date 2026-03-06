@@ -1,0 +1,56 @@
+###############################################################################
+#
+# Function: Generic service
+# Name:     Generic
+# Version:  0.1
+# Type:     Recommended
+#
+# Description:
+# An inventory to create the basic folder structures common to every app.
+# No functional service will be created but it's useful as a scaffolder.
+# If you like to create a "generic" service, duplicate and adapt this template.
+# 
+###############################################################################
+
+dojo:
+  id: demo                              # This MUST be lowercase.
+  tool: drupal                          # Serch and replace to set your tool.
+  version: "1.0"                        # Be careful with major upgrades.
+  domain: "ada-tool.precarietat.net"    # Be sure fits your domain.
+  type: domain                          # Options: domain, subdomain, folder
+
+proxy:
+  domains: "`ada-tool.precarietat.net`"
+
+database:
+  tool: mariadb
+  version: "10.2"
+  host: "db"              # Server DB host.
+  user: "ojs"             # DB user.
+  pass: "vaultPwd"        # REPLACED by real pwd set in ansible vault.
+  name: "tool"           # DB name.
+  driver: "mysqli"
+  character_set_server: "utf8mb4"
+  collation_server: "utf8mb4_general_ci"
+
+images:
+  db:  "mariadb:10.2"
+  app: "cooltool:1.0"
+
+app:
+  mail: marc.bria@uab.cat
+  credentials:
+    username: admin
+    password: "ChangeMe.298"
+  secretkey: "setMe.298"
+
+  # securize:                             # Set permissions to 600.
+  #   config: 
+  #     path: "{{ path.files.config }}/{{ dojo.id }}"
+  #     type: directory
+  #     mode: 600
+  #     owner: 100:101
+  #   environment: 
+  #     path: "{{ path.base.service }}/{{ dojo.id }}/.env"
+  #     type: file
+  #     mode: 400

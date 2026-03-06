@@ -12,13 +12,16 @@
 
 
 services:
-  mysql:
+  db:
     image: {{ allVars.images.db }}
     restart: unless-stopped
     volumes:
-      - ./volumes/db-import:/docker-entrypoint-initdb.d
+      - ./volumes/db:/var/lib/mysql
+      - ./volumes/db_import:/docker-entrypoint-initdb.d
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    networks:
+      - inside
 
   app:
 #    build:
@@ -27,7 +30,6 @@ services:
     image: {{ allVars.images.app }}
     restart: unless-stopped
     depends_on:
-      - mysql
-    ports:
-      - 8090:80
-
+      - db
+    networks:
+      - inside

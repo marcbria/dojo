@@ -27,7 +27,16 @@
         dest: ~/.vimrc
       become: yes
 
+    # Elimina el directorio de cache del tldr si ya existe.
+    - name: Remove old tldr cache if corrupted
+      file:
+        path: /root/.local/share/tldr
+        state: absent
+      when: ansible_os_family == 'Debian'
+      ignore_errors: yes
+
     # Actualizar TLDR
     - name: Updates TLDR
       command: tldr --update
       when: ansible_os_family == 'Debian'  # Puedes ajustar esto según la distribución
+      ignore_errors: yes

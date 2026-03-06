@@ -1,5 +1,5 @@
 ---
-- name: Create a full folder for the service from the service's dictionary vars
+- name: Creates a service running playbooks service-folders > env > docker-compose > permissions.
   hosts: all
   become: yes
   gather_facts: yes
@@ -15,7 +15,9 @@
     # Sets "allVars" array from the service's diccionaries as follows:
     #       baseHost > serviceGeneric > serviceHost > dojoVars.
     - include_tasks: setAllVars.yml
+      when: allVars.dojo.id is not defined
 
+    # If is not created, creates the "proxy" network.
     - name: Ensures "proxy" network exists
       shell:
         cmd: docker network create proxy

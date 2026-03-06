@@ -11,4 +11,8 @@
 serverName: adauab
 
 dojo:
-  id: demo                         # This MUST be lowercase.
+  id: demo                              # This MUST be lowercase.
+  tool: generic                         # Possible values defined at xxx.
+  version: "1.0"                        # Be careful with major upgrades.
+  domain: "ada-demo.precarietat.net"    # Be sure fits your domain.
+  type: domain                          # Options: domain, subdomain, folder

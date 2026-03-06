@@ -19,7 +19,7 @@
 dojo:
   id: proxy                             # This MUST be lowercase.
   tool: traefik                         # Use other proxies (at your own risk).
-  version: "v2.11"                      # Be careful with major upgrades.
+  version: "v2.11.32"                   # Be careful with major upgrades.
   domain: "localhost"                   # Overwriten by traefik-<server>.yml.
   type: domain                          # Options: domain, subdomain, folder
   

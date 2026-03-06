@@ -1,0 +1,24 @@
+###############################################################################
+#
+# Function: Monitor
+# Name: Template - UptimeKuma
+# Server: ServerName
+#
+# Description:
+# A lightweight tool to monitor your service.
+#
+###############################################################################
+
+
+dojo:
+  id: "template"                           # This MUST be lowercase.
+  tool: "uptimekuma"                       # Serch and replace to set your tool.
+  domain: "ada-template.precarietat.net"   # Be sure fits your domain.
+  type: domain                             # Options: domain, subdomain, folder
+
+images:
+  app: "louislam/uptime-kuma:1.23.16"
+
+proxy:
+  domains: "`ada-template.precarietat.net`"
+

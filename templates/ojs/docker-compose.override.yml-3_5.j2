@@ -43,13 +43,13 @@ services:
 
     volumes:
 {% if allVars.plugins.type == 'shared-plugins' %}
-      # Read-only shared folder for Plugins (ie: plugins/3_3):
+      # Read-only shared folder for Plugins (ie: plugins/3_5):
       - ../shared/plugins/{{ allVars.dojo.versionFamily.rsplit('_', 1)[0] }}:/var/www/html/plugins:ro
 {% elif allVars.plugins.type == 'shared-plugins-admin' %}
-      # ADMIN site: Writable shared folder for Plugins (ie: plugins/3_3):
+      # ADMIN site: Writable shared folder for Plugins (ie: plugins/3_5):
       - ../shared/plugins/{{ allVars.dojo.versionFamily.rsplit('_', 1)[0] }}:/var/www/html/plugins
 {% elif allVars.plugins.type == 'shared-theme' %}
-      # Read-only shared folder for Themes (ie: themes/3_3):
+      # Read-only shared folder for Themes (ie: themes/3_5):
       - ../shared/themes/{{ allVars.dojo.versionFamily.rsplit('_', 1)[0] }}/redi:/var/www/html/plugins/themes/redi:ro
 {% elif allVars.plugins.type == 'volume-plugins' %}
       # Writable plugins on container:
@@ -66,10 +66,9 @@ services:
       - {{ allVars.web.favicon }}:/var/www/html/favicon.ico:ro
 {% endif %}
 
-{% if allVars.pkp.patch.version is defined %}{% if allVars.pkp.patch.version == '3.3' %}
-      # Patches for OJS 3_3:
-      - ../shared/patch/PKPSubmissionFileService.inc.php:/var/www/html/lib/pkp/classes/services/PKPSubmissionFileService.inc.php:ro
-      - ../shared/patch/OJSv3_3_0UpgradeMigration.inc.php:/var/www/html/classes/migration/upgrade/OJSv3_3_0UpgradeMigration.inc.php:ro
+{% if allVars.pkp.patch.version is defined %}{% if allVars.pkp.patch.version == '3.5' %}
+      # Patches for OJS 3_5:
+      - ../shared/patch/3_5/lib/pkp/classes/core/PKPRequest.php:/var/www/html/lib/pkp/classes/core/PKPRequest.php:ro
 {% endif %}{% endif %}
 
     networks:

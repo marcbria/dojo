@@ -1,0 +1,23 @@
+#########################################################################
+#
+# Monitor with Uptime Kuma
+# File: docker-compose.yml
+#
+# Site:      {{ service }}
+# Tool:      {{ allVars.dojo.tool }}
+# Version:   {{ allVars.dojo.version }}
+# Creation:  {{ fileCreation }}
+#
+#########################################################################
+
+services:
+  app:
+    image: {{ allVars.images.app}}
+    container_name: {{ allVars.dojo.id }}
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./volumes/private:/app/data
+      # To monitor docker containers
+      - /var/run/docker.sock:/var/run/docker.sock

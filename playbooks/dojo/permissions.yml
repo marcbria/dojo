@@ -20,9 +20,9 @@
       file:
         path: "{{ item }}"
         state: directory
-        mode: 0744
-        owner: "999"
-        group: "1002"
+        mode: "{{ allVars.volumes.db.mode }}"
+        owner: "{{ allVars.volumes.db.owner }}"
+        group: "{{ allVars.volumes.db.group }}"
         recurse: yes
       loop:
         - "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id | lower}}"
@@ -33,13 +33,14 @@
       file:
         path: "{{ item }}"
         state: directory
-        mode: 0744
-        owner: "100"
-        group: "101"
+        mode: "{{ allVars.volumes.app.mode }}"
+        owner: "{{ allVars.volumes.app.owner }}"
+        group: "{{ allVars.volumes.app.group }}"
         recurse: yes
       loop:
         - "{{ allVars.path.files.config }}/{{ allVars.dojo.id | lower }}"
         - "{{ allVars.path.files.public }}/{{ allVars.dojo.id | lower }}"
         - "{{ allVars.path.files.private }}/{{ allVars.dojo.id | lower }}"
+        - "{{ allVars.path.volumes.logs }}/{{ allVars.dojo.id | lower }}/app"
       tags:
         - volumes_www

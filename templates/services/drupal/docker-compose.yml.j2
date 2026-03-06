@@ -1,0 +1,49 @@
+#########################################################################
+#
+# General settings
+# File: docker-compose.yml
+#
+# Site:      {{ service }}
+# Tool:      {{ allVars.dojo.tool }}
+# Version:   {{ allVars.dojo.version }}
+# Creation:  {{ fileCreation }}
+#
+# COMMENTS:
+# This is designed for generic services based on a DB and an APP, building
+# folders following dojo's logic. Extend path.code with additional volumes.
+# This will take advantage of the Doker's feature with anonymous volumes 
+# (which is what we are creating here) that are initialized with the existing
+# content of the image in the same location.
+#########################################################################
+
+services:
+  db:
+    image: {{ allVars.images.db }}
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./volumes/db:/var/lib/mysql
+      - ./volumes/db_import:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    networks:
+      - inside
+
+  app:
+    image: {{ allVars.images.app }}
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+{% for key, value in allVars.path.code.items() if key != 'root' %}
+      - ./volumes/code/{{ key }}:{{ value }}
+{% endfor %}
+    depends_on:
+      - db
+    networks:
+      - inside
+
+networks:
+  inside:
+    external: false

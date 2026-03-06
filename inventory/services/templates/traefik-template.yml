@@ -1,0 +1,25 @@
+###############################################################################
+#
+# Function: Reverse Proxy
+# Name: Traefik - Overwrites
+# Server: ADA
+#
+# Description:
+# Overwriting Traefik dictionary.
+# See traefik.yml for general vars.
+#
+###############################################################################
+
+dojo:
+  domain: "proxy-template.precarietat.net"   # Be sure fits your domain.
+  
+app:
+  certificate:
+    email: "marc.bria@uab.es"           # Used for let's encrypt.
+    method: http                        # Options: https and tls (dns not yet).
+    staging: fase                       # True for "sandbox" (avoid banning).
+  debug:
+    level: "ERROR"
+  credentials:
+    username: "admin"                   # admin & htpasswd ($doubled to escape).
+    password: "$$apr1$$705vzxkq$$HGhI6dJ5qS1Sjb2coIsbe."  # Default: traefikPwd.

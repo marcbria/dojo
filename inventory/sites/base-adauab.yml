@@ -11,11 +11,8 @@
 dojo:
   id: demo                # This MUST be lowercase. To be defined in journalname.yml
   tool: ojs
-#  version: "stable-3_3_0"
-#  version: "3_3_0-17"
-  version: "3_2_1-4"
-#  versionFamily: "3_3_0"
-  versionFamily: "3_2_1"
+  version: "lts-3_3"
+  versionFamily: "3_3_0"
   domain: "sub.foo.org"   # Overwride in journalname.yml
   type: domain            # How the url will be managed?
                           # domain: Domain or subdomain (ie: https://sub.foo.org/journal)
@@ -27,9 +24,20 @@ images:
   db:  "{{ database.tool }}:{{ database.version }}"
   app: "pkpofficial/{{ dojo.tool }}:{{ dojo.version }}"
 
+volumes:
+  db:
+    mode: "0744"
+    owner: 999
+    group: 1002
+  app:
+    mode: "0744"
+    owner: 100
+    group: 101
+
 plugins:
   type: shared-plugins    # How pluguins will be managed?
-                          # - shared-plugins: All plugins are common.
+                          # - shared-plugins-admin: All plugins are common but this site can write on them.
+                          # - shared-plugins: All plugins are common and read-only.
                           # - shared-themes: Only themes folder is common.
                           # - volume-plugins: Persistent volume will for all plugins.
                           # - volume-themes: Persistent volume for themes.
@@ -49,9 +57,13 @@ database:
   driver: "mysqli"
   character_set_server: "utf8mb4"
   collation_server: "utf8mb4_general_ci"
+  permissions: "999:999"              # Permissions for DB persistent volumes
+
+web:
+  favicon: "../shared/images/favicon.ico"
 
 php:
-  memory_limit: 128M
+  memory_limit: 256M
   max_execution_time: 300
   file_uploads: 'On'
   post_max_size: 20M
@@ -83,6 +95,8 @@ pkp:
     locale: en_US
     client_charset: utf-8
     connection_charset: utf8
+  security:
+    allowed_html: "a[href|target|title|id],em,strong[id],cite[id],code[id],ul[id],ol[id],li[class],dl,dt,dd,b,i,u,img[src|alt|id],sup,sub,br,p[id],h1[id],h2[id],h3[id],h4[id],h5[id],h6[id]"
   email:
     smtp: "Off"
     smtp_server: "smtps.uab.cat"
@@ -92,7 +106,7 @@ pkp:
     # smtp_user: "revistesdigitals"
     smtp_username: "spapps"
     smtp_password: "vaultPwd"           # REPLACED by real pwd in ansible Vault (just dojo-vault edit)
-    smtp_suppress_cert_check: "On"
+    smtp_suppress_cert_check: "Off"
     allow_envelope_sender: "On"
     # default_envelope_sender: "sp.revistes.digitals@uab.cat"
     default_envelope_sender: "sp.apps@uab.cat"
@@ -103,4 +117,3 @@ pkp:
     max_recipients: "10"
     require_validation: "On"
     validation_timeout: "21"
-  

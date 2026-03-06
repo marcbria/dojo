@@ -12,3 +12,4 @@ serverName: kalimero
 
 dojo:
   id: demo                         # This MUST be lowercase.
+  version: 1
