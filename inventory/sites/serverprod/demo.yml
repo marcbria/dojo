@@ -1,0 +1,42 @@
+dojo:
+  id: demo
+  tool: ojs
+  version: "3_3_0-22"
+  versionFamily: "3_3_0"
+  domain: "demo.journals.example.org"
+  type: domain-noslug
+
+images:
+  db:  "mariadb:11.3"
+  app: "pkpofficial/ojs:3_3_0-22"
+
+proxy:
+  domains: "`demo.journals.example.org`"
+
+database:
+  tool: mariadb
+  version: "11.3"
+  host: "db"
+  user: "ojs"
+  pass: "vaultPwd"        # Replaced by vault at runtime
+  name: "ojs"
+  driver: "mysqli"
+
+pkp:
+  admin:
+    mail: "admin@example.org"
+    pass: "vaultPwd"        # Replaced by vault at runtime
+  general:
+    installed: "Off"
+    base_url: "https://demo.journals.example.org"
+    base_url_index: "https://demo.journals.example.org/index"
+    base_url_journal: "https://demo.journals.example.org"
+    scheduled_tasks: "On"
+    restful_urls: "On"
+    enable_beacon: "Off"
+  email:
+    smtp: "Off"
+    smtp_auth: "tls"
+    dmarc_compliant_from_displayname: "%n via Demo Journal"
+  oai:
+    id: demo.journals.example.org

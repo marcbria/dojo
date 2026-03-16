@@ -6,10 +6,11 @@ inventory/hosts.yml
 inventory/services/adauab
 inventory/services/kalimero
 inventory/services/cory
+inventory/services/test*
 inventory/sites/adauab
 inventory/sites/kalimero
 inventory/sites/cory
-inventory/sites/test
+inventory/sites/test*
 inventory/sites/base-ada.yml
 inventory/sites/base-kalimero.yml
 inventory/sites/base-cory.yml
