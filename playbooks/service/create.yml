@@ -10,14 +10,12 @@
   vars_files:
     - ./configs/dojo.yml
     - ./configs/secret.yml
-    - ./services/base-{{ hostName }}.yml
+    - ./inventory/services/base-{{ hostName }}.yml
   tasks:
-    # Sets "allVars" array from the service's diccionaries as follows:
-    #       baseHost > serviceGeneric > serviceHost > dojoVars.
-    - include_tasks: setAllVars.yml
-      when: allVars.dojo.id is not defined
-
-    # If is not created, creates the "proxy" network.
+    - include_tasks: ../setAllVars.yml
+      vars:
+        mode: service
+        param: "{{ serviceParam }}"
     - name: Ensures "proxy" network exists
       shell:
         cmd: docker network create proxy
@@ -25,12 +23,9 @@
 
 # Creates and set permissions for service-folders
 - import_playbook: service-folders.yml
-
-# Cerates env file
+# Creates env file
 - import_playbook: env.yml
-
 # Creates all docker-compose files.
 - import_playbook: docker-compose.yml
-
 # Ensures folders permissions
 - import_playbook: permissions.yml

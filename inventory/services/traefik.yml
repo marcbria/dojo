@@ -24,7 +24,7 @@ dojo:
   type: domain                          # Options: domain, subdomain, folder
   
 images:
-  app: "traefik:{{ dojo.version }}"
+  app: !unsafe "traefik:{{ dojo.version }}"
 
 app:
   network: "proxy"                      # Name to refer after in your apps.
@@ -49,10 +49,10 @@ app:
     password: "$$apr1$$snawkpfe$$80McrwsF31DZr2aO6kyts1"  # Default: proxyPwd.
   securize:                             # Set permissions to 600.
     config: 
-      path: "{{ path.files.config }}/{{ dojo.id }}"
+      path: !unsafe "{{ path.files.config }}/{{ dojo.id }}"
       type: directory                   # Implies a recursive change.
       mode: 600
     environment: 
-      path: "{{ path.base.service }}/{{ dojo.id }}/.env"
+      path: !unsafe "{{ path.base.services }}/{{ dojo.id }}/.env"
       type: file
       mode: 400

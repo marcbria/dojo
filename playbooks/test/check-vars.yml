@@ -1,0 +1,44 @@
+---
+# TEST - Shows all variable layers and final allVars for debugging.
+#        Usage (service): just test-var-service traefik <host>
+#        Usage (site):    just test-var-site myJournal <host>
+- name: Check variable loading for a service or site
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: "INIT - Set mode and param"
+      set_fact:
+        mode:  "{{ 'service' if serviceParam is defined else 'site' }}"
+        param: "{{ serviceParam | default(siteParam | default('NULL')) }}"
+
+    - name: "Load all vars via setAllVars"
+      include_tasks: ../setAllVars.yml
+
+    - name: "DEBUG - File paths"
+      debug:
+        msg:
+          - "mode:    {{ mode }}"
+          - "Layer 1: ./configs/dojo.yml"
+          - "Layer 2: {{ layerDir }}/base-{{ hostName }}.yml  [{{ 'OK' if stat_base.stat.exists else 'NOT FOUND' }}]"
+          - "Layer 3: {{ layerDir }}/{{ param }}.yml  [{{ 'OK' if stat_generic.stat.exists else 'NOT FOUND' }}]"
+          - "Layer 4: {{ layerDir }}/{{ hostName }}/{{ param }}.yml  [{{ 'OK' if stat_host.stat.exists else 'NOT FOUND' }}]"
+
+    - name: "DEBUG - LAYER 1 dojoVars"
+      debug:
+        var: dojoVars
+
+    - name: "DEBUG - LAYER 2 baseHostVars"
+      debug:
+        var: baseHostVars | default('NOT LOADED')
+
+    - name: "DEBUG - LAYER 3 genericVars"
+      debug:
+        var: genericVars | default('NOT LOADED')
+
+    - name: "DEBUG - LAYER 4 hostVars"
+      debug:
+        var: hostVars | default('NOT LOADED')
+
+    - name: "DEBUG - FINAL allVars"
+      debug:
+        var: allVars | default('NOT COMPUTED')

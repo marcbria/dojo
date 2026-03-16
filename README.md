@@ -124,7 +124,6 @@ infrastruture and sites, and then forget about the project and manage it manuall
 
 Again, it's not mandatory, but this project uses git as a **single source of truth** so all this site structure will be created (and recreated at any time) based on an ansible-dictionary file ([example for a journal](https://github.com/marcbria/ansible/blob/main/sites/periodicum.yml)) that includes all the required variables and configuration information. Private information will be encrypted and also stored in git with ansible-vault.
 
-
 ## Installation
 
 (This is how it will work, but it's not full implemented yet)
@@ -189,6 +188,54 @@ TBD...
 
 If you prefer to run accions without any helper, or you like to adapt it, review the "[justfile](https://github.com/marcbria/ansible/blob/main/justfile)" and the modules in the '/scripts' folder.
 
+## Inventory
+
+Ansible is data driven so playbooks work acording to the variables you set in your `inventory`.
+
+To facilitate the mainenance, we defined an "order of precedence" between the files in the inventory.
+It will let you define generic variables common to multiple instances that could be overitten after by more specific files.
+This is useful to keep gruped settings in same server (ie: mail config in all journals) or to keep identical inventories for test and production servers.
+
+To ilustrate, a basic inventory will look like this:
+
+```
+inventory/
+├── hosts.yml
+├── services/
+│   ├── base-prod.yml            ← baseHostVars (services)
+│   ├── base-test.yml
+│   ├── traefik.yml              ← serviceGenericVars
+│   ├── prod/
+│   │   └── traefik.yml          ← serviceHostVars
+│   └── test/
+│       └── traefik.yml
+└── sites/
+    ├── base-prod.yml            ← baseHostVars (sites)
+    ├── base-test.yml
+    ├── myJournal.yml            ← siteGenericVars
+    ├── prod/
+    │   └── myJournal.yml        ← siteHostVars
+    └── test/
+        └── myJournal.yml        ← siteHostVars
+```
+
+The variable logic is implemented in `playbooks/(dojo|service)/setAllVars.yml` scripts that read the inventory files and folders to overwrite vars in this order:
+
+| Layer   | varName            | configPath                                                    |
+|:--------|:-------------------|:--------------------------------------------------------------|
+| Layer 1 | dojoVars           | ./configs/dojo.yml                                            |
+| Layer 2 | baseHostVars       | ./inventory/services/base-{{ hostName }}.yml                  |
+| Layer 3 | serviceGenericVars | ./inventory/services/{{ serviceParam }}.yml                   |
+| Layer 4 | serviceHostVars    | ./inventory/services/{{ hostName }}/{{ serviceParam }}.yml    |
+
+Replace `services` with `sites` for journal's inventories.
+
+:::info
+If you get in trouble... 
+- Check the variables of an specific service with: `just test-var-service traefik $REMOTESERVER`.
+- Cehck the variables of an specific journal with: `just test-var-site myJournal $REMOTESERVER`.
+Or you can call directly the `check-vars.yml` playbook.
+:::
 
 # ToDo
 

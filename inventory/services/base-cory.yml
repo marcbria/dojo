@@ -2,7 +2,7 @@
 # Set here all the vars that WILL BE THE SAME for all your services.
 #
 # About dictionary preferece: When creating Dictionary keep in mind that...
-# - Variables are combined/overriden as follows: baseHost (this file) > siteGeneric > siteHost > dojoVars
+# - Variables are combined/overriden as follows: dojoVars < baseHost < serviceGeneric < serviceHost
 # - Refered variables (ie: proxy.domains) are only possible between sections (ansible limitation) and see next...
 # - IMPORTANT: Refered variables need to be reset if the origin changes (ie: if you change dojo.domain in <site>.yml)
 # - When applies, variables follows names and structure from config.inc.php sections.

@@ -21,6 +21,24 @@ test-vars:
     @echo "Variable rootPath: " {{ rootPath }}
 
 
+# Check variable loading for a SERVICE (shows all layers and final allVars)
+# call: just test-var-service traefik myServer
+test-var-service service host *args:
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+        --vault-password-file {{ testPath }}/{{ vaultKey }} \
+        {{ testPath }}/check-vars.yml \
+        -e "hostName={{ host }} serviceParam={{ service }}" \
+        -K {{ args }}
+
+# Check variable loading for a SITE (shows all layers and final allVars)
+# call: just test-var-site myjournal myServer
+test-var-site site host *args:
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+        --vault-password-file {{ testPath }}/{{ vaultKey }} \
+        {{ testPath }}/check-vars.yml \
+        -e "hostName={{ host }} siteParam={{ site }}" \
+        -K {{ args }}
+
 # Test if you can pass arguments
 test-args *arguments:
     @echo "TEST ARGS: " $@

@@ -1,0 +1,78 @@
+---
+# INCLUDE - Set global "allVars" from inventory dictionaries.
+#           Override order: dojoVars < baseHostVars < genericVars < hostVars
+#
+# Required vars:
+#   - hostName:  target server name
+#   - mode:      "service" or "site"
+#   - param:     service or site name (e.g. "traefik" or "myJournal")
+
+- name: "INIT - Resolve layerDir and param"
+  set_fact:
+    layerDir: "{{ inventory_dir }}/{{ 'services' if mode == 'service' else 'sites' }}"
+
+- name: "LAYER 1 - Load dojoVars"
+  include_vars:
+    file: ./configs/dojo.yml
+    name: dojoVars
+  delegate_to: localhost
+
+- name: "LAYER 2 - stat baseHostVars"
+  stat:
+    path: "{{ layerDir }}/base-{{ hostName }}.yml"
+  register: stat_base
+  delegate_to: localhost
+
+- name: "LAYER 2 - Load baseHostVars"
+  include_vars:
+    file: "{{ layerDir }}/base-{{ hostName }}.yml"
+    name: baseHostVars
+  ignore_errors: yes
+  failed_when: false
+  delegate_to: localhost
+  when: stat_base.stat.exists
+
+- name: "LAYER 3 - stat genericVars"
+  stat:
+    path: "{{ layerDir }}/{{ param }}.yml"
+  register: stat_generic
+  delegate_to: localhost
+
+- name: "LAYER 3 - Load genericVars"
+  include_vars:
+    file: "{{ layerDir }}/{{ param }}.yml"
+    name: genericVars
+  ignore_errors: yes
+  failed_when: false
+  delegate_to: localhost
+  when: stat_generic.stat.exists
+
+- name: "LAYER 4 - stat hostVars"
+  stat:
+    path: "{{ layerDir }}/{{ hostName }}/{{ param }}.yml"
+  register: stat_host
+  delegate_to: localhost
+
+- name: "LAYER 4 - Load hostVars"
+  include_vars:
+    file: "{{ layerDir }}/{{ hostName }}/{{ param }}.yml"
+    name: hostVars
+  ignore_errors: yes
+  failed_when: false
+  delegate_to: localhost
+  when: stat_host.stat.exists
+
+- name: "Combine allVars"
+  set_fact:
+    allVars: "{{ dojoVars | combine(baseHostVars | default({}), genericVars | default({}), hostVars | default({}), recursive=True) }}"
+
+# Extra vars only needed in site/dojo mode
+- name: "SITE - Convert versionFamily to major_minor format"
+  set_fact:
+    versionMajorMinor: "{{ allVars.dojo.versionFamily.split('_')[0] }}_{{ allVars.dojo.versionFamily.split('_')[1] }}"
+  when: mode == 'site' and allVars.dojo.versionFamily is defined
+
+- name: "SITE - Extract MAJOR from versionFamily"
+  set_fact:
+    versionMajor: "{{ allVars.dojo.versionFamily.split('_')[0] }}"
+  when: mode == 'site' and allVars.dojo.versionFamily is defined

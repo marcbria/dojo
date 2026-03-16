@@ -10,13 +10,12 @@
   vars_files:
     - ./configs/dojo.yml
     - ./configs/secret.yml
-    - ./inventory/base-{{ hostName }}.yml
+    - ./inventory/services/base-{{ hostName }}.yml
   tasks:
-    # sets "allVars" array from the service's diccionaries as follows:
-    #           baseHost > serviceGeneric > serviceHost > dojoVars.
-    - include_tasks: setAllVars.yml
-      when: allVars.dojo.id is not defined
-  
+    - include_tasks: ../setAllVars.yml
+      vars:
+        mode: service
+        param: "{{ serviceParam }}"
     - name: Ensure dojo's essential folders exists
       file:
         path: "{{ item }}"
@@ -29,8 +28,7 @@
         - "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}"
         - "{{ allVars.path.storage.backups }}/{{ allVars.dojo.id }}"
         - "{{ allVars.path.storage.volumes }}/files"
-
-    - name: Create GENERIC VOLUME folders for service [{{ allVars.dojo.id }}] 
+    - name: Create GENERIC VOLUME folders for service [{{ allVars.dojo.id }}]
       file:
         path: "{{ item.value }}/{{ allVars.dojo.id }}"
         state: directory
@@ -38,12 +36,11 @@
         owner: "{{ allVars.user.run }}"
         group: "{{ allVars.user.group }}"
         recurse: yes
-      with_dict: 
+      with_dict:
         - "{{ allVars.path.volumes }}"
       tags:
         - volumes_directories
-
-    - name: Create CODE VOLUME folders for service [{{ allVars.dojo.id }}] 
+    - name: Create CODE VOLUME folders for service [{{ allVars.dojo.id }}]
       file:
         path: "{{ allVars.path.code.root }}/{{ allVars.dojo.id }}/{{ item.key }}"
         state: directory
@@ -56,7 +53,6 @@
       when: item.key != "root"
       tags:
         - volumes_directories
-
     - name: Create FILES VOLUME folders for service [{{ allVars.dojo.id }}]
       file:
         path: "{{ item.value }}/{{ allVars.dojo.id }}"
@@ -65,11 +61,10 @@
         owner: "{{ allVars.user.run }}"
         group: "{{ allVars.user.group }}"
         recurse: yes
-      with_dict: 
+      with_dict:
         - "{{ allVars.path.files }}"
       tags:
         - files_directories
-
     - name: Assign ownership in general BD folders
       file:
         path: "{{ item }}"
@@ -81,7 +76,6 @@
         - "{{ allVars.path.volumes.db_import }}"
       tags:
         - volumes_db
-
     - name: Assign ownership for service's BD folder
       file:
         path: "{{ item }}"
@@ -94,18 +88,16 @@
         - "{{ allVars.path.volumes.db_import }}/{{ allVars.dojo.id }}"
       tags:
         - volumes_db
-
     - name: Assign ownership in Web files
       file:
         path: "{{ item.value }}"
         state: directory
         owner: "100"
         group: "101"
-      with_dict: 
+      with_dict:
         - "{{ allVars.path.files }}"
       tags:
         - volumes_www
-
     - name: Assign ownership for service's Web files
       file:
         path: "{{ item.value }}/{{ allVars.dojo.id }}"
@@ -113,18 +105,17 @@
         owner: "100"
         group: "101"
         recurse: yes
-      with_dict: 
-        - "{{ path.files }}"
+      with_dict:
+        - "{{ allVars.path.files }}"
       tags:
         - volumes_www
-
     - name: Create required symbolic links
       file:
         src: "{{ item.target }}"
         dest: "{{ item.link }}"
         state: link
         force: yes
-      loop: 
+      loop:
         - { link: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes", target: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}" }
         - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/db", target: "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id }}" }
         - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/db_import", target: "{{ allVars.path.volumes.db_import }}/{{ allVars.dojo.id }}" }
