@@ -28,7 +28,7 @@ test-var-service service host *args:
         --vault-password-file {{ testPath }}/{{ vaultKey }} \
         {{ testPath }}/check-vars.yml \
         -e "hostName={{ host }} serviceParam={{ service }}" \
-        -K {{ args }}
+        {{ args }}
 
 # Check variable loading for a SITE (shows all layers and final allVars)
 # call: just test-var-site myjournal myServer
@@ -37,7 +37,7 @@ test-var-site site host *args:
         --vault-password-file {{ testPath }}/{{ vaultKey }} \
         {{ testPath }}/check-vars.yml \
         -e "hostName={{ host }} siteParam={{ site }}" \
-        -K {{ args }}
+        {{ args }}
 
 # Test if you can pass arguments
 test-args *arguments:
