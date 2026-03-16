@@ -1,0 +1,12 @@
+# Example of remote server config with base vars shared by all sites on this host.
+# Override order: this file < sites/<site>.yml < sites/<host>/<site>.yml
+
+serverName: serverprod
+
+dojo:
+  id: demo
+  tool: ojs
+  version: "3_5_0-4"
+  versionFamily: "3_3_0"
+  domain: "journals.example.org"
+  type: domain
