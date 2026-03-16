@@ -36,3 +36,6 @@ path:
     config:     "/srv/volumes/files/config"
   code:
     root:       "/srv/volumes/code"
+
+dojo:
+  tool: ojs

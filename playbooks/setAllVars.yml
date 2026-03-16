@@ -77,9 +77,8 @@
     that:
       - allVars.dojo is defined
       - allVars.dojo.id is defined
-      - allVars.dojo.tool is defined
     fail_msg: >-
-      allVars is missing required fields (dojo.id or dojo.tool).
+      allVars is missing required fields (dojo.id).
       Check: {{ layerDir }}/{{ hostName }}/{{ param }}.yml
 
 - name: "SITE - Inject computed version vars into allVars"
