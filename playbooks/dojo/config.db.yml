@@ -12,9 +12,10 @@
     - ./configs/secret.yml
     - ./inventory/sites/base-{{ hostName }}.yml
   tasks:
-    # sets "allVars" array from the site's diccionaries as follows:
-    #           baseHost > siteGeneric > siteHost > dojoVars.
-    - include_tasks: setAllVars.yml
+    - include_tasks: ../setAllVars.yml
+      vars:
+        mode: site
+        param: "{{ siteParam }}"
   
     - name: Generate DB config file from template and dojo vars.
       template:
