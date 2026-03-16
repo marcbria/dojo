@@ -1,5 +1,5 @@
 ---
-- name: Create PKP's docker-compose files from the service's diccionary vars.
+- name: Create docker-compose files from service dictionary vars.
   hosts: all
   become: yes
   gather_facts: yes
@@ -10,18 +10,19 @@
   vars_files:
     - ./configs/dojo.yml
     - ./configs/secret.yml
-    - ./inventory/sites/base-{{ hostName }}.yml
+    - ./inventory/services/base-{{ hostName }}.yml
   tasks:
-    # sets "allVars" array from the service's diccionaries as follows:
-    #           baseHost > serviceGeneric > serviceHost > dojoVars.
-    - include_tasks: setAllVars.yml
-  
-    - name: Generate docker-compose.yml file from template and dojo vars.
+    - include_tasks: ../setAllVars.yml
+      vars:
+        mode: service
+        param: "{{ serviceParam }}"
+
+    - name: Generate docker-compose.yml from template
       template:
         src: "./templates/{{ allVars.dojo.tool }}/docker-compose.yml.j2"
         dest: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/docker-compose.yml"
 
-    - name: Generate docker-compose.override.yml file from template and dojo vars.
+    - name: Generate docker-compose.override.yml from template
       template:
         src: "./templates/{{ allVars.dojo.tool }}/docker-compose.override.yml.j2"
         dest: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/docker-compose.override.yml"
