@@ -18,10 +18,10 @@
   
     - name: Generate docker-compose.yml file from template and dojo vars.
       template:
-        src: "./templates/{{ allVars.dojo.tool }}/docker-compose.yml-{{ versionMajorMinor }}.j2"
+        src: "./templates/{{ allVars.dojo.tool }}/docker-compose.yml-{{ allVars.versionMajorMinor }}.j2"
         dest: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}/docker-compose.yml"
 
     - name: Generate docker-compose.override.yml file from template and dojo vars.
       template:
-        src: "./templates/{{ dojo.tool }}/docker-compose.override.yml-{{ versionMajorMinor }}.j2"
+        src: "./templates/{{ allVars.dojo.tool }}/docker-compose.override.yml-{{ allVars.versionMajorMinor }}.j2"
         dest: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}/docker-compose.override.yml"

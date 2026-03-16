@@ -2,14 +2,28 @@
 # INCLUDE - Set global "allVars" from inventory dictionaries.
 #           Override order: dojoVars < baseHostVars < genericVars < hostVars
 #
-# Required vars:
-#   - hostName:  target server name
-#   - mode:      "service" or "site"
-#   - param:     service or site name (e.g. "traefik" or "myJournal")
+# Required vars (auto-detected if not passed explicitly):
+#   - hostName:  target server name (must always be set by caller)
+#   - mode:      "service" or "site"  [auto-detected from siteParam/serviceParam]
+#   - param:     service or site name [auto-detected from siteParam/serviceParam]
 
-- name: "INIT - Resolve layerDir and param"
+# FIX 1: Auto-detectar mode y param si el caller no los pasa explícitamente.
+# Esto hace que los playbooks dojo (que usan siteParam) funcionen sin cambios,
+# y los de service (que pasan mode/param vía vars:) siguen funcionando igual.
+- name: "INIT - Auto-detect mode and param if not provided"
+  set_fact:
+    mode:  "{{ mode  | default('service' if serviceParam is defined else 'site') }}"
+    param: "{{ param | default(serviceParam | default(siteParam | default(''))) }}"
+
+- name: "INIT - Resolve layerDir"
   set_fact:
     layerDir: "{{ inventory_dir }}/{{ 'services' if mode == 'service' else 'sites' }}"
+
+# FIX 2: Fail rápido si param está vacío (typo en el caller).
+- name: "INIT - Assert param is defined"
+  assert:
+    that: param != ''
+    fail_msg: "setAllVars requires 'param' (site or service name). Got empty string."
 
 - name: "LAYER 1 - Load dojoVars"
   include_vars:
@@ -27,9 +41,9 @@
   include_vars:
     file: "{{ layerDir }}/base-{{ hostName }}.yml"
     name: baseHostVars
-  ignore_errors: yes
-  failed_when: false
   delegate_to: localhost
+  # FIX 3: Eliminados ignore_errors + failed_when redundantes.
+  # El when: ya garantiza que solo se ejecuta si el fichero existe.
   when: stat_base.stat.exists
 
 - name: "LAYER 3 - stat genericVars"
@@ -42,8 +56,6 @@
   include_vars:
     file: "{{ layerDir }}/{{ param }}.yml"
     name: genericVars
-  ignore_errors: yes
-  failed_when: false
   delegate_to: localhost
   when: stat_generic.stat.exists
 
@@ -57,22 +69,42 @@
   include_vars:
     file: "{{ layerDir }}/{{ hostName }}/{{ param }}.yml"
     name: hostVars
-  ignore_errors: yes
-  failed_when: false
   delegate_to: localhost
   when: stat_host.stat.exists
 
+# FIX 4: dojoVars también protegido con | default({}) por consistencia.
 - name: "Combine allVars"
   set_fact:
-    allVars: "{{ dojoVars | combine(baseHostVars | default({}), genericVars | default({}), hostVars | default({}), recursive=True) }}"
+    allVars: >-
+      {{ dojoVars | default({})
+         | combine(baseHostVars | default({}),
+                   genericVars  | default({}),
+                   hostVars     | default({}),
+                   recursive=True) }}
 
-# Extra vars only needed in site/dojo mode
-- name: "SITE - Convert versionFamily to major_minor format"
-  set_fact:
-    versionMajorMinor: "{{ allVars.dojo.versionFamily.split('_')[0] }}_{{ allVars.dojo.versionFamily.split('_')[1] }}"
-  when: mode == 'site' and allVars.dojo.versionFamily is defined
+# FIX 5: Validación de campos obligatorios antes de que los playbooks los usen.
+- name: "VALIDATE - Assert mandatory fields exist in allVars"
+  assert:
+    that:
+      - allVars.dojo is defined
+      - allVars.dojo.id is defined
+      - allVars.dojo.tool is defined
+    fail_msg: >-
+      allVars is missing required fields (dojo.id or dojo.tool).
+      Check your inventory file: {{ layerDir }}/{{ hostName }}/{{ param }}.yml
 
-- name: "SITE - Extract MAJOR from versionFamily"
+# FIX 6: versionMajorMinor y versionMajor dentro de allVars.dojo para
+# mantener la consistencia del namespace. Los templates deben usar
+# allVars.dojo.versionMajorMinor en lugar de la variable suelta.
+- name: "SITE - Inject computed version vars into allVars"
   set_fact:
-    versionMajor: "{{ allVars.dojo.versionFamily.split('_')[0] }}"
+    allVars: >-
+      {{ allVars | combine({
+           'dojo': allVars.dojo | combine({
+             'versionMajorMinor': allVars.dojo.versionFamily.split('_')[0]
+                                  + '_'
+                                  + allVars.dojo.versionFamily.split('_')[1],
+             'versionMajor': allVars.dojo.versionFamily.split('_')[0]
+           })
+         }, recursive=True) }}
   when: mode == 'site' and allVars.dojo.versionFamily is defined
