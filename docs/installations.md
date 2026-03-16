@@ -1,92 +1,154 @@
-# Inventory of configurations
+# URL configuration types
 
-This is a list of actions to perform to setup different configurations.
+This document describes the supported URL layouts for OJS/OMP journals and
+the specific steps required to set up each one.
 
-## Single tenant, Journal in domain without url Slug
+## Types overview
 
-**Characteristics**
-- RESTful urls
-- Journal's url is the root of your domain or subdomain.
-- No additional slugs with the journal context are added to the url.
-- Admin pages are placed in "/index/admin".
+| Type | Example URL | Notes |
+|:---|:---|:---|
+| `domain` | `https://journal.example.org/journalname` | Default. Journal slug in path. |
+| `domain-noslug` | `https://journal.example.org` | Journal at domain root. Extra steps required. |
+| `folder` | `https://example.org/journalname` | Multiple journals under one domain. |
+| `folder-noslug` | `https://example.org/journalname` | Folder-based, no OJS slug in URL. |
 
-**Downsides**
-- Installation is not trivial
+---
+
+## domain-noslug
+
+Journal lives at the root of its domain — no OJS context slug in the URL.
+
+**Characteristics:**
+- RESTful URLs enabled.
+- Journal URL is the root of the domain or subdomain.
+- Admin pages are at `/index/admin`.
+
+**Downsides:**
+- Setup requires an extra manual step after the initial install.
 
 **Example:**
-Journal's url: https://ada-revista04.precarietat.net
-Admin's url:   https://ada-revista04.precarietat.net/index/admin
-
-### Actions
-
-0. Set some env variables (not mandatory but makes scripts generic and easier to read):
 ```
-$ SERVER=fooServer
-$ JOURNAL=journalname
+Journal: https://myjournal.example.org
+Admin:   https://myjournal.example.org/index/admin
 ```
 
-1. **Create your dictionary**
+### Steps
 
-Set your dictionary with the data of your journal.
-Pay special attention to `domain` and `base_url*` variables.
-
+0. Set environment variables:
+```bash
+SERVER=myserver
+JOURNAL=myjournal
 ```
+
+1. Create the inventory dictionary at `inventory/sites/<hostName>/$JOURNAL.yml`:
+```yaml
 dojo:
-  id: journalname                       # This MUST be lowercase.
+  id: myjournal                         # Must be lowercase.
   tool: ojs
-  version: "3_3_0-17"
+  version: "3_3_0-22"
   versionFamily: "3_3_0"
-  domain: "journalname.foo.org"
-  type: domain
-  
+  domain: "myjournal.example.org"
+  type: domain-noslug
+
 proxy:
-  domains: "`{{ dojo.domain }}`"
+  domains: "`myjournal.example.org`"
 
 database:
   tool: mariadb
   version: "11.3"
-  host: "db"              # Server DB host.
-  user: "ojs"             # DB user.
-  pass: "vaultPwd"        # REPLACED by real pwd set in ansible vault.
-  name: "ojs"             # DB name.
+  host: "db"
+  user: "ojs"
+  pass: "vaultPwd"                      # Replaced by vault at runtime.
+  name: "ojs"
   driver: "mysqli"
 
 images:
-  db:  "{{ database.tool }}:{{ database.version }}"
-  app: "pkpofficial/{{ dojo.tool }}:{{ dojo.version }}"
+  db:  "mariadb:11.3"
+  app: "pkpofficial/ojs:3_3_0-22"
 
 pkp:
   admin:
-    mail: "yourmail@example.org"
-    pass: "vaultPwd"        # REPLACED by real pwd set in ansible vault.
+    mail: "admin@example.org"
+    pass: "vaultPwd"                    # Replaced by vault at runtime.
   general:
     installed: "Off"
-    base_url: "https://{{ dojo.domain }}"
-
-    # Un comment for single-tenant journals "in domain as root"    
-    base_url_index: "https://{{ dojo.domain }}/index"
-    base_url_journal: "https://{{ dojo.domain }}"
+    base_url: "https://myjournal.example.org"
+    base_url_index: "https://myjournal.example.org/index"
+    base_url_journal: "https://myjournal.example.org"
     scheduled_tasks: "On"
     restful_urls: "On"
     enable_beacon: "Off"
   database:
-    host:     "{{ database.host }}"
-    driver:   "{{ database.driver }}"
-    username: "{{ database.user }}"
-    password: "{{ database.pass }}"
+    host:     "db"
+    driver:   "mysqli"
+    username: "ojs"
+    password: "vaultPwd"                # Replaced by vault at runtime.
 ```
 
-Save this as `$JOURNAL.yml` in your inventory/sites folder.
+2. Create the site:
+```bash
+just dojo-create $JOURNAL $SERVER
+```
 
-2. Create your site (see step 0 to set env variables):
-`$ just dojo-create $JOURNAL $SERVER;`
+3. Start the containers and run the OJS installer:
+```bash
+just dojo-manage $JOURNAL $SERVER up
+just dojo-run install $JOURNAL $SERVER
+```
 
-3. Raise and install your new journal:
-`$ just dojo-manage $JOURNAL $SERVER up; just dojo-run install $JOURNAL $SERVER;`
+4. In the OJS web installer, create a journal using `myjournal` as the URL path slug.
 
-4. Create your new journal with "journalname" as the url slug.
+5. Once installation is complete, uncomment the rewrite rules in
+   `volumes/config/apache.conf` and restart:
+```bash
+just dojo-manage $JOURNAL $SERVER restart
+```
 
-5. Uncomment your volumes/config/apache.conf and restart:
-`$ just dojo-manage $JOURNAL $SERVER restart;`
+6. Complete the journal configuration in the OJS admin panel.
 
-6. Complete your journal's installation.
+---
+
+## domain
+
+Journal is accessible at `domain/journalname`. This is the default OJS layout
+and requires no special Apache configuration.
+
+**Example:**
+```
+Journal: https://journals.example.org/myjournal
+Admin:   https://journals.example.org/myjournal/index/admin
+```
+
+Steps 0–3 are identical to `domain-noslug`. Set `type: domain` in the dictionary
+and skip steps 4–5.
+
+---
+
+## folder-noslug
+
+Multiple journals hosted under a shared domain, each at its own path prefix,
+without the OJS context slug in the URL.
+
+**Example:**
+```
+Journal: https://journals.example.org/myjournal
+Admin:   https://journals.example.org/myjournal/index/admin
+```
+
+Add `proxy.pathprefix` to the dictionary:
+```yaml
+dojo:
+  type: folder-noslug
+
+proxy:
+  domains: "`journals.example.org`"
+  pathprefix: "myjournal"
+
+pkp:
+  general:
+    base_url: "https://journals.example.org/myjournal"
+    base_url_index: "https://journals.example.org/myjournal/index"
+    base_url_journal: "https://journals.example.org/myjournal"
+```
+
+Then follow the same steps as `domain-noslug`.
