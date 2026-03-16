@@ -19,15 +19,8 @@ dojo-tldr:
     # $ just dojo-batch-run <siteList> $SERVER restart      # Restarts ALL the journals in the siteList file path.
     # $ just dojo-batch-create-upgrade <siteList> $SERVER   # Creates all files and folders and upgrades.
     # $ just dojo-vault edit                                # Edit your vault.
-    @ # TBD: $ dojo backup $JOURNAL                         # Backup a full journal
-    @ # TBD: $ dojo clone $JOURNAL journalclone             # Clone a journal
-    @ # TBD: $ dojo upgrade journalclone 3.4.0-6            # Upgrade a journal to the s
-    @ # TBD: $ dojo start journalclone                      # Starts a journal
-    @ # TBD: $ dojo stop journalclone                       # Stop a journal
-    @ # TBD: $ dojo frozen journalclone                     # Makes a journal work in read-only mode.
     @ echo ""
-    # To get a commented list of actions use "just dojo" 
-    # For a detailed list of actions use "just dojo-list"
+    # > To get a commented list of actions use "just dojo"
 
 
 # Shows how to use the script
@@ -42,128 +35,79 @@ dojo-list:
     @ just list dojo
 
 
-# TODO: Creates an manages an ansible vault with default. Actions are:
-# - create: Vault is saved at "configs/secrets.yml" with the password passed and stored at .vault.key (check your permissions).
-# - edit:   Edits the default vault in "configs/secrets.yml" with the password stored at .vault.key:
-#
-# Manages the ansible vault.
+# Manages the ansible vault. Actions: create, edit, view.
 dojo-vault action:
     #!/usr/bin/env bash
     echo "Action: {{ action }}";
     echo "vaultKey: {{ vaultKey }}";
     echo "vaultPath: {{ vaultPath }}";
-    case "{{ action }}" in 
+    case "{{ action }}" in
         "create")
-            echo "${2}" >> {{ vaultKey }}; 
-            ansible-vault create --vault-password-file={{ vaultKey }} {{ vaultPath }}; 
-            ;; 
-        "edit") 
-            ansible-vault edit --vault-password-file={{ vaultKey }} {{ vaultPath }}; 
-            ;; 
-        "view") 
-            ansible-vault view --vault-password-file={{ vaultKey }} {{ vaultPath }}; 
-            ;; 
-        *) 
-            echo "Unknown action"; 
+            echo "${2}" >> {{ vaultKey }};
+            ansible-vault create --vault-password-file={{ vaultKey }} {{ vaultPath }};
+            ;;
+        "edit")
+            ansible-vault edit --vault-password-file={{ vaultKey }} {{ vaultPath }};
+            ;;
+        "view")
+            ansible-vault view --vault-password-file={{ vaultKey }} {{ vaultPath }};
+            ;;
+        *)
+            echo "Unknown action";
             exit 1;
             ;;
     esac
 
-# dojo-vault action:
-#     @ if [[ "${action}" == "create" ]]; then \
-#         echo "${2}" >> ${vaultKey}; \
-#         ansible-vault create --vault-password-file=${vaultKey} ${vaultPath}; \
-#     elif [[ "${create}" == "edit" ]]; then \
-#         ansible-vault edit --vault-password-file={{ vaultKey }} {{ vaultPath }}; \
-#     else \
-#         echo "Unknown action"; \
-#     fi
 
-
-
-# DEPRECATED: Create a config.inc.php based on the specified dictionary name (ie: periodicum). Vault need to be created first.
-# Crea un fichero en "/tmp/>name>.config.inc.php" con la plantilla de /templates/<site>.yml y las variables del diccionario "/sites/<name>.yml"
-_dojo-site-old action name:
-    #!/usr/bin/env sh
-    echo "{{ action }} - {{ name }}"
-    # case ${action} in 
-    #     create-config) 
-    #         ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ name }} --vault-password-file {{ vaultKey }} ./config.yml -e "site={{ name }}" 
-    #     ;; 
-    #     create-all) 
-    #         echo "Create ALL: {{ action }} - {{ name }}" 
-    #     ;; 
-    # esac
-
-
-# Runs an action with:
-# - Action: Is the playbook name (without .yml) from playbooks/dojo.
-# - Site: A "site" is an ansible dictionary read from inventory/sites.
-# - Host: A "host" Acording to the inverntory/hosts.yml
-# - Args: Additional arguments.
-# 
 # Runs an action (playbook) with the specified site (dictionary) in the selected host.
 dojo-run action site host *args:
-    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} {{ dojoPath }}/{{ action }}.yml \
-     -e "host={{ host }}" \
-     -e "site={{ site }}" \
-     -e "ansible_become_password=$(cat ./configs/{{ host }}.vault.key)" \
-     {{ args }}
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+      --vault-password-file {{ vaultKey }} \
+      {{ dojoPath }}/{{ action }}.yml \
+      -e "host={{ host }}" \
+      -e "site={{ site }}" \
+      {{ args }}
 
 
-# Runs the specified action against all the sites from "siteList" file, acording to the dictionaries in sites/<site>.yml 
-# Detailed output will be stored in a log file.
-# If you only like to run once, you can do it calling "dojo-run" playbook.
-# IMPORTANT: Sudo password won't be requested (it's taken from configs/{hostname}.vault.key).
+# Runs the specified action against all the sites from "siteList" file.
+# Detailed output is stored in a log file.
 dojo-batch-run siteList host action *args:
     #!/usr/bin/env sh
 
-    # Path to store the detailed log:
     logFile="logs/$(date +'%Y%m%d-%H%M')_{{ host }}-batch_{{ action }}.log";
-
     totalStart=$(date +%s);
 
-    # Show the action and asks for confirmation
     echo '=====================================================================================';
     echo 'SERVER: {{ host }}';
     echo 'ACTION: {{ action }}';
-    echo 'ARGS: {{ args }}';
     echo 'SITELIST: {{ siteList }}';
     echo "LOGS: $logFile";
     echo '=====================================================================================';
     echo '';
     echo 'WARNING: Some actions could be destructive.';
-    read -p 'Are you sure you like to run this batch process? [y/N] ' confirm; 
+    read -p 'Are you sure you like to run this batch process? [y/N] ' confirm;
     echo '';
 
-    if [ ${confirm:-no} = 'y' ]; then 
-        while IFS= read -r site; do 
+    if [ ${confirm:-no} = 'y' ]; then
+        while IFS= read -r site; do
             siteStart=$(date +%s);
             echo "";
             echo "-----------------------------------------------";
             echo "---> SITE: $site";
-            # echo "DEBUG COMMAND:";
-            # echo "ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
-            #     {{ dojoPath }}/{{ action }}.yml \
-            #     -e \"host={{ host }}\" \
-            #     -e \"site=$site ansible_become_password=[./configs/{{ host }}.vault.key]\" \
-            #     {{ args }}";
-            ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
+            ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+                --vault-password-file {{ vaultKey }} \
                 {{ dojoPath }}/{{ action }}.yml \
                 -e "host={{ host }}" \
                 -e "site=$site" \
-                -e "ansible_become_password=$(cat ./configs/{{ host }}.vault.key)" \
                 {{ args }} >> $logFile 2>&1;
             siteEnd=$(date +%s);
-            siteDuration=$(( siteEnd - siteStart ));
-            echo "Completed in $siteDuration seconds.";
+            echo "Completed in $(( siteEnd - siteStart )) seconds.";
             echo "-----------------------------------------------";
         done < {{ siteList }};
         totalEnd=$(date +%s);
-        totalDuration=$(( totalEnd - totalStart ));
         echo '';
         echo '=====================================================================================';
-        echo "Batch process completed in $totalDuration seconds.";
+        echo "Batch process completed in $(( totalEnd - totalStart )) seconds.";
         echo "Full logs at: $logFile";
         echo '=====================================================================================';
     else
@@ -171,17 +115,14 @@ dojo-batch-run siteList host action *args:
     fi
 
 
-
-
-# Creates a full site with acording to the dictionary in sites/<site>.yml 
-# Following playbooks will be called: site-folders > config > db > apache > docker-compose
-#
-# Multiplaybook: Creates a full site acording to the site's dictionary.
+# Multiplaybook: Creates a full site according to the site's dictionary.
+# Playbooks: site-folders > config > db > apache > docker-compose > env > permissions
 dojo-create site host *args:
-    @ echo 'This will run playbooks: site-folders > config > db > apache > docker-compose > env > permissions.' 
+    @ echo 'This will run playbooks: site-folders > config > db > apache > docker-compose > env > permissions.'
     @ echo "WARNING: Creating a site will overwrite data in the existing one!!"
-    @ echo "Are you sure you like to run action "create" for [{{ site }}] on [{{ host }} - `dig +short {{ host }}`]?" 
-    @ ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
+    @ echo "Are you sure you like to run action create for [{{ site }}] on [{{ host }} - `dig +short {{ host }}`]?"
+    @ ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+      --vault-password-file {{ vaultKey }} \
       {{ dojoPath }}/site-folders.yml \
       {{ dojoPath }}/config.yml \
       {{ dojoPath }}/config.db.yml \
@@ -192,42 +133,25 @@ dojo-create site host *args:
       {{ dojoPath }}/permissions.yml \
       -e "host={{ host }}" \
       -e "site={{ site }}" \
-      -e "ansible_become_password=$(cat ./configs/{{ host }}.vault.key)" \
-      -K {{ args }}
+      {{ args }}
 
-# Creates or recreates all the sites from "siteList" file, acording to the dictionaries in sites/<site>.yml 
-# Script also calls sync-ugrade at the end to ensure data is sync and OJS is upgraded to last version.
-# Files will be overwiten 
-# If you only like to run once, you can do it calling "dojo-create" job and "sync-upgrade" playbook.
-# IMPORTANT: Sudo password won't be requested (it's taken from configs/{hostname}.vault.key).
-#
+
 # Multiplaybook: Creates or recreates all sites listed in "siteList".
+# Playbooks: site-folders > config > db > apache > docker-compose > env > permissions > sync-upgrade
 dojo-batch-create-upgrade siteList host *args:
-    @ echo 'This will run playbooks: site-folders > config > db > apache > docker-compose > env > permissions > sync-ugrade.' 
-    @ echo "WARNING: Creating sites will overwrite data for the existing one!!"
-    @ read -p "Are you sure you like to run action "create" for ALL SITES in [{{ siteList }}] on [{{ host }} - `dig +short {{ host }}`]? [y/N] " confirm; \
-    if [ ${confirm:-no} = 'y' ]; then \
-        while IFS= read -r site; do \
-            echo ""; \
-            echo "==============================================="; \
-            echo "---> BUILDING SITE: $site"; \
-            echo "==============================================="; \
-            echo "COMMAND:"; \
-                echo "ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
-                {{ dojoPath }}/site-folders.yml \
-                {{ dojoPath }}/config.yml \
-                {{ dojoPath }}/config.db.yml \
-                {{ dojoPath }}/config.php.yml \
-                {{ dojoPath }}/docker-compose.yml \
-                {{ dojoPath }}/apache.yml \
-                {{ dojoPath }}/env.yml \
-                {{ dojoPath }}/permissions.yml \
-                {{ dojoPath }}/sync-upgrade.yml \
-                -e "host={{ host }}" \
-                -e \"site=$site ansible_become_password=[./configs/{{ host }}.vault.key]\" \
-                {{ args }}"; \
-            echo "LOG:"; \
-                ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
+    #!/usr/bin/env sh
+    echo 'This will run playbooks: site-folders > config > db > apache > docker-compose > env > permissions > sync-upgrade.'
+    echo "WARNING: Creating sites will overwrite data for the existing ones!!"
+    read -p "Are you sure you like to run action create for ALL SITES in [{{ siteList }}] on [{{ host }} - `dig +short {{ host }}`]? [y/N] " confirm;
+
+    if [ ${confirm:-no} = 'y' ]; then
+        while IFS= read -r site; do
+            echo "";
+            echo "===============================================";
+            echo "---> BUILDING SITE: $site";
+            echo "===============================================";
+            ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+                --vault-password-file {{ vaultKey }} \
                 {{ dojoPath }}/site-folders.yml \
                 {{ dojoPath }}/config.yml \
                 {{ dojoPath }}/config.db.yml \
@@ -239,28 +163,19 @@ dojo-batch-create-upgrade siteList host *args:
                 {{ dojoPath }}/sync-upgrade.yml \
                 -e "host={{ host }}" \
                 -e "site=$site" \
-                -e "ansible_become_password=$(cat ./configs/{{ host }}.vault.key)" \
-                {{ args }}; \
-        done < {{ siteList }}; \
-    else \
-        echo "EXIT: Well done! A coward is good for two battles."; \
+                {{ args }};
+        done < {{ siteList }};
+    else
+        echo "EXIT: Well done! A coward is good for two battles.";
     fi
 
 
-
-
-
-#fi 2>&1 | tee -i -a batchCreation.log;
-#
-# Manages the site
+# Manages a site: start, stop, restart, down, pull, up, clear, pause, unpause, build, ps
 dojo-manage site host command *args:
-    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file {{ dojoPath }}/{{ vaultKey }} \
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+      --vault-password-file {{ vaultKey }} \
       {{ dojoPath }}/manage.yml \
       -e "host={{ host }}" \
       -e "site={{ site }}" \
-      -e "ansible_become_password=$(cat ./configs/{{ host }}.vault.key)" \
       -e "command={{ command }}" \
       {{ args }}
-
-
-    
