@@ -1,46 +1,39 @@
 # dojo: Ansible playbooks for a full automated PKP server
 
-| **WARNING:** This is an ongoing project. |
-|:--|
-| Features could change, be unstable or not even tested. |
-| A minimal viable product is planned to be released at the end of ~~April~~ June. |
+> **Warning:** This is an ongoing project. Features could change, be unstable or not yet tested.
 
-TL;DR; The aim of this project is to offer the PKP community a way to host its applications (OJS, OMP...) on-premises, in a simple, standardised and resilient way.
+TL;DR: The aim of this project is to offer the PKP community a way to host its applications (OJS, OMP...) on-premises, in a simple, standardised and resilient way.
 
-To do this, the project offer a set of tools to convert a brand new Debian (or any other Debian based distribution), to and dedicated server able to host, maintain and upgrade any PKP application and also to include all the additional tools to manage the service.
+To do this, the project offers a set of tools to convert a brand new Debian (or any other Debian-based distribution) into a dedicated server able to host, maintain and upgrade any PKP application, including all the additional tools needed to manage the service.
 
-Here you can see a demo showning how a journal is created and installed:
+Here you can see a demo showing how a journal is created and installed:
 
 [See video in Vimeo](https://player.vimeo.com/video/946092633)
 
 Project is created with the following pillars in mind:
-- **Standarization:** All decisions regarding to technologies and development are taken thinking in stadards first. When there is no standards to apply, the decisions are homogeneous.
-- **Resilience**: Based on gitOps aproach, the infrastructure is build over declarative descriptions, stored under control version system and full-automatized.
-- **Simplicity**: Main design principle is KISS. Once a feature is stabilized, will be simplified with a set of self-explanatory scripts.
+- **Standardization:** All decisions regarding technologies and development are taken thinking in standards first. When there are no standards to apply, decisions are homogeneous.
+- **Resilience:** Based on a GitOps approach, the infrastructure is built over declarative descriptions, stored under version control and fully automated.
+- **Simplicity:** Main design principle is KISS. Once a feature is stabilized, it is simplified with a set of self-explanatory scripts.
 
-All this is build based on two proven and well recognised technologies as:
-- **Ansible:** For the installation and maintenance of the service, which makes it easy to understand and portable.
-- **Docker:** To keep applications isolated and make them easy to upgrade and also with docker-compose to help with the deployments.
+All this is built on two proven and well-recognised technologies:
+- **Ansible:** For the installation and maintenance of the service, making it easy to understand and portable.
+- **Docker:** To keep applications isolated and make them easy to upgrade, with docker-compose to help with deployments.
 
-The full project and the scripts are divided in 3 parts:
-- **Infrastructure:** To install all the underlaying software required to support the service (ie: docker...).
-- **Service:** To install all the containers needed to maintain the service (ie: reverse proxy...).
-- **Dojo:** To install and maintain the PKP apps and the helpers (ie: journals and books).
+The full project is divided in 3 parts:
+- **Infrastructure:** To install all the underlying software required to support the service (e.g. docker).
+- **Service:** To install all the containers needed to maintain the service (e.g. reverse proxy).
+- **Dojo:** To install and maintain the PKP apps (e.g. journals and books).
 
-To "Keep It Simple Stupid", and to avoid errors during calls, I recommend to use the set of justfile scripts (see [just](https://github.com/casey/just#packages)) provided, but is also possible to run the ansible playbooks directly if you like.
+To keep it simple and avoid errors, it is recommended to use the justfile scripts (see [just](https://github.com/casey/just#packages)), but it is also possible to run the ansible playbooks directly.
 
-As far as code is quite self-explanatory, the documentation is still rather sparse, but I hope to improve it as time goes by and as questions arise.
+New ideas, improvements and PRs are welcome.
 
-New ideas about new needs or improvements and PRs are really welcome.
 
 ## Structure
 
-The model is based on the usage of containers with images for both, PKP apps and aditional services.
+The model is based on containers for both PKP apps and additional services.
 
-The benefits of this are multiple and will be detailed in future, but in short, this will make the OS simpler and easier to maintain, will reduce the dependencies and isolate the web-apps that could be upgrades, monitored, replaced, moved and backup independently from the rest of the platform.
-
-All the process of installation and management is automatized via ansible playbooks. It means, after some basic configuration you will only need to run a few installation scripts to transform a clean Debian (or another Debian based distro) into a server specialized in hosting and maintaining any PKP application under the following logic structure:
-
+All installation and management is automated via ansible playbooks. After some basic configuration you only need to run a few scripts to transform a clean Debian into a server specialised in hosting and maintaining PKP applications, under the following structure:
 ```
                                      +---------+     +-------+
                              +-------|  OJS 1  |-----| DB j1 |
@@ -58,7 +51,6 @@ All the process of installation and management is automatized via ansible playbo
 --------| Reverse Proxy |----+-------|  OMP N  |-----| DB mN |
         +---------------+    |       +---------+     +-------+
                              |
-                             |
                           S  |       +---------+
                           E  +-------| Monitor |
                           R  |       +---------+
@@ -71,274 +63,275 @@ All the process of installation and management is automatized via ansible playbo
                                      +---------+
 ```
 
-Each box is a container that will be stored in the proper folder according to it's usage (`service` or `site`) and with the project name (ie: `journalTag` or `proxy`).
+Each box is a container stored in the proper folder according to its usage (`service` or `sites`) and named after the project (e.g. `journalTag` or `proxy`).
 
-Physically, in your server, this will be stored in two main folders (you can change it in `config/dojo.yml`):
-
+Physically, on your server, this is stored in two main folders (configurable in `configs/dojo.yml`):
 ```
-[runningFolder] (ie: /home/docker)
-├── service
-    └── proxy
-└── sites
-    └── [journalname]
+[runningFolder] (e.g. /home/docker)
+├── service/
+│   └── proxy/
+│       ├── docker-compose.yml
+│       ├── docker-compose.override.yml
+│       ├── .env
+│       └── volumes -> /srv/volumes/all/proxy
+└── sites/
+    └── [journalname]/
+        ├── docker-compose.yml
+        ├── docker-compose.override.yml
+        ├── .env
         └── volumes -> /srv/volumes/all/[journalname]
 
-[storageFolder] (ie: /srv)
-├── backups
-│   └── [journalname]
-└── volumes
-    ├── all
-    │   └── [journalname]
-    │       ├── config -> /srv/volumes/files/config/[journalname]
-    │       ├── db -> /srv/volumes/db/[journalname]
-    │       ├── logs -> /srv/volumes/logs/[journalname]
-    │       ├── private -> /srv/volumes/files/private/[journalname]
-    │       └── public -> /srv/volumes/files/public/[journalname]
-    ├── db
-    │   └── [journalname]
-    ├── files
-    │   ├── config
-    │   │   └── [journalname]
-    │   ├── private
-    │   │   └── [journalname]
-    │   └── public
-    │       └── [journalname]
-    └── logs
-        └── [journalname]
+[storageFolder] (e.g. /srv)
+├── backups/
+│   └── [journalname]/
+└── volumes/
+    ├── all/
+    │   └── [journalname]/
+    │       ├── config  -> /srv/volumes/files/config/[journalname]
+    │       ├── db      -> /srv/volumes/db/[journalname]
+    │       ├── logs    -> /srv/volumes/logs/[journalname]
+    │       ├── private -> /srv/volumes/files/private/[journalname]
+    │       └── public  -> /srv/volumes/files/public/[journalname]
+    ├── db/
+    │   └── [journalname]/
+    ├── files/
+    │   ├── config/
+    │   │   └── [journalname]/
+    │   ├── private/
+    │   │   └── [journalname]/
+    │   └── public/
+    │       └── [journalname]/
+    └── logs/
+        └── [journalname]/
 ```
 
-Each site in the `runningFolder` will include, at least, the following structure:
+Each site in the `runningFolder` contains at least:
 
-- `docker-compose.yml`: With common description about how to deploy the app.
-- `docker-compose.override.yml`: With specific description about how to deploy.
-- `.env`: with environment variables required by the containers.
-- `volumes`: A symlink to the `storageFolder` with all the persistent data
-        - config: All configuration files (like config.inc.php or certificates)
-        - db: The database files.
-        - public: Public files.
-        - private: Private files.
+- `docker-compose.yml`: Common description of how to deploy the app.
+- `docker-compose.override.yml`: Host-specific deployment overrides.
+- `.env`: Environment variables required by the containers.
+- `volumes/`: Symlink to the `storageFolder` with all persistent data (config, db, public, private).
 
-Project is thought to be modular: You can use it as a whole, or use only the parts that are useful to you.
-For instance, you can call playbooks directly (without justfile helpers), or use it all to set up your
-infrastruture and sites, and then forget about the project and manage it manually without ansible.
+This project uses git as a **single source of truth**: the entire site structure is created (and can be recreated at any time) from an inventory dictionary file that contains all required variables and configuration. Sensitive data is encrypted with ansible-vault and also stored in git.
 
-Again, it's not mandatory, but this project uses git as a **single source of truth** so all this site structure will be created (and recreated at any time) based on an ansible-dictionary file ([example for a journal](https://github.com/marcbria/ansible/blob/main/sites/periodicum.yml)) that includes all the required variables and configuration information. Private information will be encrypted and also stored in git with ansible-vault.
+Project is modular: use it as a whole, or use only the parts useful to you. You can call playbooks directly without the justfile helpers, or use it all to set up your infrastructure and then manage it manually.
+
 
 ## Installation
 
-(This is how it will work, but it's not full implemented yet)
+> Some parts of this project are still in progress. See the [ToDo](#todo) section for details.
 
+#### Requirements
 
-#### Ingredients
+- **Server:** A clean Debian (or Debian-based) distribution with SSH access.
+- **Local:** Ansible installed (use `just infra-install-ansible` if needed).
 
-- Sever: A clean Debian (or Debian based) distribution (ensure you have SSH access).
-- Local: Ansible installed (use `just infra-install-ansible` if you like).
+#### Quick overview
 
-#### Recipe
-
-Instructions are detailed in the "[Installation Manual](#InstallationManual)" but, from a bird's eye view, the process is divided in 3 parts:
-
-**Basic requirements: [completed]**
+**Basic requirements:**
 
 1. Clone this repository.
-2. Create your own `inventory/hosts.yml` adding your remoteServer name.
-3. Recommended: Install [just](https://github.com/casey/just#packages) version 1.23 or higher.
+2. Create your own `inventory/hosts.yml`.
+3. Install [just](https://github.com/casey/just#packages) version 1.23 or higher (recommended).
 
-**Set up your underlying infrastructure: [completed]**
+**Set up the underlying infrastructure:**
 
-4. Use `just` to install the underlaying infrastructure.
+4. Install infrastructure on the remote server.
 5. Install the reverse proxy.
 
-**Create journal:  [completed]**
+**Create a journal:**
 
-6. Create your first journal's dictionary.
-7. Create your ansible-vault add edit your journal's passwd.
-8. Build your fist journal.
-9. Visit your new journal in your browser and finish your installation.
+6. Create your journal's inventory dictionary.
+7. Create and edit your ansible-vault.
+8. Build your first journal.
+9. Visit your new journal in the browser and finish installation.
 
+**Extend your service:**
 
-**Extend your service:  [workInProgress]**
-
-10. Read more about this project and decide what other tools you also like to install.
+10. Add optional tooling (monitor, backup, etc.).
 
 
 ### Tooling
 
-| Function       | Tools                                   | Type        | Infrastructure  |
-|:---------------|:----------------------------------------|:------------|:----------------|
-| Infrastructure | git, ansible, docker, docker-compose    | Host        | Required        |
-| Reverse-proxy  | Traefik                                 | Container   | Required        |
-| Journals       | OJS                                     | Container   | Optional        |
-| Books          | OMP                                     | Container   | Optional        |
-| Monitor        | UptimeKuma                              | Container   | Optional        |
-| Backup         | Duplicati                               | Container   | Optional        |
-| Statistics     | Plausible				   | Container   | Optional	   |
-| Snapshots      | zfs + sanoid                            | Host        | Optional        |
-| Extras         | just, tldr, zsh                         | Host        | Optional        |
+| Function       | Tools                                | Type      | Status   |
+|:---------------|:-------------------------------------|:----------|:---------|
+| Infrastructure | git, ansible, docker, docker-compose | Host      | Required |
+| Reverse-proxy  | Traefik                              | Container | Required |
+| Journals       | OJS                                  | Container | Optional |
+| Books          | OMP                                  | Container | Optional |
+| Monitor        | UptimeKuma                           | Container | Optional |
+| Backup         | Duplicati                            | Container | Optional |
+| Statistics     | Plausible                            | Container | Optional |
+| Snapshots      | zfs + sanoid                         | Host      | Optional |
+| Extras         | just, tldr, zsh                      | Host      | Optional |
 
 
 ### Actions
 
-The justfile is divided into the 3 blocks mentioned above:
-- Infrastructure
-- Service
-- Dojo
+The justfile is divided into 4 groups. Run `just <group>` for a list of available actions:
 
-TBD...
+- `just infra` — install and maintain the underlying system (OS + docker).
+- `just service` — install and manage services (traefik, monitor…).
+- `just dojo` — create and manage PKP applications (journals, books).
+- `just test` — test and debug variables and playbooks.
 
-If you prefer to run accions without any helper, or you like to adapt it, review the "[justfile](https://github.com/marcbria/ansible/blob/main/justfile)" and the modules in the '/scripts' folder.
 
 ## Inventory
 
-Ansible is data driven so playbooks work acording to the variables you set in your `inventory`.
-
-To facilitate the mainenance, we defined an "order of precedence" between the files in the inventory.
-It will let you define generic variables common to multiple instances that could be overitten after by more specific files.
-This is useful to keep gruped settings in same server (ie: mail config in all journals) or to keep identical inventories for test and production servers.
-
-To ilustrate, a basic inventory will look like this:
-
+Ansible is data-driven: playbooks work entirely from variables defined in `inventory/`.
+A precedence system lets you define shared defaults and override only what changes per host.
 ```
 inventory/
 ├── hosts.yml
-├── services/
-│   ├── base-prod.yml            ← baseHostVars (services)
-│   ├── base-test.yml
-│   ├── traefik.yml              ← serviceGenericVars
-│   ├── prod/
-│   │   └── traefik.yml          ← serviceHostVars
-│   └── test/
-│       └── traefik.yml
-└── sites/
-    ├── base-prod.yml            ← baseHostVars (sites)
-    ├── base-test.yml
-    ├── myJournal.yml            ← siteGenericVars
-    ├── prod/
-    │   └── myJournal.yml        ← siteHostVars
-    └── test/
-        └── myJournal.yml        ← siteHostVars
+├── services/                          ← vars for services (traefik, monitor…)
+│   ├── base-<hostName>.yml            ← Layer 2: defaults shared by all services on a host
+│   ├── traefik.yml                    ← Layer 3: traefik config for any host
+│   └── <hostName>/
+│       └── traefik.yml                ← Layer 4: traefik config specific for this host
+└── sites/                             ← vars for PKP apps (journals, books…)
+    ├── base-<hostName>.yml            ← Layer 2: defaults shared by all sites on a host
+    ├── myJournal.yml                  ← Layer 3: journal config for any host
+    └── <hostName>/
+        └── myJournal.yml              ← Layer 4: journal config specific for this host
 ```
 
-The variable logic is implemented in `playbooks/(dojo|service)/setAllVars.yml` scripts that read the inventory files and folders to overwrite vars in this order:
+This logic is implemented in `playbooks/setAllVars.yml`, which merges the layers in this order (rightmost wins):
+```
+dojoVars < baseHostVars < genericVars < hostVars = allVars
+```
 
-| Layer   | varName            | configPath                                                    |
-|:--------|:-------------------|:--------------------------------------------------------------|
-| Layer 1 | dojoVars           | ./configs/dojo.yml                                            |
-| Layer 2 | baseHostVars       | ./inventory/services/base-{{ hostName }}.yml                  |
-| Layer 3 | serviceGenericVars | ./inventory/services/{{ serviceParam }}.yml                   |
-| Layer 4 | serviceHostVars    | ./inventory/services/{{ hostName }}/{{ serviceParam }}.yml    |
+| | Layer 1 | Layer 2 | Layer 3 | Layer 4 |
+|:--|:--|:--|:--|:--|
+| **file** | `configs/dojo.yml` | `inventory/[services\|sites]/base-<hostName>.yml` | `inventory/[services\|sites]/<name>.yml` | `inventory/[services\|sites]/<hostName>/<name>.yml` |
+| **varName** | `dojoVars` | `baseHostVars` | `genericVars` | `hostVars` |
+| **scope** | global defaults | all services/sites on a host | this service/site on any host | this service/site on this host only |
+| **priority** | lowest | ↑ | ↑ | highest |
 
-Replace `services` with `sites` for journal's inventories.
+Layers 2–4 are optional — missing files are silently skipped.
+The merge is recursive: nested keys are combined, not replaced wholesale.
 
-:::info
-If you get in trouble... 
-- Check the variables of an specific service with: `just test-var-service traefik $REMOTESERVER`.
-- Cehck the variables of an specific journal with: `just test-var-site myJournal $REMOTESERVER`.
-Or you can call directly the `check-vars.yml` playbook.
-:::
+> **Tip:** Inspect the final merged variables before running a playbook:
+> ```bash
+> just test-var-service traefik $SERVER   # for services
+> just test-var-site myJournal $SERVER    # for sites
+> ```
 
-# ToDo
-
-Add more playbooks:
-- [x] To install and configure traefik.
-- [ ] To install and configure an OJS journal (on any url).
-- [ ] To set journal's config from dictionary (API or DB injection) 
-- [ ] To install and configure an OMP monograph (on any url).
-- [ ] Review infrastructure and extra playbooks.
-- [x] Structure the justfile better.
-- [ ] To install and configure monitor tooling.
-- [ ] To install and configure backup tool.
+> **Note:** Any inventory value containing Jinja2 references to other variables
+> (e.g. `traefik:{{ dojo.version }}`) must be tagged with `!unsafe` to prevent
+> Ansible from evaluating them at load time. They will be resolved later when
+> templates are rendered.
+> ```yaml
+> images:
+>   app: !unsafe "traefik:{{ dojo.version }}"
+> ```
 
 
 ## Installation Manual
 
-This section details the installation process. 
-Remember this project is still beta and playbooks are self-dependant, so please, follow installation process carefully. 
+This section details the full installation process step by step.
+This project is still in beta — please follow the steps carefully.
 
 
 #### Basic requirements
 
-1. Clone this repository.
+1. Clone this repository:
+```bash
+git clone https://github.com/marcbria/dojo/
+cd dojo
 ```
-$ git clone https://github.com/marcbria/dojo/
+
+2. Create your own `inventory/hosts.yml`:
+```bash
+vim inventory/hosts.yml
+# See: https://docs.ansible.com/ansible/latest/collections/ansible/builtin/yaml_inventory.html#examples
 ```
 
-2. Create your own `inventory/hosts.yml` adding your remoteServer name.
+3. Install [just](https://github.com/casey/just#packages) version 1.23 or higher:
+```bash
+apt install cargo
+cargo install just
 ```
-$ cd dojo
-$ mkdir inventory
-$ vim inventory/hosts.yml
-# Take a look to [those examples](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/yaml_inventory.html#examples) to create your inventory file.
+
+
+#### Set up the underlying infrastructure
+
+4. Install the underlying infrastructure on the remote server:
+```bash
+just infra-install-ansible                      # Install ansible on local machine.
+
+REMOTESERVER=<remoteServer>
+just infra-run info-ps $REMOTESERVER -K         # Test remote server is reachable.
+just infra-dist-upgrade $REMOTESERVER           # Update the server.
+
+just infra-run install-basic $REMOTESERVER -K   # Install essential tooling (curl, rsync…).
+just infra-run install-docker $REMOTESERVER -K  # Install docker & docker-compose.
+just infra-run info-docker $REMOTESERVER -K     # Verify docker installation.
+
+just infra-run create-user $REMOTESERVER        # Create docker user/group and folders.
 ```
-3. Recommended: Install [just](https://github.com/casey/just#packages) version 1.23 or higher.
 
 
-#### Set up your underlying infrastructure
+#### Install the reverse proxy
 
-4. Use `just` to install the underlaying infrastructure.
-```
-$ just infra-install-ansible                      # Install ansible in local machine.
-
-$ REMOTESERVER=<remoteServer>                     # Set env-vars to make it more readable
-$ just infra-run ps $REMOTESERVER -K              # Test if remote server is reachable.
-$ just infra-dist-upgrade $REMOTESERVER           # Update the server.
-
-$ just infra-run install-basic $REMOTESERVER -K   # Essential tooling (curl,rsync,pip...)
-
-$ just infra-run install-docker $REMOTESERVER -K  # Install docker & docker-compose.
-$ just infra-run info docker $REMOTESERVER -K     # Test docker and docker-compose.
-
-$ just infra-run create-user $REMOTESERVER        # Create docker user/group and folders.
-$ just infra-run create-folders $REMOTESERVER     # Creates the required folder structure.
+5. Edit the Traefik inventory and deploy:
+```bash
+vim ./inventory/services/traefik.yml            # Set your domain, email and credentials.
+just service-create traefik $REMOTESERVER
 ```
 
 
 #### Create a journal
 
-5. Install the reverse proxy:
-```
-vim ./inventory/services/traefik.yml              # Edit your proxy's dictionary.
-just service-create traefik $REMOTESERVER
-```
-6. Create your first journal's dictionary
-```
-$ JOURNAL=<journalname>                           # Use lowercase for your journal's ID.
-$ mv sites/journalname.yml sites/$JOURNAL.yml
-$ vim sites/$JOURNAL.yml
-```
-7. Create your ansible-vault add edit your journal's passwd.
-```
-$ just dojo-vault create
-$ just dojo-vault edit
-```
-8. Build your fist journal:
-```
-```
-$ just dojo-create $JOURNAL $SERVER               # Creates the site based on dictionary.
-$ just dojo-manage $JOURNAL $SERVER up            # Raises the site (OJS container and DB).
-$ just dojo-run install $JOURNAL $SERVER          # Installs OJS with dictionary data (curl)
+6. Create your journal's inventory dictionary:
+```bash
+JOURNAL=<journalname>                           # Must be lowercase.
+cp inventory/sites/serverprod/demo.yml inventory/sites/serverprod/$JOURNAL.yml
+vim inventory/sites/serverprod/$JOURNAL.yml
 ```
 
+7. Create and edit your ansible-vault:
+```bash
+just dojo-vault create
+just dojo-vault edit
 ```
-9. Visit your new OJS in your browser and create a new journal (TBD automatize this part too, based on dictionary data).
+
+8. Build your first journal:
+```bash
+just dojo-create $JOURNAL $SERVER               # Creates folders and config files.
+just dojo-manage $JOURNAL $SERVER up            # Starts the OJS and DB containers.
+just dojo-run install $JOURNAL $SERVER          # Runs OJS installer via HTTP.
+```
+
+9. Visit your new OJS in the browser and complete the journal setup.
 
 
 #### Extend your service
-10. Read more about this project and decide what other tools you also like to install.
 
-- [ ] Monitoring tool, like uptimekuma.
-- [ ] Backup apps, like sanoid and duplicati.
-- [ ] Management apps, like portainer.
-- [ ] ...
+10. Add optional tooling as needed:
 
-See section "(Tooling)[#Tooling]" for a detailed list.
+- [ ] Monitoring: uptimekuma.
+- [ ] Backup: sanoid, duplicati.
+- [ ] Management: portainer.
 
-#### Why dojo?
+See the [Tooling](#tooling) table for the full list.
+
+
+## ToDo
+
+- [x] Install and configure Traefik.
+- [x] Structure the justfile.
+- [ ] Install and configure an OJS journal (any URL type).
+- [ ] Install and configure an OMP monograph.
+- [ ] Automate journal setup from dictionary (API or DB injection).
+- [ ] Review infrastructure and extra playbooks.
+- [ ] Install and configure monitoring tooling.
+- [ ] Install and configure backup tooling.
+
+
+## Why dojo?
 
 Well... long story short? Because technology evolves.
 
-If you like acronyms you can think it comes from "Docker Open Journal Operations" or even from  "DO JOurnals".
-If you like Oriental philosophy you can think it all it's a metaphor where journal/site is a "dojo" where we teach different martial arts.
-If you like the long story, all started sooo long ago when I created an script to manage multiple OJS journals called "[mojo](https://github.com/marcbria/mojo)" (Multiple OJs Operations). Some years after docker apears and I start playing with it creating [docker4ojs](https://github.com/marcbria/docker4ojs) but the initial bash script becomes beast very difficult to manage and test, and I realized first we need good docker images for OJS and OMP... so now that OJS images are stable enough I though was time to move forward and introduce a gitOps approach and ansible to the game... so "dojo" sounds like a romantic name that reminds me of the beginings.
+If you like acronyms you can think it comes from "Docker Open Journal Operations" or even from "DO JOurnals". If you like Oriental philosophy you can think it all it's a metaphor where journal/site is a "dojo" where we teach different martial arts. If you like the long story, all started sooo long ago when I created an script to manage multiple OJS journals called ["mojo"](https://github.com/marcbria/mojo) (Multiple OJs Operations). Some years after docker apears and I start playing with it creating [docker4ojs](https://github.com/marcbria/docker4ojs) but the initial bash script becomes beast very difficult to manage and test, and I realized first we need good docker images for OJS and OMP... so now that OJS images are stable enough I though was time to move forward and introduce a gitOps approach and ansible to the game... so "dojo" sounds like a romantic name that reminds me of the beginings.
 
-At the end, its just a name that sounds nice.
+At the end, it's just a name that sounds nice.
