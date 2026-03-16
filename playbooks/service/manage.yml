@@ -1,44 +1,50 @@
-- name: Run Docker Compose in service's root folder. 
+---
+- name: Run docker compose command in service folder.
   hosts: all
   become: yes
   gather_facts: yes
   vars:
+    hostName: "{{ host }}"
     serviceParam: "{{ service }}"
-
   vars_files:
     - ./configs/dojo.yml
-    - ./services/{{ serviceParam }}.yml
-
+    - ./configs/secret.yml
+    - ./inventory/services/base-{{ hostName }}.yml
   tasks:
-    - name: Check if the service directory exists
+    - include_tasks: ../setAllVars.yml
+      vars:
+        mode: service
+        param: "{{ serviceParam }}"
+
+    - name: Check service directory exists
       stat:
-        path: "{{ path.base.service }}/{{ dojo.id }}"
+        path: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}"
       register: service_dir_stat
 
     - name: Fail if service directory does not exist
       fail:
-        msg: "Service directory does not exist"
+        msg: "Service directory not found: {{ allVars.path.base.services }}/{{ allVars.dojo.id }}"
       when: not service_dir_stat.stat.exists
 
-    - name: Runs "docker compose <command>" in the service's directory
+    - name: Run "docker compose {{ command }}"
       shell:
         cmd: |
-          docker compose {{ command }};
+          docker compose {{ command }}
           docker compose ps
-        chdir: "{{ path.base.service }}/{{ dojo.id }}"
+        chdir: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}"
       when: command in ['start', 'stop', 'restart', 'down', 'pull', 'pause', 'ps', 'unpause', 'build']
       register: docker_compose_output
 
-    - name: Runs "docker compose up -d" in the service's directory
+    - name: Run "docker compose up -d"
       shell:
         cmd: |
-          docker compose up -d;
+          docker compose up -d
           docker compose ps
-        chdir: "{{ path.base.service }}/{{ dojo.id }}"
+        chdir: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}"
       when: command in ['up']
       register: docker_compose_output
 
-    - name: Show the service's status
+    - name: Show service status
       debug:
         msg: "{{ docker_compose_output.stdout_lines }}"
       when: docker_compose_output.stdout_lines is defined
