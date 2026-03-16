@@ -200,12 +200,12 @@ This logic is implemented in `playbooks/setAllVars.yml`, which merges the layers
 dojoVars < baseHostVars < genericVars < hostVars = allVars
 ```
 
-| | Layer 1 | Layer 2 | Layer 3 | Layer 4 |
-|:--|:--|:--|:--|:--|
-| **file** | `configs/dojo.yml` | `inventory/[services\|sites]/base-<hostName>.yml` | `inventory/[services\|sites]/<name>.yml` | `inventory/[services\|sites]/<hostName>/<name>.yml` |
-| **varName** | `dojoVars` | `baseHostVars` | `genericVars` | `hostVars` |
-| **scope** | global defaults | all services/sites on a host | this service/site on any host | this service/site on this host only |
-| **priority** | lowest | ↑ | ↑ | highest |
+|              | Layer 1            | Layer 2                                           | Layer 3                                  | Layer 4                                             |
+|:------------ |:------------------ |:------------------------------------------------- |:---------------------------------------- |:--------------------------------------------------- |
+| **priority** | lowest             | middle                                            | high                                     | highest                                             |
+| **file**     | `configs/dojo.yml` | `inventory/[services\|sites]/base-<hostName>.yml` | `inventory/[services\|sites]/<name>.yml` | `inventory/[services\|sites]/<hostName>/<name>.yml` |
+| **varName**  | `dojoVars`         | `baseHostVars`                                    | `genericVars`                            | `hostVars`                                          |
+| **scope**    | global defaults    | all services/sites on a host                      | this service/site on any host            | this service/site on this host only                 |
 
 Layers 2–4 are optional — missing files are silently skipped.
 The merge is recursive: nested keys are combined, not replaced wholesale.
