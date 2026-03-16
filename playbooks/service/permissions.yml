@@ -1,39 +1,40 @@
-- name: Set permissions in journal's folders structure
+---
+- name: Set permissions in service folder structure.
   hosts: all
   become: true
   gather_facts: yes
   vars:
     hostName: "{{ host }}"
-    siteParam: "{{ site }}"
+    serviceParam: "{{ service }}"
     fileCreation: "{{ ansible_date_time.iso8601 }}"
   vars_files:
     - ./configs/dojo.yml
     - ./configs/secret.yml
-    - ./inventory/sites/base-{{ hostName }}.yml
+    - ./inventory/services/base-{{ hostName }}.yml
   tasks:
-    # sets "allVars" array from the site's diccionaries as follows:
-    #           baseHost > siteGeneric > siteHost > dojoVars.
-    - include_tasks: setAllVars.yml
-  
-    - name: Assign user and group for BD folders
+    - include_tasks: ../setAllVars.yml
+      vars:
+        mode: service
+        param: "{{ serviceParam }}"
+
+    - name: Set ownership on DB folders
       file:
         path: "{{ item }}"
         state: directory
-        mode: 0744
+        mode: "0744"
         owner: "999"
         group: "1002"
         recurse: yes
       loop:
-        - "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id | lower}}"
-        - "{{ allVars.path.volumes.db_import }}/{{ allVars.dojo.id | lower}}"
-      tags:
-        - volumes_db
+        - "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id | lower }}"
+        - "{{ allVars.path.volumes.db_import }}/{{ allVars.dojo.id | lower }}"
+      tags: volumes_db
 
-    - name: Assign user and group for WWW folders
+    - name: Set ownership on web folders
       file:
         path: "{{ item }}"
         state: directory
-        mode: 0744
+        mode: "0744"
         owner: "100"
         group: "101"
         recurse: yes
@@ -41,5 +42,4 @@
         - "{{ allVars.path.files.config }}/{{ allVars.dojo.id | lower }}"
         - "{{ allVars.path.files.public }}/{{ allVars.dojo.id | lower }}"
         - "{{ allVars.path.files.private }}/{{ allVars.dojo.id | lower }}"
-      tags:
-        - volumes_www
+      tags: volumes_www
