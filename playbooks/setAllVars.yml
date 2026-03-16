@@ -7,9 +7,6 @@
 #   - mode:      "service" or "site"  [auto-detected from siteParam/serviceParam]
 #   - param:     service or site name [auto-detected from siteParam/serviceParam]
 
-# FIX 1: Auto-detectar mode y param si el caller no los pasa explícitamente.
-# Esto hace que los playbooks dojo (que usan siteParam) funcionen sin cambios,
-# y los de service (que pasan mode/param vía vars:) siguen funcionando igual.
 - name: "INIT - Auto-detect mode and param if not provided"
   set_fact:
     mode:  "{{ mode  | default('service' if serviceParam is defined else 'site') }}"
@@ -19,60 +16,53 @@
   set_fact:
     layerDir: "{{ inventory_dir }}/{{ 'services' if mode == 'service' else 'sites' }}"
 
-# FIX 2: Fail rápido si param está vacío (typo en el caller).
 - name: "INIT - Assert param is defined"
   assert:
     that: param != ''
-    fail_msg: "setAllVars requires 'param' (site or service name). Got empty string."
+    fail_msg: "setAllVars requires 'param'. Got empty string."
 
-- name: "LAYER 1 - Load dojoVars"
-  include_vars:
-    file: ./configs/dojo.yml
-    name: dojoVars
+- block:
+    - name: "LAYER 1 - Load dojoVars"
+      include_vars:
+        file: ./configs/dojo.yml
+        name: dojoVars
+
+    - name: "LAYER 2 - stat baseHostVars"
+      stat:
+        path: "{{ layerDir }}/base-{{ hostName }}.yml"
+      register: stat_base
+
+    - name: "LAYER 2 - Load baseHostVars"
+      include_vars:
+        file: "{{ layerDir }}/base-{{ hostName }}.yml"
+        name: baseHostVars
+      when: stat_base.stat.exists
+
+    - name: "LAYER 3 - stat genericVars"
+      stat:
+        path: "{{ layerDir }}/{{ param }}.yml"
+      register: stat_generic
+
+    - name: "LAYER 3 - Load genericVars"
+      include_vars:
+        file: "{{ layerDir }}/{{ param }}.yml"
+        name: genericVars
+      when: stat_generic.stat.exists
+
+    - name: "LAYER 4 - stat hostVars"
+      stat:
+        path: "{{ layerDir }}/{{ hostName }}/{{ param }}.yml"
+      register: stat_host
+
+    - name: "LAYER 4 - Load hostVars"
+      include_vars:
+        file: "{{ layerDir }}/{{ hostName }}/{{ param }}.yml"
+        name: hostVars
+      when: stat_host.stat.exists
+
   delegate_to: localhost
+  become: false
 
-- name: "LAYER 2 - stat baseHostVars"
-  stat:
-    path: "{{ layerDir }}/base-{{ hostName }}.yml"
-  register: stat_base
-  delegate_to: localhost
-
-- name: "LAYER 2 - Load baseHostVars"
-  include_vars:
-    file: "{{ layerDir }}/base-{{ hostName }}.yml"
-    name: baseHostVars
-  delegate_to: localhost
-  # FIX 3: Eliminados ignore_errors + failed_when redundantes.
-  # El when: ya garantiza que solo se ejecuta si el fichero existe.
-  when: stat_base.stat.exists
-
-- name: "LAYER 3 - stat genericVars"
-  stat:
-    path: "{{ layerDir }}/{{ param }}.yml"
-  register: stat_generic
-  delegate_to: localhost
-
-- name: "LAYER 3 - Load genericVars"
-  include_vars:
-    file: "{{ layerDir }}/{{ param }}.yml"
-    name: genericVars
-  delegate_to: localhost
-  when: stat_generic.stat.exists
-
-- name: "LAYER 4 - stat hostVars"
-  stat:
-    path: "{{ layerDir }}/{{ hostName }}/{{ param }}.yml"
-  register: stat_host
-  delegate_to: localhost
-
-- name: "LAYER 4 - Load hostVars"
-  include_vars:
-    file: "{{ layerDir }}/{{ hostName }}/{{ param }}.yml"
-    name: hostVars
-  delegate_to: localhost
-  when: stat_host.stat.exists
-
-# FIX 4: dojoVars también protegido con | default({}) por consistencia.
 - name: "Combine allVars"
   set_fact:
     allVars: >-
@@ -82,7 +72,6 @@
                    hostVars     | default({}),
                    recursive=True) }}
 
-# FIX 5: Validación de campos obligatorios antes de que los playbooks los usen.
 - name: "VALIDATE - Assert mandatory fields exist in allVars"
   assert:
     that:
@@ -91,11 +80,8 @@
       - allVars.dojo.tool is defined
     fail_msg: >-
       allVars is missing required fields (dojo.id or dojo.tool).
-      Check your inventory file: {{ layerDir }}/{{ hostName }}/{{ param }}.yml
+      Check: {{ layerDir }}/{{ hostName }}/{{ param }}.yml
 
-# FIX 6: versionMajorMinor y versionMajor dentro de allVars.dojo para
-# mantener la consistencia del namespace. Los templates deben usar
-# allVars.dojo.versionMajorMinor en lugar de la variable suelta.
 - name: "SITE - Inject computed version vars into allVars"
   set_fact:
     allVars: >-
