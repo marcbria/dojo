@@ -16,10 +16,11 @@
       vars:
         mode: service
         param: "{{ serviceParam }}"
-    - name: Ensures "proxy" network exists
-      shell:
-        cmd: docker network create proxy
-      ignore_errors: yes
+
+    - name: Ensure proxy network exists
+      community.docker.docker_network:
+        name: "proxy"
+        state: present
 
 # Creates and set permissions for service-folders
 - import_playbook: service-folders.yml
