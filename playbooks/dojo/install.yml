@@ -24,7 +24,7 @@
           &adminUsername={{ allVars.pkp.install.user | default('admin') | urlencode }}
           &adminPassword={{ vault.general.pkp.OJS_ADMIN_PASSWORD | default('vaultPwd') | urlencode }}
           &adminPassword2={{ vault.general.pkp.OJS_ADMIN_PASSWORD | default('vaultPwd') | urlencode }}
-          &adminEmail={{ allVars.pkp.database.install.mail | default('admin@localhost') | urlencode }}
+          &adminEmail={{ allVars.pkp.install.mail | default('admin@localhost') | urlencode }}
           &locale=en_US
           &clientCharset={{ allVars.pkp.i18n.client_charset | default('utf-8') | urlencode }}
           &connectionCharset={{ allVars.pkp.i18n.connection_charset | default('utf8') | urlencode }}
