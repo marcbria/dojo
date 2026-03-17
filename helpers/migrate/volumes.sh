@@ -43,7 +43,7 @@ phase_volumes() {
 
     # ── Apply domain substitutions in config files inside volumes ─────────────
     log "Applying domain substitutions in volume config files on test..."
-    [[ ${#DOMAIN_MAP[@]} -eq 0 ]] && build_domain_map
+    [[ "${#DOMAIN_MAP[@]:-0}" -eq 0 ]] && build_domain_map
     apply_domain_map_in_test "${STORAGE_BASE}/volumes/files/config"
 
     # ── Verify symlink integrity ───────────────────────────────────────────────

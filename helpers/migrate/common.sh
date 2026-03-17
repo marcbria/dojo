@@ -20,7 +20,7 @@ TEST_PREFIX="${TEST_PREFIX:-cory}"              # cory-<name>.precarietat.net
 DRY_RUN="${DRY_RUN:-false}"
 LOG_FILE="${LOG_FILE:-./migration-$(date +%Y%m%d-%H%M%S).log}"
 
-declare -A DOMAIN_MAP
+declare -A DOMAIN_MAP=()
 
 # =============================================================================
 # COLORS AND LOGGING
