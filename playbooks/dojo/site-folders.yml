@@ -60,8 +60,8 @@
       file:
         path: "{{ item }}"
         state: directory
-        owner: "999"
-        group: "1002"
+        owner: "{{ allVars.volumes.db.owner }}"
+        group: "{{ allVars.volumes.db.group }}"
       loop:
         - "{{ allVars.path.volumes.db }}"
       tags:
