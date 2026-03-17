@@ -17,7 +17,7 @@ networks:
 
 services:
   db:
-    image: {{ allVars.images.db }}
+    image: {{ allVars.database.tool }}:{{ allVars.database.version }}
     env_file:
       - .env
     container_name: "{{ allVars.dojo.tool }}_db_${COMPOSE_PROJECT_NAME:-demo}"
@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
 
   app:
-    image: {{ allVars.images.app }}
+    image: pkpofficial/{{ allVars.dojo.tool }}:{{ allVars.dojo.version }}
     env_file:
       - .env
     container_name: "{{ allVars.dojo.tool }}_app_${COMPOSE_PROJECT_NAME:-demo}"
