@@ -22,7 +22,7 @@ phase_volumes() {
     if [[ "$stop_prod" == "true" ]]; then
         log "Stopping site containers on prod (Traefik stays up)..."
         local sites
-        sites=$(prod_ssh "ls ${DOJO_BASE}/sites/") || true
+        sites=$(prod_ssh "sudo ls ${DOJO_BASE}/sites/") || true
         for site in $sites; do
             log "  → Stopping: ${site}"
             prod_ssh "cd '${DOJO_BASE}/sites/${site}' && sudo docker compose down" \
@@ -43,7 +43,7 @@ phase_volumes() {
 
     # ── Apply domain substitutions in config files inside volumes ─────────────
     log "Applying domain substitutions in volume config files on test..."
-    [[ "${#DOMAIN_MAP[@]:-0}" -eq 0 ]] && build_domain_map
+    [[ ${#DOMAIN_MAP[@]} -eq 0 ]] && build_domain_map
     apply_domain_map_in_test "${STORAGE_BASE}/volumes/files/config"
 
     # ── Verify symlink integrity ───────────────────────────────────────────────
@@ -52,7 +52,7 @@ phase_volumes() {
         broken=0
         while IFS= read -r link; do
             [ ! -e \"\$link\" ] && echo \"  [BROKEN] \$link\" && broken=\$((broken+1))
-        done < <(find '${STORAGE_BASE}/volumes/all' -maxdepth 2 -type l 2>/dev/null)
+        done < <(sudo find '${STORAGE_BASE}/volumes/all' -maxdepth 2 -type l 2>/dev/null)
         [ \$broken -eq 0 ] && echo '  All symlinks OK' \
             || echo \"  WARNING: \$broken broken symlink(s) — re-run phase infra\"
     " | tee -a "$LOG_FILE"
@@ -61,7 +61,7 @@ phase_volumes() {
     if [[ "$stop_prod" == "true" ]]; then
         log "Restoring site containers on prod..."
         local sites
-        sites=$(prod_ssh "ls ${DOJO_BASE}/sites/") || true
+        sites=$(prod_ssh "sudo ls ${DOJO_BASE}/sites/") || true
         for site in $sites; do
             log "  → Starting: ${site}"
             prod_ssh "cd '${DOJO_BASE}/sites/${site}' && sudo docker compose up -d" \

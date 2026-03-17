@@ -52,7 +52,7 @@ phase_infra() {
 
     # ── 3. Sync site definition files (no volumes symlink) ────────────────────
     local sites
-    sites=$(prod_ssh "ls ${DOJO_BASE}/sites/") || { error "Could not list sites on prod"; exit 1; }
+    sites=$(prod_ssh "sudo ls ${DOJO_BASE}/sites/") || { error "Could not list sites on prod"; exit 1; }
 
     for site in $sites; do
         log "  → Syncing site definition: ${site}"
@@ -112,9 +112,9 @@ phase_infra() {
 
     # ── 8. Verify ─────────────────────────────────────────────────────────────
     log "Verifying structure on test:"
-    test_ssh "echo '--- DOJO_BASE ---'; find '${DOJO_BASE}' -maxdepth 3 | sort
+    test_ssh "echo '--- DOJO_BASE ---'; sudo find '${DOJO_BASE}' -maxdepth 3 | sort
               echo ''; echo '--- volumes/all ---'
-              find '${STORAGE_BASE}/volumes/all' -maxdepth 2 | sort" | tee -a "$LOG_FILE"
+              sudo find '${STORAGE_BASE}/volumes/all' -maxdepth 2 | sort" | tee -a "$LOG_FILE"
 
     ok "Infrastructure synced to test"
 }

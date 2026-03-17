@@ -28,7 +28,7 @@ phase_start() {
 
     # ── Start sites ───────────────────────────────────────────────────────────
     local sites
-    sites=$(test_ssh "ls '${DOJO_BASE}/sites/' 2>/dev/null") || true
+    sites=$(test_ssh "sudo ls '${DOJO_BASE}/sites/' 2>/dev/null") || true
     for site in $sites; do
         log "  → Starting: ${site}"
         if [[ "$DRY_RUN" == "false" ]]; then

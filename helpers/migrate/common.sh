@@ -20,7 +20,7 @@ TEST_PREFIX="${TEST_PREFIX:-cory}"              # cory-<name>.precarietat.net
 DRY_RUN="${DRY_RUN:-false}"
 LOG_FILE="${LOG_FILE:-./migration-$(date +%Y%m%d-%H%M%S).log}"
 
-declare -A DOMAIN_MAP=()
+declare -A DOMAIN_MAP
 
 # =============================================================================
 # COLORS AND LOGGING
@@ -102,7 +102,7 @@ build_domain_map() {
 
     log "Reading PROJECT_DOMAIN from prod .env files..."
     local sites
-    sites=$(prod_ssh "ls ${DOJO_BASE}/sites/ 2>/dev/null") || {
+    sites=$(prod_ssh "sudo ls ${DOJO_BASE}/sites/ 2>/dev/null") || {
         warn "Could not list sites on prod — DOMAIN_MAP will be empty"; return
     }
 
@@ -110,7 +110,7 @@ build_domain_map() {
     for site in $sites; do
         local prod_domain
         prod_domain=$(prod_ssh \
-            "grep -E '^PROJECT_DOMAIN=' '${DOJO_BASE}/sites/${site}/.env' 2>/dev/null \
+            "sudo grep -E '^PROJECT_DOMAIN=' '${DOJO_BASE}/sites/${site}/.env' 2>/dev/null \
              | cut -d'=' -f2 | tr -d '\"' | tr -d \"'\" | tr -d ' '") || true
 
         [[ -z "$prod_domain" ]] && { warn "  [$site] PROJECT_DOMAIN not found — skipping"; continue; }
@@ -149,7 +149,7 @@ apply_domain_map_in_test() {
         local test_domain="${DOMAIN_MAP[$prod_domain]}"
         log "  Replacing: ${prod_domain} → ${test_domain} in ${target_dir}"
         [[ "$DRY_RUN" == "true" ]] && { warn "  [dry-run] sed skipped"; continue; }
-        test_ssh "find '${target_dir}' -type f \
+        test_ssh "sudo find '${target_dir}' -type f \
             \( -name '.env' -o -name '*.yml' -o -name '*.yaml' \
             -o -name '*.conf' -o -name '*.php' -o -name '*.ini' \) \
             -exec sudo sed -i 's|${prod_domain}|${test_domain}|g' {} \;"

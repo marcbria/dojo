@@ -12,7 +12,7 @@ phase_inventory() {
     log "\nServices:"; prod_ssh "sudo ls -la ${DOJO_BASE}/service/" | tee -a "$LOG_FILE"
 
     log "\nDisk usage:"
-    prod_ssh "du -sh ${DOJO_BASE}/* ${STORAGE_BASE}/volumes/*/ 2>/dev/null" | tee -a "$LOG_FILE"
+    prod_ssh "sudo du -sh ${DOJO_BASE}/* ${STORAGE_BASE}/volumes/*/ 2>/dev/null" | tee -a "$LOG_FILE"
 
     log "\nDocker images:"
     prod_ssh "sudo docker images --format 'table {{.Repository}}\t{{.Tag}}\t{{.Size}}'" \
@@ -20,10 +20,10 @@ phase_inventory() {
 
     log "\nDetected domains (PROJECT_DOMAIN per site):"
     local sites
-    sites=$(prod_ssh "ls ${DOJO_BASE}/sites/") || { warn "Could not list sites"; return; }
+    sites=$(prod_ssh "sudo ls ${DOJO_BASE}/sites/") || { warn "Could not list sites"; return; }
     for site in $sites; do
         local d
-        d=$(prod_ssh "grep -E '^PROJECT_DOMAIN=' '${DOJO_BASE}/sites/${site}/.env' 2>/dev/null \
+        d=$(prod_ssh "sudo grep -E '^PROJECT_DOMAIN=' '${DOJO_BASE}/sites/${site}/.env' 2>/dev/null \
              | cut -d'=' -f2 | tr -d '\"' || echo '(not found)'")
         printf "  %-25s → %s\n" "$site" "$d" | tee -a "$LOG_FILE"
     done

@@ -38,12 +38,12 @@ phase_preflight() {
     fi
 
     log "Checking dojo structure on prod..."
-    prod_ssh "test -d ${DOJO_BASE}/sites && test -d ${DOJO_BASE}/service" \
+    prod_ssh "sudo test -d ${DOJO_BASE}/sites && sudo test -d ${DOJO_BASE}/service" \
         && ok "dojo structure OK on prod" \
         || { error "dojo base not found on prod (${DOJO_BASE})"; exit 1; }
 
     log "Checking storage on prod..."
-    prod_ssh "test -d ${STORAGE_BASE}/volumes" \
+    prod_ssh "sudo test -d ${STORAGE_BASE}/volumes" \
         && ok "Storage OK on prod" \
         || warn "Storage path not found on prod: ${STORAGE_BASE}/volumes"
 
