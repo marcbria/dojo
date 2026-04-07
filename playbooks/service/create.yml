@@ -22,6 +22,15 @@
         name: "proxy"
         state: present
 
+    - name: Ensure acme.json has correct permissions for Traefik
+      file:
+        path: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes/config/certificates/acme/acme.json"
+        state: touch
+        owner: root
+        group: root
+        mode: 0600
+      when: allVars.dojo.tool == 'traefik'
+
 # Creates and set permissions for service-folders
 - import_playbook: service-folders.yml
 # Creates env file

@@ -32,7 +32,7 @@ app:
     http: 80
     https: 443
     api: 8080
-    redirect: true                      # When true, http -> https
+      #    redirect: true                      # When true, http -> https
   api:
     dashboard: true                     # Start a GUI in app.ports.api.
     insecure: false                     # When true, no pwd is required.
@@ -40,8 +40,10 @@ app:
     token: false                        # Set here your token if any.
   certificate:
     email: "yourMail@foo.org"           # Used for let's encrypt.
-    method: http                        # Options: https and tls (dns not yet).
-    staging: fase                       # True for "sandbox" (avoid banning).
+#    method: http                       # Options: https and tls (dns not yet).
+#    staging: fase                      # True for "sandbox" (avoid banning).
+    method: tls                         # Options: https and tls (dns not yet).
+    staging: true                       # True for "sandbox" (avoid banning).
   debug:
     level: "ERROR"
   credentials:

@@ -18,6 +18,9 @@ services:
       - ./volumes/config/certificates/acme:/etc/traefik/acme
       - ./volumes/config/certificates/host:/etc/traefik/host
       - ./volumes/config/providers:/etc/traefik/providers
+{% if allVars.app.certificate.selfsigned | default(false) %}
+      - ./volumes/config/certificates/selfsigned:/etc/traefik/selfsigned:ro
+{% endif %}
     ports:
       - ${HTTP_PORT:-80}:{{ allVars.app.ports.http | default('80') }}
       - ${HTTPS_PORT:-443}:{{ allVars.app.ports.https | default('443') }}
@@ -41,20 +44,24 @@ services:
       - "--entrypoints.webinsecure.http.redirections.entrypoint.scheme=https"
       - "--entrypoints.webinsecure.http.redirections.entrypoint.permanent=true"
 {% endif %}
-{% if allVars.app.certificate.method == 'http' %}
+{% if allVars.app.certificate.selfsigned | default(false) %}
+      - "--certificatesFile=/etc/traefik/selfsigned/fullchain.pem"
+      - "--keyFile=/etc/traefik/selfsigned/privkey.pem"
+{% else %}
+{%   if allVars.app.certificate.method == 'http' %}
       - "--certificatesresolvers.leresolver.acme.httpchallenge=true"
       - "--certificatesresolvers.leresolver.acme.httpchallenge.entrypoint=webinsecure"
-{% elif allVars.app.certificate.method == 'tls' %}
+{%   elif allVars.app.certificate.method == 'tls' %}
       - "--certificatesresolvers.leresolver.acme.tlschallenge=true"
-{% elif allVars.app.certificate.method == 'dns' %}
+{%   elif allVars.app.certificate.method == 'dns' %}
       - "--certificatesresolvers.leresolver.acme.dnschallenge=true"
-{% endif %}
-{% if allVars.app.certificate.staging | default(false) | bool %}
-      # Staging CA: avoids hitting Let's Encrypt rate limits during testing.
+{%   endif %}
+{%   if allVars.app.certificate.staging | default(false) | bool %}
       - "--certificatesResolvers.leresolver.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
-{% endif %}
+{%   endif %}
       - "--certificatesresolvers.leresolver.acme.email={{ allVars.app.certificate.email }}"
       - "--certificatesresolvers.leresolver.acme.storage=/etc/traefik/acme/acme.json"
+{% endif %}
 
     networks:
       - {{ allVars.app.network | default('proxy') }}
