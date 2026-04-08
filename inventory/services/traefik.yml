@@ -26,6 +26,8 @@ dojo:
 images:
   app: !unsafe "traefik:{{ dojo.version }}"
 
+database: {}
+
 app:
   network: "proxy"                      # Name to refer after in your apps.
   ports:
@@ -40,8 +42,8 @@ app:
     token: false                        # Set here your token if any.
   certificate:
     email: "yourMail@foo.org"           # Used for let's encrypt.
-#    method: http                       # Options: https and tls (dns not yet).
-#    staging: fase                      # True for "sandbox" (avoid banning).
+    method: http                        # Options: https and tls (dns not yet).
+    staging: true                       # True for "sandbox" (avoid banning).
     method: tls                         # Options: https and tls (dns not yet).
     staging: true                       # True for "sandbox" (avoid banning).
   debug:
