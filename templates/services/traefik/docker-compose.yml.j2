@@ -45,8 +45,9 @@ services:
       - "--entrypoints.webinsecure.http.redirections.entrypoint.permanent=true"
 {% endif %}
 {% if allVars.app.certificate.selfsigned | default(false) %}
-      - "--certificatesFile=/etc/traefik/selfsigned/fullchain.pem"
-      - "--keyFile=/etc/traefik/selfsigned/privkey.pem"
+# Not working yet:
+#      - "--certificatesFile=/etc/traefik/selfsigned/fullchain.pem"
+#      - "--keyFile=/etc/traefik/selfsigned/privkey.pem"
 {% else %}
 {%   if allVars.app.certificate.method == 'http' %}
       - "--certificatesresolvers.leresolver.acme.httpchallenge=true"
@@ -77,6 +78,7 @@ services:
       traefik.http.middlewares.traefik-auth.basicauth.users: "{{ allVars.app.credentials.username }}:{{ allVars.app.credentials.password }}"
 {% endif %}
 
-networks:
-  {{ allVars.app.network | default('proxy') }}:
-    external: true
+# Moved to override:
+# networks:
+#   {{ allVars.app.network | default('proxy') }}:
+#     external: true

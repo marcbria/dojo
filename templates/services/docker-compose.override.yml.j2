@@ -17,4 +17,4 @@ services:
 networks:
   {{ allVars.app.network | default('proxy') }}:
     name: {{ allVars.app.network | default('proxy') }}
-    external: false
+    external: true
