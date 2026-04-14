@@ -22,6 +22,43 @@
         name: "proxy"
         state: present
 
+    - name: Create TLS configuration file for self-signed certificate
+      copy:
+        content: |
+          tls:
+            certificates:
+              - certFile: /etc/traefik/selfsigned/cert.pem
+                keyFile: /etc/traefik/selfsigned/key.pem
+        dest: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes/config/providers/tls.yml"
+        owner: "{{ allVars.user.run }}"
+        group: "{{ allVars.user.group }}"
+        mode: 0644
+      when: allVars.app.certificate.selfsigned | default(false)
+
+    - name: Create dashboard configuration file for Traefik
+      copy:
+        content: |
+          http:
+            routers:
+              traefik-dashboard:
+                rule: "Host(`{{ allVars.dojo.domain }}`)"
+                service: "api@internal"
+                entryPoints:
+                  - websecure
+                middlewares:
+                  - traefik-auth
+                tls: {}
+            middlewares:
+              traefik-auth:
+                basicAuth:
+                  users:
+                    - "{{ allVars.app.credentials.username }}:{{ allVars.app.credentials.password }}"
+        dest: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes/config/providers/dashboard.yml"
+        owner: "{{ allVars.user.run }}"
+        group: "{{ allVars.user.group }}"
+        mode: 0644
+      when: allVars.app.certificate.selfsigned | default(false)
+
     - name: Ensure acme.json has correct permissions for Traefik
       file:
         path: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes/config/certificates/acme/acme.json"

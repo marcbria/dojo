@@ -1,0 +1,70 @@
+---
+- name: Generate self-signed certificate for Traefik (Dojo service)
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    hostName: "{{ host }}"
+    serviceParam: "{{ service }}"
+  vars_files:
+    - ./configs/dojo.yml
+    - ./configs/secret.yml
+    - ./inventory/services/base-{{ hostName }}.yml
+  tasks:
+    - name: Include setAllVars to get all service variables
+      include_tasks: ../setAllVars.yml
+      vars:
+        mode: service
+        param: "{{ serviceParam }}"
+
+    - name: Set facts for certificate paths
+      set_fact:
+        cert_dir: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes/config/certificates/selfsigned"
+        cert_key: "key.pem"
+        cert_crt: "cert.pem"
+        cert_subj: "/CN={{ allVars.dojo.domain }}"
+
+    - name: Ensure self-signed certificate directory exists
+      file:
+        path: "{{ cert_dir }}"
+        state: directory
+        owner: "{{ allVars.user.run }}"
+        group: "{{ allVars.user.group }}"
+        mode: 0755
+
+    - name: Generate self-signed certificate (if not exists)
+      command: >
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048
+        -keyout {{ cert_dir }}/{{ cert_key }}
+        -out {{ cert_dir }}/{{ cert_crt }}
+        -subj "{{ cert_subj }}"
+      args:
+        creates: "{{ cert_dir }}/{{ cert_crt }}"
+      register: cert_result
+
+    - name: Force regenerate certificate if requested
+      command: >
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048
+        -keyout {{ cert_dir }}/{{ cert_key }}
+        -out {{ cert_dir }}/{{ cert_crt }}
+        -subj "{{ cert_subj }}"
+      when: force_regen | default(false) | bool
+      notify: restart traefik
+
+    - name: Set correct ownership and permissions on certificate files
+      file:
+        path: "{{ cert_dir }}/{{ item }}"
+        owner: "{{ allVars.user.run }}"
+        group: "{{ allVars.user.group }}"
+        mode: 0644
+      loop:
+        - "{{ cert_key }}"
+        - "{{ cert_crt }}"
+
+  handlers:
+    - name: restart traefik
+      include_tasks: "{{ servicePath }}/manage.yml"
+      vars:
+        host: "{{ hostName }}"
+        service: "{{ serviceParam }}"
+        command: "restart"

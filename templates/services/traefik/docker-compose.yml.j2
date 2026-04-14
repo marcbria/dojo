@@ -39,16 +39,15 @@ services:
       - "--providers.file.watch=true"
       - "--entrypoints.webinsecure.address=:{{ allVars.app.ports.http | default('80') }}"
       - "--entrypoints.websecure.address=:{{ allVars.app.ports.https | default('443') }}"
+{% if not allVars.app.certificate.selfsigned | default(false) %}
 {% if allVars.app.ports.redirect | default(false) %}
       - "--entrypoints.webinsecure.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.webinsecure.http.redirections.entrypoint.scheme=https"
       - "--entrypoints.webinsecure.http.redirections.entrypoint.permanent=true"
 {% endif %}
-{% if allVars.app.certificate.selfsigned | default(false) %}
-# Not working yet:
-#      - "--certificatesFile=/etc/traefik/selfsigned/fullchain.pem"
-#      - "--keyFile=/etc/traefik/selfsigned/privkey.pem"
-{% else %}
+{% endif %}
+{#- Configuración de certificados: autofirmado mediante archivo externo (tls.yml), o Let's Encrypt -#}
+{% if not allVars.app.certificate.selfsigned | default(false) %}
 {%   if allVars.app.certificate.method == 'http' %}
       - "--certificatesresolvers.leresolver.acme.httpchallenge=true"
       - "--certificatesresolvers.leresolver.acme.httpchallenge.entrypoint=webinsecure"
@@ -67,15 +66,13 @@ services:
     networks:
       - {{ allVars.app.network | default('proxy') }}
 
+{% if not allVars.app.certificate.selfsigned | default(false) %}
     labels:
       traefik.enable: "true"
       traefik.http.routers.traefik.entrypoints: websecure
       traefik.http.routers.traefik.rule: Host(`${DASHBOARD_DOMAIN:-{{ allVars.dojo.domain }}}`)
       traefik.http.routers.traefik.service: api@internal
       traefik.http.routers.traefik.tls.certresolver: leresolver
-{% if allVars.app.credentials is defined and allVars.app.credentials %}
-      traefik.http.routers.traefik.middlewares: traefik-auth
-      traefik.http.middlewares.traefik-auth.basicauth.users: "{{ allVars.app.credentials.username }}:{{ allVars.app.credentials.password }}"
 {% endif %}
 
 # Moved to override:

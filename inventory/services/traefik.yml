@@ -48,7 +48,7 @@ app:
     level: "ERROR"
   credentials:
     username: "admin"                   # admin & htpasswd (double "$" to escape).
-    password: "$$apr1$$snawkpfe$$80McrwsF31DZr2aO6kyts1"  # Default: proxyPwd.
+    password: "$$apr1$$nLV9hi8m$$k.VLdQMmxo7qcjXxEUOW2."  # Default: proxyPwd.
   securize:                             # Set permissions to 600.
     config: 
       path: !unsafe "{{ path.files.config }}/{{ dojo.id }}"

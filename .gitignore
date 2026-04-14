@@ -24,5 +24,4 @@ tmp
 2delete
 logs
 *batchSync-*
-configs/secret.yml
 *.log
