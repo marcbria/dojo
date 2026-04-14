@@ -1,6 +1,7 @@
 *.key
 .vault.key
 secrets
+configs/secret.yml
 inventory/hosts.ini
 inventory/hosts.yml
 inventory/services/adauab
