@@ -47,8 +47,10 @@ app:
   debug:
     level: "ERROR"
   credentials:
-    username: "admin"                   # admin & htpasswd (double "$" to escape).
-    password: "$$apr1$$nLV9hi8m$$k.VLdQMmxo7qcjXxEUOW2."  # Default: proxyPwd.
+    # Username and password for dashboard.yml provider.
+    # IMPORTANT: If is used in compose.yml "$" in bash need to be doubled.
+    username: "admin"
+    password: "$apr1$nLV9hi8m$k.VLdQMmxo7qcjXxEUOW2."  # Default: proxyPwd.
   securize:                             # Set permissions to 600.
     config: 
       path: !unsafe "{{ path.files.config }}/{{ dojo.id }}"
