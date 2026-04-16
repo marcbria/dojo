@@ -12,7 +12,8 @@
     - ./configs/secret.yml
     - ./inventory/services/base-{{ hostName }}.yml
   tasks:
-    - include_tasks: ../setAllVars.yml
+    - name: Include setAllVars to get all service variables
+      include_tasks: ../setAllVars.yml
       vars:
         mode: service
         param: "{{ serviceParam }}"
@@ -22,6 +23,52 @@
         name: "proxy"
         state: present
 
+    # -------------------------------------------------------------------------
+    # Certificado autofirmado (solo si selfsigned=true)
+    # -------------------------------------------------------------------------
+    - name: Generate self-signed certificate for Traefik (if selfsigned)
+      block:
+        - name: Ensure self-signed certificate directory exists
+          file:
+            path: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes/config/certificates/selfsigned"
+            state: directory
+            owner: "{{ allVars.user.run }}"
+            group: "{{ allVars.user.group }}"
+            mode: 0755
+
+        - name: Generate self-signed certificate (if not exists)
+          command: >
+            openssl req -x509 -nodes -days 365 -newkey rsa:2048
+            -keyout "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes/config/certificates/selfsigned/key.pem"
+            -out "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes/config/certificates/selfsigned/cert.pem"
+            -subj "/CN={{ allVars.dojo.domain }}"
+          args:
+            creates: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes/config/certificates/selfsigned/cert.pem"
+
+        - name: Set correct ownership and permissions on certificate files
+          file:
+            path: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes/config/certificates/selfsigned/{{ item }}"
+            owner: "{{ allVars.user.run }}"
+            group: "{{ allVars.user.group }}"
+            mode: 0644
+          loop:
+            - key.pem
+            - cert.pem
+
+        - name: Force regenerate certificate if requested
+          command: >
+            openssl req -x509 -nodes -days 365 -newkey rsa:2048
+            -keyout "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes/config/certificates/selfsigned/key.pem"
+            -out "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes/config/certificates/selfsigned/cert.pem"
+            -subj "/CN={{ allVars.dojo.domain }}"
+          when: force_regen | default(false) | bool
+          notify: restart traefik
+
+      when: allVars.app.certificate.selfsigned | default(false)
+
+    # -------------------------------------------------------------------------
+    # Archivo tls.yml (necesario para certificado autofirmado)
+    # -------------------------------------------------------------------------
     - name: Create TLS configuration file for self-signed certificate
       copy:
         content: |
@@ -35,6 +82,10 @@
         mode: 0644
       when: allVars.app.certificate.selfsigned | default(false)
 
+    # -------------------------------------------------------------------------
+    # Archivo dashboard.yml (configuración estática del router del dashboard)
+    # Se genera siempre, con contenido adaptado al modo (selfsigned o LE)
+    # -------------------------------------------------------------------------
     - name: Create dashboard configuration file for Traefik
       copy:
         content: |
@@ -47,7 +98,12 @@
                   - websecure
                 middlewares:
                   - traefik-auth
+                {% if allVars.app.certificate.selfsigned | default(false) %}
                 tls: {}
+                {% else %}
+                tls:
+                  certResolver: leresolver
+                {% endif %}
             middlewares:
               traefik-auth:
                 basicAuth:
@@ -57,8 +113,11 @@
         owner: "{{ allVars.user.run }}"
         group: "{{ allVars.user.group }}"
         mode: 0644
-      when: allVars.app.certificate.selfsigned | default(false)
+      when: allVars.app.credentials is defined and allVars.app.credentials
 
+    # -------------------------------------------------------------------------
+    # Asegurar permisos de acme.json (solo para modo LE, pero harmless si no existe)
+    # -------------------------------------------------------------------------
     - name: Ensure acme.json has correct permissions for Traefik
       file:
         path: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/volumes/config/certificates/acme/acme.json"
@@ -68,11 +127,18 @@
         mode: 0600
       when: allVars.dojo.tool == 'traefik'
 
-# Creates and set permissions for service-folders
+  handlers:
+    - name: restart traefik
+      include_tasks: "{{ servicePath }}/manage.yml"
+      vars:
+        host: "{{ hostName }}"
+        service: "{{ serviceParam }}"
+        command: "restart"
+
+# -----------------------------------------------------------------------------
+# Importación de los playbooks estándar de Dojo
+# -----------------------------------------------------------------------------
 - import_playbook: service-folders.yml
-# Creates env file
 - import_playbook: env.yml
-# Creates all docker-compose files.
 - import_playbook: docker-compose.yml
-# Ensures folders permissions
 - import_playbook: permissions.yml
