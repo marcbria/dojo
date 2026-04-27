@@ -1,5 +1,7 @@
 *.key
 .vault.key
+*.vault.key
+*.vault.yml
 secrets
 configs/secret.yml
 inventory/hosts.ini
