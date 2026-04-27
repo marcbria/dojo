@@ -18,6 +18,7 @@ inventory/sites/base-ada.yml
 inventory/sites/base-kalimero.yml
 inventory/sites/base-cory.yml
 inventory/redi
+inventory/lists
 ansible.cfg
 venv
 tmp
