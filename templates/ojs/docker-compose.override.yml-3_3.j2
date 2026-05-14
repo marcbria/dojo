@@ -28,7 +28,9 @@ services:
       - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.rule={{ traefik_rule }}"
       - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.entrypoints=websecure"
       - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.tls=true"
+{% if not proxy_certificate_selfsigned | default(false) %}
       - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.tls.certresolver=leresolver"
+{% endif %}
 
 {% if allVars.app.ports.redirect is defined %}
       # HTTP routers:
