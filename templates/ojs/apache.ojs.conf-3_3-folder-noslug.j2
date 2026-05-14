@@ -1,5 +1,5 @@
 ## Template: ojs/apache.ojs.conf-3_3-folder-noslug.j2
-## 
+##
 ## This set of rules were created for single-tenant journals with a folder url
 ## with the journalContext hidden (ie: https://foo.org/folderSlug) behind a
 ## reverse proxy, but running in a container without ssl.
@@ -18,10 +18,12 @@
 LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
 LoadModule rewrite_module modules/mod_rewrite.so
 LoadModule expires_module modules/mod_expires.so
+LoadModule headers_module modules/mod_headers.so
 
 # The container is running with http behind an httpS reverse proxy, so...
 # Trick01: Faking the schema to build httpS urls and avoid "Mixed content" issues.
 SetEnvIf X-Forwarded-Proto "https" HTTPS=on
+SetEnvIf X-Forwarded-Proto "https" REQUEST_SCHEME=https
 
 <VirtualHost *:80>
     ServerName localhost
@@ -31,11 +33,15 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
     RewriteEngine On
     AcceptPathInfo On
 
-    # Uncomment to clarify who is answering with the error: 
+    # Extra protection: To avoid mixed content, this tries to fix any Location header
+    # that OJS might generate with http://
+    Header edit Location "^http://(.*)$" "https://$1"
+
+    # Uncomment to clarify who is answering with the error:
     # ErrorDocument 404 "Error 404 at: [{{ allVars.dojo.id }}]"
     # ErrorDocument 500 "Error 500 at: [{{ allVars.dojo.id }}]"
 
-    # OJS is pysically installed in the container's webroot
+    # OJS is physically installed in the container's webroot
     DocumentRoot /var/www/html
 
     # BUT, the URL includes a folder.
@@ -43,22 +49,22 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
     Alias /{{ allVars.proxy.pathprefix }} /var/www/html
 
 {% if allVars.proxy.alias is defined %}
-    # A secondary Alias was requested:
+    # A secondary Alias was requested (ie: "folderslug" and "FolderSlug"):
     Alias /{{ allVars.proxy.alias }} /var/www/html
 {% endif %}
 
     <Directory /var/www/html>
         Options FollowSymLinks
         AllowOverride all
-        Allow from all
+        Require all granted
 
         DirectoryIndex index.php index.html
 
         # Trick 03: Apache will always preserve the first /folderSlug (in relative redirections).
         RewriteBase /{{ allVars.proxy.pathprefix }}
 
-        # Redirects root to index
-        RewriteRule ^/?$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index [L,R=307]
+        # Redirects root and /journalContext (with or without slash) to index (unified rule)
+        RewriteRule ^(/?|/{{ allVars.proxy.pathprefix }}/?)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index [L,R=307]
 
         # Redirects regular API calls to journal context
         RewriteCond %{REQUEST_URI} ^\/{{ allVars.proxy.pathprefix }}\/api\/v1
@@ -72,7 +78,7 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
         RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/$1 [QSA,L,R=307]
 
     {% if allVars.pkp.general.base_url_index is defined %}
-    # To reach Admin pages 
+    # To reach Admin pages
         # TBD: Make it generic. Now only folderSlug/index is filtered.
 
         # Redirect Admin pages
@@ -82,54 +88,16 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
         RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/$1 [QSA,L,R=307]
     {% endif %}
 
-        # Redirects root folder to journal context
+        # Redirects root folder to journal context (RESTful & noSlug)
         RewriteCond %{REQUEST_URI} !/{{ allVars.proxy.pathprefix }}/index.php
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteCond %{REQUEST_FILENAME} !-f
         RewriteRule ^(.*)$ index.php/{{ allVars.proxy.pathprefix }}/$1 [QSA,L]
 
-        # RESTful rule: Includes index.php (if is not done yet)
-        RewriteCond %{REQUEST_URI} !/index.php
-        RewriteCond %{REQUEST_FILENAME} !-d
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
-
+        # (The generic RESTful rule "index.php/$1" has been removed as redundant)
     </Directory>
 
     # Uncomment to debug the rewrites.
-    # LogLevel alert rewrite:trace2
-
-    ErrorLog  /var/log/apache2/error.log
-    CustomLog  /var/log/apache2/access.log combined
-</VirtualHost>
-
-# Keeping this to show how to configure virtual host if containers include certificates 
-# UNTESTED and could collide with former rules.
-<VirtualHost *:443>
-    ServerName localhost
-    ServerAlias {{ allVars.dojo.domain }}
-    ServerAlias {{ allVars.dojo.id }}
-    DocumentRoot /var/www/html
-
-    SSLEngine on
-    SSLCertificateFile /etc/ssl/apache2/server.pem
-    SSLCertificateKeyFile /etc/ssl/apache2/server.key
-
-    PassEnv HTTPS
-    RewriteEngine on
-    AcceptPathInfo On
-
-    <Directory /var/www/html>
-        Options FollowSymLinks
-        AllowOverride all
-        Allow from all
-
-        # Remove index.php from the url
-        RewriteCond %{REQUEST_FILENAME} !-d
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
-    </Directory>
-
     # LogLevel alert rewrite:trace2
 
     ErrorLog  /var/log/apache2/error.log

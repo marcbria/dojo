@@ -34,7 +34,7 @@ app:
     http: 80
     https: 443
     api: 8080
-      #    redirect: true                      # When true, http -> https
+    redirect: true                      # When true, http -> https (important)
   api:
     dashboard: true                     # Start a GUI in app.ports.api.
     insecure: false                     # When true, no pwd is required.
