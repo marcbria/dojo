@@ -103,5 +103,3 @@ SetEnvIf X-Forwarded-Proto "https" REQUEST_SCHEME=https
     ErrorLog  /var/log/apache2/error.log
     CustomLog  /var/log/apache2/access.log combined
 </VirtualHost>
-
-# The <VirtualHost *:443> block has been removed – SSL termination is handled by Traefik.
