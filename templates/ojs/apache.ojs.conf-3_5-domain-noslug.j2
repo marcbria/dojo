@@ -1,27 +1,26 @@
-## Template: ojs/apache.ojs.conf-3_3-domain-noslug.j2
+## Template: ojs/apache.ojs.conf-3_5-domain-noslug.j2
 ##
-## This set of rules were created for single-tenant journals installed in a domain
-## or a subdomain's root with the journalContext hidden (ie: https://subdomain.foo.org)
-## behind a reverse proxy, but running in a container without ssl.
+## This set of rules was created for single-tenant journals installed in a domain
+## or a subdomain's root with the journalContext hidden (eg: https://subdomain.foo.org)
+## behind a reverse proxy, running in a container without SSL.
 ##
-## Some notes:
-## - Non final redirections need to be 307.
-## - Conflictive redirections include the protocol (httpS) to avoid "mixed content".
-## - API calls are captured to be redirected to site or journal.
-## - Root folder is for the journal (single-tenant).
+## Notes:
+## - Non‑final redirections use 307.
+## - Redirections include https:// to avoid mixed content.
+## - API calls are captured and redirected appropriately.
+## - Root folder is for the journal (single‑tenant).
 ## - Admin pages are redirected to /index subfolder.
-##
-## Journal root is: {{ allVars.pkp.general.base_url_journal }}
-## Site's root is:  {{ allVars.pkp.general.base_url_index }}
+## - Compatible with OJS 3.5.
 
-# Load modules
+# Load required modules
 LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
 LoadModule rewrite_module modules/mod_rewrite.so
 LoadModule expires_module modules/mod_expires.so
+LoadModule headers_module modules/mod_headers.so
 
-# This is essential if you are in http behind an httpS reverse proxy:
-# Faking the schema to build httpS urls and avoid "Mixed content" issues.
+# Trick 01: Force HTTPS detection when behind a reverse proxy
 SetEnvIf X-Forwarded-Proto "https" HTTPS=on
+SetEnvIf X-Forwarded-Proto "https" REQUEST_SCHEME=https
 
 <VirtualHost *:80>
     ServerName localhost
@@ -31,18 +30,15 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
     RewriteEngine On
     AcceptPathInfo On
 
-    # Uncomment to clarify who is answering with the error:
-    # ErrorDocument 404 "Error 404 at: [{{ allVars.dojo.id }}]"
-    # ErrorDocument 500 "Error 500 at: [{{ allVars.dojo.id }}]"
+    # Trick 02: Rewrite any Location header from http to https
+    Header edit Location "^http://(.*)$" "https://$1"
 
-    # OJS is pysically installed in the container's webroot
     DocumentRoot /var/www/html
 
     <Directory /var/www/html>
         Options FollowSymLinks
         AllowOverride all
-        Allow from all
-
+        Require all granted          # Apache 2.4+ (replaces Allow from all)
         DirectoryIndex index.php index.html
 
         RewriteBase /
@@ -52,49 +48,52 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
         # Rules for a domain/subdomain journal installed at root
         #########################################################
 
-        # Redirects root to index
-        RewriteRule ^/?$ https://{{ allVars.dojo.domain }}/index [L]
+        # Trick 03: Redirect domain root to /index (so internal rewrite works)
+        RewriteRule ^/?$ https://{{ allVars.dojo.domain }}/index [L,R=307]
 
-        # ## Force httpS (won't be necessary when OJS allows to force the protocol):
-        RewriteCond %{HTTPS}  !=on
-        RewriteCond %{REQUEST_URI} api\/v1\/
+        # Trick 04: Redirect journal API calls (without duplicating the id)
+        RewriteCond %{REQUEST_URI} ^/api/v1
         RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^/?(.*) https://{{ allVars.dojo.domain }}/index.php/{{ allVars.dojo.id }}/$1 [L,R=307]
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/index.php/{{ allVars.dojo.id }}/$1 [QSA,L,R=307]
 
-    {% if allVars.pkp.general.base_url_index is defined %}
-    # To reach Admin pages
-        # TBD: Make it generic. Now only /index is filtered.
-        RewriteCond %{REQUEST_URI} ^/index/
+        # Redirect new _API calls (sitewide, used for public endpoints)
+        RewriteCond %{REQUEST_URI} ^/_/api/v1/
         RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^/?(.*) https://{{ allVars.dojo.domain }}/index.php/$1 [L,R=307]
-    {% endif %}
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/index.php/$1 [QSA,L,R=307]
 
-        # Rewrite API calls to subdomain journals (avoid double redirection)
-        RewriteCond %{REQUEST_URI} {{ allVars.dojo.id }}\/api\/v1\/
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ index.php/{{ allVars.dojo.id }}$1 [L,R=307]
+        #########################################################
+        # Rewrite clean URLs for the journal (noslug mode)
+        # Exclude routes starting with /index/ or containing /index.php
+        #########################################################
 
-        # Rewrite API calls to subdomain journals
-        RewriteCond %{REQUEST_URI} api\/v1\/
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ index.php/{{ allVars.dojo.id }}/$1 [L,R=307]
+        # Trick 05: Separate rewrite rules for journal content and admin pages
 
-        # Remes the short journal's rule:
-        RewriteCond %{REQUEST_URI} !/{{ allVars.dojo.id }}/index.php
+        # For routes that are NOT admin (journal)
+        RewriteCond %{REQUEST_URI} !^/index/
+        RewriteCond %{REQUEST_URI} !/index.php
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteCond %{REQUEST_FILENAME} !-f
         RewriteRule ^(.*)$ index.php/{{ allVars.dojo.id }}/$1 [QSA,L]
 
+        # For admin routes (RESTful): /index/admin, /index/oai, etc.
+        # Rewrite internally to index.php/index/... (no external redirect)
+        RewriteCond %{REQUEST_URI} ^/index/
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^index/(.*)$ index.php/index/$1 [QSA,L]
+
+        # NOTE: URLs already containing /index.php are never modified.
+
 {% else %}
         ########################
-        # Rules to INSTALL
+        # Rules for fresh install
         ########################
 
-        # $$$call$$ redirection to journal
+        # Special installer redirection ($$$call$$$)
         RewriteCond %{REQUEST_URI} ^\/\$\$\$call\$\$\$
         RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/index.php/{{ allVars.dojo.id }}/$1 [L,R=307]
 
-        # This removes index.php from the url
+        # Standard OJS rewrite during installation
         RewriteCond %{REQUEST_URI} !/index.php
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteCond %{REQUEST_FILENAME} !-f
@@ -102,41 +101,6 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
 {% endif %}
 
     </Directory>
-
-    # LogLevel alert rewrite:trace2
-
-    ErrorLog  /var/log/apache2/error.log
-    CustomLog  /var/log/apache2/access.log combined
-</VirtualHost>
-
-# Keeping this to show how to configure virtual host if containers include certificates
-# UNTESTED and could collide with former rules.
-<VirtualHost *:443>
-    ServerName localhost
-    ServerAlias {{ allVars.dojo.domain }}
-    ServerAlias {{ allVars.dojo.id }}
-    DocumentRoot /var/www/html
-
-    SSLEngine on
-    SSLCertificateFile /etc/ssl/apache2/server.pem
-    SSLCertificateKeyFile /etc/ssl/apache2/server.key
-
-    PassEnv HTTPS
-    RewriteEngine on
-    AcceptPathInfo On
-
-    <Directory /var/www/html>
-        Options FollowSymLinks
-        AllowOverride all
-        Allow from all
-
-        # Remove index.php from the url
-        RewriteCond %{REQUEST_FILENAME} !-d
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
-    </Directory>
-
-    # LogLevel alert rewrite:trace2
 
     ErrorLog  /var/log/apache2/error.log
     CustomLog  /var/log/apache2/access.log combined
