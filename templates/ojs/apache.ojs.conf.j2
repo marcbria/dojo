@@ -1,7 +1,7 @@
-## Template: ojs/apache.ojs.conf.j2
+## Template: ojs/apache.ojs.conf.j2 (unified for OJS 3.2–3.5)
 ##
-## This set of rules were tested in single-tenant journals installed in a folder, 
-## domain or a subdomain's root with the journalContext hidden, behind a reverse 
+## This set of rules were tested in single-tenant journals installed in a folder,
+## domain or a subdomain's root with the journalContext hidden, behind a reverse
 ## proxy, in a container without ssl.
 ##
 ## Versions supported: OJS 3.2–3.5
@@ -16,16 +16,10 @@
 ##   - Apache 2.4+ with mod_rewrite, mod_headers, mod_slotmem_shm and mod_expires.
 ##   - Non‑final redirections use 307, include https:// to avoid mixed content
 ##
-## Testing:
-## Those set of rules were tested in single-tenant journals installed in a folder,
-## domain or a subdomain's root with the journalContext hidden, behind a reverse
-## proxy, in a container without ssl. Other variants are also possible but could
-## introduce issues. For those extra cases, PRs are welcome.
-##
 ## Journal root is: {{ allVars.pkp.general.base_url_journal }}
 ## Site's root is:  {{ allVars.pkp.general.base_url_index }}
 ##
-## Generated: {{ ansible_date_time.iso8601 }}
+## Generated: {{ ansible_date_time.date }} {{ ansible_date_time.time }}
 
 # Load required modules
 LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
@@ -51,6 +45,9 @@ SetEnvIf X-Forwarded-Proto "https" REQUEST_SCHEME=https
     DocumentRoot /var/www/html
 
 {% if allVars.dojo.type in ['folder', 'folder-noslug'] %}
+    ## =========================================
+    ## Folder alias configuration
+    ## =========================================
     # The URL includes a folder prefix; Apache strips it so that
     # everything under /prefix is served from the document root.
     Alias /{{ allVars.proxy.pathprefix }} /var/www/html
@@ -62,58 +59,89 @@ SetEnvIf X-Forwarded-Proto "https" REQUEST_SCHEME=https
     <Directory /var/www/html>
         Options FollowSymLinks
         AllowOverride all
-        Require all granted          # Apache 2.4+ (replaces Allow from all)
+        Require all granted
         DirectoryIndex index.php index.html
 
-        {% if allVars.dojo.type in ['folder', 'folder-noslug'] %}
+{% if allVars.dojo.type in ['folder', 'folder-noslug'] %}
         # For folder types, preserve the folder prefix in relative redirects.
         RewriteBase /{{ allVars.proxy.pathprefix }}
-        {% else %}
+{% else %}
         RewriteBase /
-        {% endif %}
+{% endif %}
 
 {% if allVars.pkp.general.installed | default('Off') == 'On' %}
-        #########################################################
-        # Rules for installed journal
-        #########################################################
+        ## =========================================
+        ## Rules for installed journal
+        ## =========================================
 
-        {# ----- ROOT/BASE REDIRECTION ----- #}
-        {% if allVars.dojo.type in ['domain', 'domain-noslug'] %}
+        # ----- Root / base redirection --------------------------------------
+{% if allVars.dojo.type in ['domain', 'domain-noslug'] %}
         # Redirect domain root to /index
         RewriteRule ^/?$ https://{{ allVars.dojo.domain }}/index [L,R=307]
-
-        {% elif allVars.dojo.type == 'folder-noslug' %}
-        # Redirect base of alias to /index (unified rule for both root cases)
-        RewriteRule ^(/?|/{{ allVars.proxy.pathprefix }}/?)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index [L,R=307]
-
-        {% elif allVars.dojo.type == 'folder' %}
+{% elif allVars.dojo.type == 'folder' %}
         # Redirect the base of the alias to /index (site landing)
         RewriteRule ^/?$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index [L,R=307]
-        {% endif %}
+{% elif allVars.dojo.type == 'folder-noslug' %}
+        # Redirect base of alias to /index (unified for both root and prefix)
+        RewriteRule ^(/?|/{{ allVars.proxy.pathprefix }}/?)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index [L,R=307]
+{% endif %}
 
-        {# ----- API CALLS (external redirects to https) ----- #}
-        {% if allVars.dojo.type in ['domain-noslug', 'folder-noslug'] %}
+        # ----- API calls (external redirects) ------------------------------
+{% if allVars.dojo.type == 'folder-noslug' %}
+        # Redirect regular API calls to journal context (with prefix)
+        RewriteCond %{REQUEST_URI} ^\/{{ allVars.proxy.pathprefix }}\/api\/v1
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/{{ allVars.proxy.pathprefix }}/$1 [QSA,L,R=307]
+
+        # Redirect new _API calls (with prefix)
+        RewriteCond %{REQUEST_URI} ^\/{{ allVars.proxy.pathprefix }}\/_\/api\/v1\/
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/$1 [QSA,L,R=307]
+{% elif allVars.dojo.type in ['domain-noslug', 'domain'] %}
         # Redirect journal API calls (without duplicating the context id)
         RewriteCond %{REQUEST_URI} ^/api/v1
         RewriteCond %{REQUEST_FILENAME} !-f
         RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/index.php/{{ allVars.dojo.id }}/$1 [QSA,L,R=307]
-        {% else %}
-        # Redirect API calls (site‑wide, no journal context in the path)
-        RewriteCond %{REQUEST_URI} ^/api/v1
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/index.php/$1 [QSA,L,R=307]
-        {% endif %}
 
-        # Redirect new _API calls (sitewide, used for public endpoints)
+        # Redirect new _API calls (sitewide)
         RewriteCond %{REQUEST_URI} ^/_/api/v1/
         RewriteCond %{REQUEST_FILENAME} !-f
         RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/index.php/$1 [QSA,L,R=307]
+{% elif allVars.dojo.type == 'folder' %}
+        # Redirect API calls (site‑wide, no journal context)
+        RewriteCond %{REQUEST_URI} ^/api/v1
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/index.php/$1 [QSA,L,R=307]
 
-        {# ----- CLEAN URL REWRITES (internal, no external redirect) ----- #}
-        # For noslug types: journal context is the dojo.id
-        # For visible types: journal context is the first path segment
+        # Redirect new _API calls
+        RewriteCond %{REQUEST_URI} ^/_/api/v1/
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/index.php/$1 [QSA,L,R=307]
+{% endif %}
 
-        {% if allVars.dojo.type in ['domain-noslug', 'folder-noslug'] %}
+        # ----- Admin pages (external redirects for folder-noslug) ----------
+{% if allVars.dojo.type == 'folder-noslug' %}
+        # Redirect Admin pages (with prefix)
+        RewriteCond %{REQUEST_URI} ^\/{{ allVars.proxy.pathprefix }}\/index\/
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/$1 [QSA,L,R=307]
+{% endif %}
+
+        # ----- Clean URL rewrites (internal) -------------------------------
+{% if allVars.dojo.type == 'folder-noslug' %}
+        # Redirect root folder to journal context (RESTful & noSlug)
+        RewriteCond %{REQUEST_URI} !/{{ allVars.proxy.pathprefix }}/index.php
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/{{ allVars.proxy.pathprefix }}/$1 [QSA,L]
+
+        # Generic RESTful rule (fallback)
+        RewriteCond %{REQUEST_URI} !/index.php
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+{% elif allVars.dojo.type in ['domain-noslug'] %}
         # For routes that are NOT admin (journal content)
         RewriteCond %{REQUEST_URI} !^/index/
         RewriteCond %{REQUEST_URI} !/index.php
@@ -121,13 +149,12 @@ SetEnvIf X-Forwarded-Proto "https" REQUEST_SCHEME=https
         RewriteCond %{REQUEST_FILENAME} !-f
         RewriteRule ^(.*)$ index.php/{{ allVars.dojo.id }}/$1 [QSA,L]
 
-        # For admin routes: /index/admin, /index/oai, etc.
+        # For admin routes (RESTful): /index/admin, /index/oai, etc.
         RewriteCond %{REQUEST_URI} ^/index/
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteCond %{REQUEST_FILENAME} !-f
         RewriteRule ^index/(.*)$ index.php/index/$1 [QSA,L]
-
-        {% else %}
+{% elif allVars.dojo.type == 'domain' %}
         # For routes that are NOT admin (journal content)
         RewriteCond %{REQUEST_URI} !^/index/
         RewriteCond %{REQUEST_URI} !/index.php
@@ -135,28 +162,40 @@ SetEnvIf X-Forwarded-Proto "https" REQUEST_SCHEME=https
         RewriteCond %{REQUEST_FILENAME} !-f
         RewriteRule ^(.*)$ index.php/$1 [QSA,L]
 
-        # For admin routes (RESTful): /index/admin, /index/oai, etc.
+        # For admin routes
         RewriteCond %{REQUEST_URI} ^/index/
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteCond %{REQUEST_FILENAME} !-f
         RewriteRule ^index/(.*)$ index.php/index/$1 [QSA,L]
-        {% endif %}
+{% elif allVars.dojo.type == 'folder' %}
+        # For routes that are NOT admin (journal content)
+        RewriteCond %{REQUEST_URI} !^/index/
+        RewriteCond %{REQUEST_URI} !/index.php
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+
+        # For admin routes
+        RewriteCond %{REQUEST_URI} ^/index/
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^index/(.*)$ index.php/index/$1 [QSA,L]
+{% endif %}
 
         # NOTE: URLs already containing /index.php are never modified.
 
 {% else %}
-        ########################
-        # Rules for fresh install
-        ########################
+        ## =========================================
+        ## Rules for fresh install
+        ## =========================================
 
-        {# ----- INSTALLER REDIRECTION ----- #}
         # Special installer redirection ($$$call$$$)
         RewriteCond %{REQUEST_URI} ^\/\$\$\$call\$\$\$
-        {% if allVars.dojo.type in ['domain', 'domain-noslug'] %}
+{% if allVars.dojo.type in ['domain', 'domain-noslug'] %}
         RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/index.php/{{ allVars.dojo.id }}/$1 [L,R=307]
-        {% else %}
+{% elif allVars.dojo.type in ['folder', 'folder-noslug'] %}
         RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/{{ allVars.dojo.id }}/$1 [L,R=307]
-        {% endif %}
+{% endif %}
 
         # Standard OJS rewrite during installation
         RewriteCond %{REQUEST_URI} !/index.php
