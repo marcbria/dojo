@@ -1,7 +1,7 @@
 ## Template: ojs/apache.ojs.conf-3_3-domain-noslug.j2
-## 
+##
 ## This set of rules were created for single-tenant journals installed in a domain
-## or a subdomain's root with the journalContext hidden (ie: https://subdomain.foo.org) 
+## or a subdomain's root with the journalContext hidden (ie: https://subdomain.foo.org)
 ## behind a reverse proxy, but running in a container without ssl.
 ##
 ## Some notes:
@@ -31,9 +31,9 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
     RewriteEngine On
     AcceptPathInfo On
 
-    # Uncomment to clarify who is answering with the error: 
-    # ErrorDocument 404 "Error 404 at: [{{ dojo.id }}]"
-    # ErrorDocument 500 "Error 500 at: [{{ dojo.id }}]"
+    # Uncomment to clarify who is answering with the error:
+    # ErrorDocument 404 "Error 404 at: [{{ allVars.dojo.id }}]"
+    # ErrorDocument 500 "Error 500 at: [{{ allVars.dojo.id }}]"
 
     # OJS is pysically installed in the container's webroot
     DocumentRoot /var/www/html
@@ -62,7 +62,7 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
         RewriteRule ^/?(.*) https://{{ allVars.dojo.domain }}/index.php/{{ allVars.dojo.id }}/$1 [L,R=307]
 
     {% if allVars.pkp.general.base_url_index is defined %}
-    # To reach Admin pages 
+    # To reach Admin pages
         # TBD: Make it generic. Now only /index is filtered.
         RewriteCond %{REQUEST_URI} ^/index/
         RewriteCond %{REQUEST_FILENAME} !-f
@@ -109,7 +109,7 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
     CustomLog  /var/log/apache2/access.log combined
 </VirtualHost>
 
-# Keeping this to show how to configure virtual host if containers include certificates 
+# Keeping this to show how to configure virtual host if containers include certificates
 # UNTESTED and could collide with former rules.
 <VirtualHost *:443>
     ServerName localhost
