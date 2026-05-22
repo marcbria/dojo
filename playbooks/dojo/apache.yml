@@ -1,5 +1,5 @@
 ---
-- name: Create an APACHE virtual host file from the site's diccionary vars.
+- name: Create an APACHE virtual host file from the site's dictionary vars.
   hosts: all
   become: yes
   gather_facts: yes
@@ -12,14 +12,14 @@
     - ./configs/secret.yml
     - ./inventory/sites/base-{{ hostName }}.yml
   tasks:
-    # sets "allVars" array from the site's diccionaries as follows:
+    # sets "allVars" array from the site's dictionaries as follows:
     #           baseHost > siteGeneric > siteHost > dojoVars.
     - include_tasks: ../setAllVars.yml
       vars:
         mode: site
         param: "{{ siteParam }}"
-
-    - name: Generate apache-config file from template and dojo vars
+    
+    - name: Generate apache-config file from unified template
       template:
-        src: "./templates/{{ allVars.dojo.tool }}/apache.{{ allVars.dojo.tool }}.conf-{{ allVars.dojo.versionMajorMinor }}-{{ allVars.dojo.type }}.j2"
+        src: "./templates/{{ allVars.dojo.tool }}/apache.{{ allVars.dojo.tool }}.conf.j2"
         dest: "{{ allVars.path.files.config }}/{{ allVars.dojo.id }}/apache.conf"
