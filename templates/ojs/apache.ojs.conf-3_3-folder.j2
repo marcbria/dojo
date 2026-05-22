@@ -1,27 +1,25 @@
 ## Template: ojs/apache.ojs.conf-3_3-folder.j2
-## 
-## This set of rules were created for single-tenant journals with a folder url
-## with the journalContext visible (ie: https://foo.org/folderSlug/journalContext)
-## behind a reverse proxy, but running in a container without ssl.
 ##
-## Some notes:
-## - Non final redirections need to be 307.
-## - Conflictive redirections include the protocol (httpS) to avoid "mixed content".
-## - API calls are captured to be redirected to site or journal.
-## - Root folder is for the journal (single-tenant).
-## - Admin pages are redirected to /index subfolder.
+## This set of rules was created for journals installed in a folder
+## WITH the journal context visible (eg: https://domain.com/folder/journalname)
+## behind a reverse proxy, running in a container without SSL.
 ##
-## Journal root is: {{ allVars.pkp.general.base_url_journal }}
-## Site's root is:  {{ allVars.pkp.general.base_url_index }}
+## Notes:
+## - Non‑final redirections use 307.
+## - Redirections include https:// to avoid mixed content.
+## - The folder prefix is stripped by an Alias directive.
+## - Journal context is the first segment after the prefix.
+## - Admin pages are under /index/ (site‑wide).
 
-# Load modules
+# Load required modules
 LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
 LoadModule rewrite_module modules/mod_rewrite.so
 LoadModule expires_module modules/mod_expires.so
+LoadModule headers_module modules/mod_headers.so
 
-# The container is running with http behind an httpS reverse proxy, so...
-# Trick01: Faking the schema to build httpS urls and avoid "Mixed content" issues.
+# Trick 01: Force HTTPS detection when behind a reverse proxy
 SetEnvIf X-Forwarded-Proto "https" HTTPS=on
+SetEnvIf X-Forwarded-Proto "https" REQUEST_SCHEME=https
 
 <VirtualHost *:80>
     ServerName localhost
@@ -31,69 +29,91 @@ SetEnvIf X-Forwarded-Proto "https" HTTPS=on
     RewriteEngine On
     AcceptPathInfo On
 
-    # OJS is pysically installed in the container's webroot
+    # Trick 02: Rewrite any Location header from http to https
+    Header edit Location "^http://(.*)$" "https://$1"
+
     DocumentRoot /var/www/html
-    # BUT, the URL includes a folder.
-    # Trick 02: Apache will ignore the folder prefix to serve webroot files.
+
+    # The URL includes a folder prefix; Apache strips it so that
+    # everything under /prefix is served from the document root.
     Alias /{{ allVars.proxy.pathprefix }} /var/www/html
 
 {% if allVars.proxy.alias is defined %}
-    # A secondary Alias was requested:
+    # Optional secondary alias (e.g., case‑insensitive variant)
     Alias /{{ allVars.proxy.alias }} /var/www/html
 {% endif %}
 
     <Directory /var/www/html>
         Options FollowSymLinks
         AllowOverride all
-        Allow from all
-
+        Require all granted          # Apache 2.4+ (replaces Allow from all)
         DirectoryIndex index.php index.html
+
+        # Because of the Alias, the URL path seen by rewrite rules
+        # does NOT include the folder prefix. The following rules are
+        # identical to those used for the domain‑visible‑slug case.
 
         RewriteBase /
 
-        # This removes index.php from the url BUT keeps the folder:
+{% if allVars.pkp.general.installed | default('Off') == 'On' %}
+        #########################################################
+        # Rules for a journal installed with visible context
+        #########################################################
+
+        # Redirect the base of the alias to /index (site landing)
+        RewriteRule ^/?$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index [L,R=307]
+
+        # Redirect API calls (site‑wide)
+        RewriteCond %{REQUEST_URI} ^/api/v1
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/$1 [QSA,L,R=307]
+
+        # Redirect new _API calls
+        RewriteCond %{REQUEST_URI} ^/_/api/v1/
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/$1 [QSA,L,R=307]
+
+        #########################################################
+        # Rewrite clean URLs for the journal (context visible)
+        # Exclude routes starting with /index/ or containing /index.php
+        #########################################################
+
+        # For routes that are NOT admin (journal content)
+        RewriteCond %{REQUEST_URI} !^/index/
         RewriteCond %{REQUEST_URI} !/index.php
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteRule ^(.*)$ {{ allVars.proxy.pathprefix }}/index.php/$1 [QSA,L]
+        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
 
-    </Directory>
+        # For admin routes (RESTful): /index/admin, /index/oai, etc.
+        # Rewrite internally to index.php/index/... (no external redirect)
+        RewriteCond %{REQUEST_URI} ^/index/
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^index/(.*)$ index.php/index/$1 [QSA,L]
 
-    # LogLevel alert rewrite:trace2
+        # NOTE: URLs already containing /index.php are never modified.
 
-    ErrorLog  /var/log/apache2/error.log
-    CustomLog  /var/log/apache2/access.log combined
-</VirtualHost>
+{% else %}
+        ########################
+        # Rules for fresh install
+        ########################
 
-# Keeping this to show how to configure virtual host if containers include certificates 
-# UNTESTED and could collide with former rules.
-<VirtualHost *:443>
-    ServerName localhost
-    ServerAlias {{ allVars.dojo.domain }}
-    ServerAlias {{ allVars.dojo.id }}
-    DocumentRoot /var/www/html
+        # Special installer redirection ($$$call$$$)
+        RewriteCond %{REQUEST_URI} ^\/\$\$\$call\$\$\$
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/{{ allVars.dojo.id }}/$1 [L,R=307]
 
-    SSLEngine on
-    SSLCertificateFile /etc/ssl/apache2/server.pem
-    SSLCertificateKeyFile /etc/ssl/apache2/server.key
-
-    PassEnv HTTPS
-    RewriteEngine on
-    AcceptPathInfo On
-
-    <Directory /var/www/html>
-        Options FollowSymLinks
-        AllowOverride all
-        Allow from all
-
-        # Remove index.php from the url
+        # Standard OJS rewrite during installation
+        RewriteCond %{REQUEST_URI} !/index.php
         RewriteCond %{REQUEST_FILENAME} !-d
         RewriteCond %{REQUEST_FILENAME} !-f
         RewriteRule ^(.*)$ index.php/$1 [QSA,L]
-    </Directory>
+{% endif %}
 
-    # LogLevel alert rewrite:trace2
+    </Directory>
 
     ErrorLog  /var/log/apache2/error.log
     CustomLog  /var/log/apache2/access.log combined
 </VirtualHost>
+
+# The <VirtualHost *:443> block has been removed – SSL termination is handled by Traefik.
