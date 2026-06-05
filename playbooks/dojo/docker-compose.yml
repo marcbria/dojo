@@ -19,7 +19,7 @@
   
     - name: Generate docker-compose.yml file from template and dojo vars.
       template:
-        src: "{{ playbook_dir }}/../../templates/{{ allVars.dojo.tool }}/docker-compose.yml-{{ allVars.dojo.versionMajorMinor }}.j2"
+        src: "{{ playbook_dir }}/../../templates/{{ allVars.dojo.tool }}/docker-compose.yml.j2"
         dest: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}/docker-compose.yml"
 
     - name: Generate docker-compose.override.yml file from unified template
