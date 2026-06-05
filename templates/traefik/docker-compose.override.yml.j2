@@ -1,0 +1,18 @@
+#########################################################################
+# Traefik owns the proxy network — other services declare it as external.
+#
+# Service:   {{ serviceParam }}
+# Tool:      {{ allVars.dojo.tool }}
+# Version:   {{ allVars.dojo.version }}
+# File:      docker-compose.override.yml.j2
+# Creation:  {{ fileCreation }}
+#########################################################################
+
+services:
+  app:
+    networks:
+      - {{ allVars.app.network | default('proxy') }}
+
+networks:
+  {{ allVars.app.network | default('proxy') }}:
+    external: true

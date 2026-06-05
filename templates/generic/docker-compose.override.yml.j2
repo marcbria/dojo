@@ -1,0 +1,12 @@
+#########################################################################
+# An generic override – adds proxy network
+#########################################################################
+
+services:
+  app:
+    networks:
+      - {{ allVars.app.network | default('proxy') }}
+
+networks:
+  {{ allVars.app.network | default('proxy') }}:
+    external: true
