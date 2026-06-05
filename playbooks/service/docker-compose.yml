@@ -22,7 +22,7 @@
         src: "./templates/{{ allVars.dojo.tool }}/docker-compose.yml.j2"
         dest: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/docker-compose.yml"
 
-    - name: Generate docker-compose.override.yml from template
+    - name: Generate docker-compose.override.yml from unified service template
       template:
-        src: "./templates/{{ allVars.dojo.tool }}/docker-compose.override.yml.j2"
+        src: "./templates/services/docker-compose.override.yml.j2"
         dest: "{{ allVars.path.base.services }}/{{ allVars.dojo.id }}/docker-compose.override.yml"

@@ -1,13 +1,15 @@
 #########################################################################
-#
-# General settings
-# File: docker-compose.override.yml
+# docker-compose.override.yml.j2 – Unified override for OMP
+# Supports OMP 3.2, 3.3 (and later if needed)
 #
 # Site:      {{ siteParam }}
 # Tool:      {{ allVars.dojo.tool }}
 # Version:   {{ allVars.dojo.version }}
 # Creation:  {{ fileCreation }}
 #
+# Based on the OJS unified template, adapted for OMP.
+# OMP does not currently use version-specific patches,
+# but the structure is kept for future extensibility.
 #########################################################################
 
 {% set traefik_rule = "Host(" + allVars.proxy.domains + ")" %}
@@ -21,58 +23,47 @@
 services:
   app:
     labels:
-      # Enable traefik for this stack:
       - "traefik.enable=true"
-
-      # HTTPS routers:
       - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.rule={{ traefik_rule }}"
       - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.entrypoints=websecure"
       - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.tls=true"
-{% if not proxy_certificate_selfsigned | default(false) %}
+{% if not (allVars.app.certificate.selfsigned | default(false)) %}
       - "traefik.http.routers.{{ allVars.dojo.id | lower }}-secure.tls.certresolver=leresolver"
-{% endif %}
-
-{% if allVars.app.ports.redirect is defined %}
-      # HTTP routers:
-      # - "traefik.http.routers.{{ allVars.dojo.id | lower }}.rule={{ traefik_rule }}"
-      # - "traefik.http.routers.{{ allVars.dojo.id | lower }}.entrypoints=webinsecure"
-      # - "traefik.http.routers.{{ allVars.dojo.id | lower }}.middlewares={{ allVars.dojo.id | lower }}-redirect"
-
-      # Redirect Scheme HTTP -> HTTPS (if not done globably in traefik)
-      # - "traefik.http.middlewares.{{ allVars.dojo.id | lower }}-redirect.redirectscheme.scheme=https"
-      # - "traefik.http.middlewares.{{ allVars.dojo.id | lower }}-redirect.redirectscheme.permanent=true"
 {% endif %}
 
     volumes:
 {% if allVars.plugins.type == 'shared-plugins' %}
-      # Read-only shared folder for Plugins (ie: plugins/3_3):
+      # Read-only shared folder for plugins (e.g., plugins/3_3)
       - ../shared/plugins/{{ allVars.dojo.versionFamily.rsplit('_', 1)[0] }}:/var/www/html/plugins:ro
 {% elif allVars.plugins.type == 'shared-plugins-admin' %}
-      # ADMIN site: Writable shared folder for Plugins (ie: plugins/3_3):
+      # Writable shared folder for plugins (admin site only)
       - ../shared/plugins/{{ allVars.dojo.versionFamily.rsplit('_', 1)[0] }}:/var/www/html/plugins
 {% elif allVars.plugins.type == 'shared-theme' %}
-      # Read-only shared folder for Themes (ie: themes/3_3):
+      # Read-only shared folder for themes (e.g., themes/3_3/redi)
       - ../shared/themes/{{ allVars.dojo.versionFamily.rsplit('_', 1)[0] }}/redi:/var/www/html/plugins/themes/redi:ro
 {% elif allVars.plugins.type == 'volume-plugins' %}
-      # Writable plugins on container:
+      # Persistent volume for plugins
       - ./volumes/plugins:/var/www/html/plugins
 {% elif allVars.plugins.type == 'volume-theme' %}
-      # Writable themes on container:
+      # Persistent volume for themes
       - ./volumes/themes/redi:/var/www/html/plugins/themes/redi
 {% endif %}
+
       - ../shared/images:/var/www/html/common/images:ro
       - ../shared/typos:/var/www/html/common/typos:ro
 
 {% if allVars.web.favicon is defined %}
-      # Favicon:
       - {{ allVars.web.favicon }}:/var/www/html/favicon.ico:ro
 {% endif %}
 
-{% if allVars.pkp.patch.version is defined %}{% if allVars.pkp.patch.version == '3.3' %}
-      # Patches for OJS 3_3:
-      - ../shared/patch/PKPSubmissionFileService.inc.php:/var/www/html/lib/pkp/classes/services/PKPSubmissionFileService.inc.php:ro
-      - ../shared/patch/OJSv3_3_0UpgradeMigration.inc.php:/var/www/html/classes/migration/upgrade/OJSv3_3_0UpgradeMigration.inc.php:ro
-{% endif %}{% endif %}
+{# OMP does not have version-specific patches yet; uncomment and extend if needed.
+{% if allVars.pkp.patch.version is defined %}
+  {% if allVars.pkp.patch.version == '3.3' %}
+      # Patches for OMP 3.3
+      - ../shared/patch/omp/...:/var/www/html/...:ro
+  {% endif %}
+{% endif %}
+#}
 
     networks:
       - proxy
