@@ -1,15 +1,13 @@
 #########################################################################
-#
-# General settings
-# File: docker-compose.yml
+# docker-compose.yml.j2 – Unified OMP compose file
+# Supports OMP 3.2, 3.3, 3.4, 3.5 (and later if needed)
 #
 # Site:      {{ siteParam }}
 # Tool:      {{ allVars.dojo.tool }}
 # Version:   {{ allVars.dojo.version }}
+# File:      docker-compose.yml.j2
 # Creation:  {{ fileCreation }}
-#
 #########################################################################
-
 
 networks:
   inside:
@@ -17,7 +15,7 @@ networks:
 
 services:
   db:
-    image: {{ allVars.images.db }}
+    image: {{ allVars.database.tool }}:{{ allVars.database.version }}
     env_file:
       - .env
     container_name: "{{ allVars.dojo.tool }}_db_${COMPOSE_PROJECT_NAME:-demo}"
@@ -30,31 +28,25 @@ services:
       - ./volumes/db:/var/lib/mysql
       - ./volumes/migration:/docker-entrypoint-initdb.d
       - ./volumes/config/db.custom.cnf:/etc/mysql/conf.d/db.custom.cnf
-      # - ./volumes/logs/db:/var/log/mysql
     networks:
       - inside
     restart: unless-stopped
 
   app:
-    image: {{ allVars.images.app }}
+    image: pkpofficial/{{ allVars.dojo.tool }}:{{ allVars.dojo.version }}
     env_file:
       - .env
     container_name: "{{ allVars.dojo.tool }}_app_${COMPOSE_PROJECT_NAME:-demo}"
     hostname: "${COMPOSE_PROJECT_NAME:-demo}"
     volumes:
-      # Sync time between docker and host:
       - /etc/localtime:/etc/localtime
-      # Files and logs:
       - ./volumes/private:/var/www/files
       - ./volumes/public:/var/www/html/public
       - ./volumes/logs/app:/var/log/apache2
-      # Config files:
       - ./volumes/config/config.inc.php:/var/www/html/config.inc.php
       - ./volumes/config/apache.conf:/etc/apache2/conf.d/{{ allVars.dojo.tool }}.conf
-      - ./volumes/config/php.custom.ini:/etc/php81/conf.d/0-omp.ini
-      # - ./config/apache.htaccess:/var/www/html/.htaccess
+      - ./volumes/config/php.custom.ini:/usr/local/etc/php/conf.d/0-omp.ini
     restart: unless-stopped
-
     networks:
       - inside
     depends_on:
