@@ -75,7 +75,7 @@ user_validation_period  = {{ allVars.pkp.general.user_validation_period | defaul
 driver                  = {{ allVars.pkp.database.driver | default('mysqli') | safe }}
 host                    = {{ allVars.pkp.database.host | default('db') | safe }}
 username                = {{ allVars.pkp.database.username | default('ojs') | safe }}
-password                = "{{ vault.general.pkp.OJS_DB_PASSWORD | default('ojsPwd') | safe }}"
+password                = "{{ allVars.vault.general.pkp.OJS_DB_PASSWORD | default('ojsPwd') | safe }}"
 name                    = {{ allVars.pkp.database.name | default('ojs') | safe }}
 debug                   = {{ allVars.pkp.database.debug | default('Off') | safe }}
 ; See: https://docs.pkp.sfu.ca/dev/release-notebooks/en/3.4-release-notebook#client-charset
@@ -136,7 +136,7 @@ smtp_server             = "{{ allVars.pkp.email.smtp_server | default('mail.exam
 smtp_port               = "{{ allVars.pkp.email.smtp_port | default('25') | safe }}"
 smtp_auth               = "{{ allVars.pkp.email.smtp_auth | default('') | safe }}"
 smtp_username           = "{{ allVars.pkp.email.smtp_username | default('') | safe }}"
-smtp_password           = "{{ vault.general.pkp.SMTP_PASS | default('') | safe }}"
+smtp_password           = "{{ allVars.vault.general.pkp.SMTP_PASS | default('') | safe }}"
 smtp_authtype           = "{{ allVars.pkp.email.smtp_authtype | default('') | safe }}"
 smtp_oauth_provider     = "{{ allVars.pkp.email.smtp_oauth_provider | default('') | safe }}"
 smtp_oauth_email        = "{{ allVars.pkp.email.smtp_oauth_email | default('') | safe }}"
