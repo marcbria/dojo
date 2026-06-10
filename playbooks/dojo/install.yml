@@ -22,8 +22,8 @@
         installString: >
           installing=0
           &adminUsername={{ allVars.pkp.install.user | default('admin') | urlencode }}
-          &adminPassword={{ vault.general.pkp.OJS_ADMIN_PASSWORD | default('vaultPwd') | urlencode }}
-          &adminPassword2={{ vault.general.pkp.OJS_ADMIN_PASSWORD | default('vaultPwd') | urlencode }}
+          &adminPassword={{ allVars.vault.general.pkp.OJS_ADMIN_PASSWORD | default('vaultPwd') | urlencode }}
+          &adminPassword2={{ allVars.vault.general.pkp.OJS_ADMIN_PASSWORD | default('vaultPwd') | urlencode }}
           &adminEmail={{ allVars.pkp.install.mail | default('admin@localhost') | urlencode }}
           &locale=en_US
           &clientCharset={{ allVars.pkp.i18n.client_charset | default('utf-8') | urlencode }}
@@ -33,7 +33,7 @@
           &databaseDriver={{ allVars.database.driver | default('mysqli') | urlencode }}
           &databaseHost={{ allVars.pkp.database.host | default('db') | urlencode }}
           &databaseUsername={{ allVars.pkp.database.username | default('ojs') | urlencode }}
-          &databasePassword={{ vault.general.pkp.OJS_DB_PASSWORD | default('vaultPwd') | urlencode }}
+          &databasePassword={{ allVars.vault.general.pkp.OJS_DB_PASSWORD | default('vaultPwd') | urlencode }}
           &databaseName={{ allVars.database.name | default('ojs') | urlencode }}
           &oaiRepositoryId=ojs.{{ allVars.dojo.domain | default('dojo') | urlencode }}
           &enableBeacon={{ allVars.pkp.general.enable_beacon | default('0') | urlencode }}
