@@ -1,0 +1,214 @@
+## Template: omp/apache.omp.conf.j2 (unified for OMP 3.2–3.5)
+##
+## This set of rules were tested in single-tenant books/monographs installed in a folder,
+## domain or a subdomain's root with the context hidden, behind a reverse proxy,
+## in a container without ssl.
+##
+## Versions supported: OMP 3.2–3.5
+## Layout variants:
+##   - domain-noslug   : book at domain root, context hidden
+##   - domain          : book at domain root, context visible (/bookname)
+##   - folder-noslug   : book under folder prefix, context hidden
+##   - folder          : book under folder prefix, context visible (/bookname)
+##
+## All setups assume:
+##   - Container runs HTTP only (SSL terminated by reverse proxy)
+##   - Apache 2.4+ with mod_rewrite, mod_headers, mod_slotmem_shm and mod_expires.
+##   - Non‑final redirections use 307, include https:// to avoid mixed content
+##
+## Book root is: {{ allVars.pkp.general.base_url_journal }}
+##
+## Generated: {{ ansible_date_time.date }} {{ ansible_date_time.time }}
+
+# Load required modules
+LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
+LoadModule rewrite_module modules/mod_rewrite.so
+LoadModule expires_module modules/mod_expires.so
+LoadModule headers_module modules/mod_headers.so
+
+# Trick 01: Force HTTPS detection when behind a reverse proxy
+SetEnvIf X-Forwarded-Proto "https" HTTPS=on
+SetEnvIf X-Forwarded-Proto "https" REQUEST_SCHEME=https
+
+<VirtualHost *:80>
+    ServerName localhost
+    ServerAlias {{ allVars.dojo.domain }}
+    ServerAlias {{ allVars.dojo.id }}
+
+    RewriteEngine On
+    AcceptPathInfo On
+
+    # Trick 02: Rewrite any Location header from http to https
+    Header edit Location "^http://(.*)$" "https://$1"
+
+    DocumentRoot /var/www/html
+
+{% if allVars.dojo.type in ['folder', 'folder-noslug'] %}
+    ## =========================================
+    ## Folder alias configuration
+    ## =========================================
+    # The URL includes a folder prefix; Apache strips it so that
+    # everything under /prefix is served from the document root.
+    Alias /{{ allVars.proxy.pathprefix }} /var/www/html
+    {% if allVars.proxy.alias is defined %}
+    Alias /{{ allVars.proxy.alias }} /var/www/html
+    {% endif %}
+{% endif %}
+
+    <Directory /var/www/html>
+        Options FollowSymLinks
+        AllowOverride all
+        Require all granted
+        DirectoryIndex index.php index.html
+
+{% if allVars.dojo.type in ['folder', 'folder-noslug'] %}
+        # For folder types, preserve the folder prefix in relative redirects.
+        RewriteBase /{{ allVars.proxy.pathprefix }}
+{% else %}
+        RewriteBase /
+{% endif %}
+
+{% if allVars.pkp.general.installed | default('Off') == 'On' %}
+        ## =========================================
+        ## Rules for installed book
+        ## =========================================
+
+        # ----- Root / base redirection --------------------------------------
+{% if allVars.dojo.type in ['domain', 'domain-noslug'] %}
+        # Redirect domain root to /index
+        RewriteRule ^/?$ https://{{ allVars.dojo.domain }}/index [L,R=307]
+{% elif allVars.dojo.type == 'folder' %}
+        # Redirect the base of the alias to /index (site landing)
+        RewriteRule ^/?$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index [L,R=307]
+{% elif allVars.dojo.type == 'folder-noslug' %}
+        # Redirect base of alias to /index (unified for both root and prefix)
+        RewriteRule ^(/?|/{{ allVars.proxy.pathprefix }}/?)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index [L,R=307]
+{% endif %}
+
+        # ----- API calls (external redirects) ------------------------------
+{% if allVars.dojo.type == 'folder-noslug' %}
+        # Redirect regular API calls to book context (with prefix)
+        RewriteCond %{REQUEST_URI} ^\/{{ allVars.proxy.pathprefix }}\/api\/v1
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/{{ allVars.proxy.pathprefix }}/$1 [QSA,L,R=307]
+
+        # Redirect new _API calls (with prefix)
+        RewriteCond %{REQUEST_URI} ^\/{{ allVars.proxy.pathprefix }}\/_\/api\/v1\/
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/$1 [QSA,L,R=307]
+{% elif allVars.dojo.type in ['domain-noslug', 'domain'] %}
+        # Redirect book API calls (without duplicating the context id)
+        RewriteCond %{REQUEST_URI} ^/api/v1
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/index.php/{{ allVars.dojo.id }}/$1 [QSA,L,R=307]
+
+        # Redirect new _API calls (sitewide)
+        RewriteCond %{REQUEST_URI} ^/_/api/v1/
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/index.php/$1 [QSA,L,R=307]
+{% elif allVars.dojo.type == 'folder' %}
+        # Redirect API calls (site‑wide, no book context)
+        RewriteCond %{REQUEST_URI} ^/api/v1
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/index.php/$1 [QSA,L,R=307]
+
+        # Redirect new _API calls
+        RewriteCond %{REQUEST_URI} ^/_/api/v1/
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/index.php/$1 [QSA,L,R=307]
+{% endif %}
+
+        # ----- Admin pages (external redirects for folder-noslug) ----------
+{% if allVars.dojo.type == 'folder-noslug' %}
+        # Redirect Admin pages (with prefix)
+        RewriteCond %{REQUEST_URI} ^\/{{ allVars.proxy.pathprefix }}\/index\/
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/$1 [QSA,L,R=307]
+{% endif %}
+
+        # ----- Clean URL rewrites (internal) -------------------------------
+{% if allVars.dojo.type == 'folder-noslug' %}
+        # Redirect root folder to book context (RESTful & noSlug)
+        RewriteCond %{REQUEST_URI} !/{{ allVars.proxy.pathprefix }}/index.php
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/{{ allVars.proxy.pathprefix }}/$1 [QSA,L]
+
+        # Generic RESTful rule (fallback)
+        RewriteCond %{REQUEST_URI} !/index.php
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+{% elif allVars.dojo.type in ['domain-noslug'] %}
+        # For routes that are NOT admin (book content)
+        RewriteCond %{REQUEST_URI} !^/index/
+        RewriteCond %{REQUEST_URI} !/index.php
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/{{ allVars.dojo.id }}/$1 [QSA,L]
+
+        # For admin routes (RESTful): /index/admin, /index/oai, etc.
+        RewriteCond %{REQUEST_URI} ^/index/
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^index/(.*)$ index.php/index/$1 [QSA,L]
+{% elif allVars.dojo.type == 'domain' %}
+        # For routes that are NOT admin (book content)
+        RewriteCond %{REQUEST_URI} !^/index/
+        RewriteCond %{REQUEST_URI} !/index.php
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+
+        # For admin routes
+        RewriteCond %{REQUEST_URI} ^/index/
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^index/(.*)$ index.php/index/$1 [QSA,L]
+{% elif allVars.dojo.type == 'folder' %}
+        # For routes that are NOT admin (book content)
+        RewriteCond %{REQUEST_URI} !^/index/
+        RewriteCond %{REQUEST_URI} !/index.php
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+
+        # For admin routes
+        RewriteCond %{REQUEST_URI} ^/index/
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^index/(.*)$ index.php/index/$1 [QSA,L]
+{% endif %}
+
+        # NOTE: URLs already containing /index.php are never modified.
+
+{% else %}
+        ## =========================================
+        ## Rules for fresh install
+        ## =========================================
+
+        # Special installer redirection ($$$call$$$)
+        RewriteCond %{REQUEST_URI} ^\/\$\$\$call\$\$\$
+{% if allVars.dojo.type in ['domain', 'domain-noslug'] %}
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/index.php/{{ allVars.dojo.id }}/$1 [L,R=307]
+{% elif allVars.dojo.type in ['folder', 'folder-noslug'] %}
+        RewriteRule ^(.*)$ https://{{ allVars.dojo.domain }}/{{ allVars.proxy.pathprefix }}/index.php/{{ allVars.dojo.id }}/$1 [L,R=307]
+{% endif %}
+
+        # Standard OMP rewrite during installation
+        RewriteCond %{REQUEST_URI} !/index.php
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+{% endif %}
+
+    </Directory>
+
+    ErrorLog /var/log/apache2/error.log
+    CustomLog /var/log/apache2/access.log combined
+
+    # Uncomment for detailed rewrite debugging:
+    # LogLevel alert rewrite:trace2
+
+</VirtualHost>
