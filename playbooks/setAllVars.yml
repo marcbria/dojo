@@ -72,6 +72,14 @@
                    hostVars     | default({}),
                    recursive=True) }}
 
+- name: "SITE - Inject vault secrets into allVars"
+  set_fact:
+    allVars: >-
+      {{ allVars | combine({
+           'vault': vault | default({})
+         }, recursive=True) }}
+  when: mode == 'site'
+
 - name: "VALIDATE - Assert mandatory fields exist in allVars"
   assert:
     that:
