@@ -16,7 +16,11 @@
       vars:
         mode: site
         param: "{{ siteParam }}"
-  
+ 
+    - name: DEBUG - mostrar vault
+      debug:
+        var: vault
+
     - name: Generate config file from template and dojo vars.
       template:
         src: "./templates/{{ allVars.dojo.tool }}/config.inc.php-{{ allVars.dojo.versionFamily }}.j2"

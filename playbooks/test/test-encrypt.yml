@@ -3,7 +3,7 @@
   vars_files:
     - ./configs/secret.yml
   tasks:
-    - name: Imprimir variables almacenadas en la Vault (./configs/secrets.yml)
+    - name: Imprimir variables almacenadas en la Vault (./configs/secret.yml)
       debug:
         msg: 
           - "Usuario con acceso a traefik: [{{ traefik.appUser }}]"

@@ -67,9 +67,7 @@ sitewide_privacy_statement = {{ allVars.pkp.general.sitewide_privacy_statement |
 driver                  = {{ allVars.pkp.database.driver | default('mysqli') | safe }}
 host                    = {{ allVars.pkp.database.host | default('db') | safe }}
 username                = {{ allVars.pkp.database.username | default('omp') | safe }}
-; DEBUG: OMP_DB_PASSWORD = {{ allVars.vault.general.pkp.OMP_DB_PASSWORD | default('NO') }}
 password 		= "{{ allVars.vault.general.pkp.OMP_DB_PASSWORD | default('ompPwd') | safe }}"
-password 		= "{{ allVars.vault.general.pkp.OMP_DB_PASSWORD }}"
 name                    = {{ allVars.pkp.database.name | default('omp') | safe }}
 debug                   = {{ allVars.pkp.database.debug | default('Off') | safe }}
 ; See: https://docs.pkp.sfu.ca/dev/release-notebooks/en/3.3-release-notebook#update-connection_charset

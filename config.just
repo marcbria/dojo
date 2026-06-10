@@ -6,7 +6,7 @@
 # General
 remoteHost          := 'testing'            # Set your default remote server.
 rootPath            := `pwd`
-vaultPath           := './configs/secrets.yml'
+vaultPath           := './configs/secret.yml'
 vaultKey            := './configs/.vault.key'
 inventoryPath       := rootPath / 'inventory'
 
