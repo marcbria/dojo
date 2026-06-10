@@ -179,3 +179,8 @@ dojo-manage site host command *args:
       -e "site={{ site }}" \
       -e "command={{ command }}" \
       {{ args }}
+
+
+# Ejecuta un comando arbitrario en el host remoto (como root mediante sudo)
+dojo-exec site host cmd:
+    ansible -i {{ inventoryPath }}/hosts.yml {{ host }} -b -m shell -a "{{ cmd }}"
