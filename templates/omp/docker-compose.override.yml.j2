@@ -56,14 +56,15 @@ services:
       - {{ allVars.web.favicon }}:/var/www/html/favicon.ico:ro
 {% endif %}
 
-{# OMP does not have version-specific patches yet; uncomment and extend if needed.
 {% if allVars.pkp.patch.version is defined %}
   {% if allVars.pkp.patch.version == '3.3' %}
-      # Patches for OMP 3.3
-      - ../shared/patch/omp/...:/var/www/html/...:ro
+      # Patches for OJS 3.3
+      - ../shared/patch/3_5/lib/pkp/classes/core/PKPRequest.php:/var/www/html/lib/pkp/classes/core/PKPRequest.php:ro
+  {% elif allVars.pkp.patch.version == '3.5' %}
+      # Patches for OJS 3.5
+      - ../shared/patch/3_5/lib/pkp/classes/core/PKPRequest.php:/var/www/html/lib/pkp/classes/core/PKPRequest.php:ro
   {% endif %}
 {% endif %}
-#}
 
     networks:
       - proxy
