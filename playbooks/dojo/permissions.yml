@@ -1,3 +1,4 @@
+---
 - name: Set permissions in journal's folders structure
   hosts: all
   become: true
@@ -15,7 +16,7 @@
       vars:
         mode: site
         param: "{{ siteParam }}"
-  
+
     - name: Assign user and group for BD folders
       file:
         path: "{{ item }}"
@@ -25,11 +26,11 @@
         group: "{{ allVars.volumes.db.group }}"
         recurse: yes
       loop:
-        - "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id | lower}}"
+        - "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id | lower }}"
       tags:
         - volumes_db
 
-    - name: Assign user and group for WWW folders
+    - name: Assign user and group for application directories (recursive)
       file:
         path: "{{ item }}"
         state: directory
@@ -42,5 +43,34 @@
         - "{{ allVars.path.files.public }}/{{ allVars.dojo.id | lower }}"
         - "{{ allVars.path.files.private }}/{{ allVars.dojo.id | lower }}"
         - "{{ allVars.path.volumes.logs }}/{{ allVars.dojo.id | lower }}/app"
+      tags:
+        - volumes_www
+
+    - name: Ensure critical config files have correct ownership and permissions
+      file:
+        path: "{{ item.path }}"
+        state: file
+        mode: "{{ item.mode }}"
+        owner: "{{ allVars.volumes.app.owner }}"
+        group: "{{ allVars.volumes.app.group }}"
+      loop:
+        - { path: "{{ allVars.path.files.config }}/{{ allVars.dojo.id | lower }}/config.inc.php", mode: "0644" }
+        - { path: "{{ allVars.path.files.config }}/{{ allVars.dojo.id | lower }}/apache.conf", mode: "0644" }
+        - { path: "{{ allVars.path.files.config }}/{{ allVars.dojo.id | lower }}/php.custom.ini", mode: "0644" }
+        - { path: "{{ allVars.path.files.config }}/{{ allVars.dojo.id | lower }}/db.custom.cnf", mode: "0644" }
+      tags:
+        - volumes_www
+        - config_files
+
+    - name: Ensure public and private directories have 0755 for web server traversal
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+        owner: "{{ allVars.volumes.app.owner }}"
+        group: "{{ allVars.volumes.app.group }}"
+      loop:
+        - "{{ allVars.path.files.public }}/{{ allVars.dojo.id | lower }}"
+        - "{{ allVars.path.files.private }}/{{ allVars.dojo.id | lower }}"
       tags:
         - volumes_www

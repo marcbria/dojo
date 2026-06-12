@@ -56,6 +56,16 @@
       tags:
         - files_directories
 
+    - name: Create app log directory inside logs folder
+      file:
+        path: "{{ allVars.path.volumes.logs }}/{{ allVars.dojo.id | lower }}/app"
+        state: directory
+        mode: "0755"
+        owner: "{{ allVars.volumes.app.owner | default(allVars.user.run) }}"
+        group: "{{ allVars.volumes.app.group | default(allVars.user.group) }}"
+      tags:
+        - logs_app
+
     - name: Assign ownership in BD folder
       file:
         path: "{{ item }}"
