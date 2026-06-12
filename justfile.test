@@ -34,7 +34,7 @@ test-var-service service host *args:
 # call: just test-var-site myjournal myServer
 test-var-site site host *args:
     ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
-        --vault-password-file {{ testPath }}/{{ vaultKey }} \
+        --vault-password-file {{ vaultKey }} \
         {{ testPath }}/check-vars.yml \
         -e "hostName={{ host }} siteParam={{ site }}" \
         {{ args }}
@@ -57,4 +57,4 @@ test-ls:
 # Runs an action (playbook) with the specified site (dictionary) in the selected host.
 test-run action host *args:
     ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} --vault-password-file \
-        {{ testPath }}/{{ vaultKey }} {{ testPath }}/{{ action }}.yml -K {{ args }}
+        {{ vaultKey }} {{ testPath }}/{{ action }}.yml -K {{ args }}

@@ -5,6 +5,8 @@
 - name: Check variable loading for a service or site
   hosts: all
   gather_facts: false
+  vars_files:
+    - ./configs/secret.yml
   tasks:
     - name: "INIT - Set mode and param"
       set_fact:
