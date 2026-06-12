@@ -44,8 +44,9 @@ services:
       - ./volumes/public:/var/www/html/public
       - ./volumes/logs/app:/var/log/apache2
       - ./volumes/config/config.inc.php:/var/www/html/config.inc.php
-      - ./volumes/config/apache.conf:/etc/apache2/conf.d/{{ allVars.dojo.tool }}.conf
       - ./volumes/config/php.custom.ini:/usr/local/etc/php/conf.d/0-ojs.ini
+      # Overrites the image's standard virtualhost
+      - ./volumes/config/apache.conf:/etc/apache2/conf-enabled/pkp.conf
     restart: unless-stopped
     networks:
       - inside
