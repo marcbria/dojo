@@ -21,6 +21,17 @@ test-vars:
     @echo "Variable rootPath: " {{ rootPath }}
 
 
+# Show variable merge across layers using setAllVars.yml with real inventory
+# Inventory's hierarchy: dojoVars < baseHostVars < genericVars < hostVars = allVars
+# Usage: just test-var-site-layers <site> <host> [variable]   (default variable: dojo.tool)
+test-var-site-layers site host var='dojo.tool':
+    @ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+        --vault-password-file {{ vaultKey }} \
+        {{ testPath }}/test-var-site-layers.yml \
+        -e "host={{ host }}" -e "site={{ site }}" -e "var={{ var }}" 2>&1 | \
+        awk '/=== SUMMARY START ===/,/=== SUMMARY END ===/'
+
+
 # Check variable loading for a SERVICE (shows all layers and final allVars)
 # call: just test-var-service traefik myServer
 test-var-service service host *args:
@@ -29,6 +40,7 @@ test-var-service service host *args:
         {{ testPath }}/check-vars.yml \
         -e "hostName={{ host }} serviceParam={{ service }}" \
         {{ args }}
+
 
 # Check variable loading for a SITE (shows all layers and final allVars)
 # call: just test-var-site myjournal myServer
@@ -39,6 +51,7 @@ test-var-site site host *args:
         -e "hostName={{ host }} siteParam={{ site }}" \
         {{ args }}
 
+
 # Test if you can pass arguments
 test-args *arguments:
     @echo "TEST ARGS: " $@
@@ -47,6 +60,7 @@ test-args *arguments:
 # Test if you can list playbook's folder
 test-ls:
     ls playbooks/test
+
 
 # Runs an action with:
 # - Action: Is the playbook name (without .yml) from playbooks/dojo.

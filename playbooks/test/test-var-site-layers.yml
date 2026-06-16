@@ -1,0 +1,65 @@
+---
+- name: Show variable value across layers (dojoVars < baseHostVars < genericVars < hostVars = allVars) using real inventory
+  hosts: all
+  gather_facts: false
+  vars:
+    test_var: "{{ var | default('dojo.tool') }}"
+    summary_file: "/tmp/dojo_var_summary.txt"
+  tasks:
+    - name: Include setAllVars to load layers
+      include_tasks: ../setAllVars.yml
+      vars:
+        mode: "{{ 'site' }}"
+        hostName: "{{ host }}"
+        param: "{{ site }}"
+
+    - name: Debug hostVars raw content
+      debug:
+        var: hostVars
+
+    - name: Build summary content with paths
+      set_fact:
+        summary_content: |
+          === SUMMARY START ===
+          Site: {{ site }} / Host: {{ host }}
+          Variable: {{ test_var }}
+          Hierarchy: dojoVars < baseHostVars < genericVars < hostVars = allVars
+          --------------------------------------------------------------
+          Inventory paths:
+            Layer 1 (dojoVars):     ./configs/dojo.yml (always exists)
+            Layer 2 (baseHostVars): {{ inventory_dir }}/sites/base-{{ host }}.yml [{{ 'EXISTS' if stat_base.stat.exists else 'NOT FOUND' }}]
+            Layer 3 (genericVars):  {{ inventory_dir }}/sites/{{ site }}.yml [{{ 'EXISTS' if stat_generic.stat.exists else 'NOT FOUND' }}]
+            Layer 4 (hostVars):     {{ inventory_dir }}/sites/{{ host }}/{{ site }}.yml [{{ 'EXISTS' if stat_host.stat.exists else 'NOT FOUND' }}]
+          --------------------------------------------------------------
+          Values for variable: {{ test_var }}
+            Layer 1 (dojoVars):     {{ dojoVars | default({}) | json_query(test_var) | default('undefined') }}
+            Layer 2 (baseHostVars): {{ baseHostVars | default({}) | json_query(test_var) | default('undefined') }}
+            Layer 3 (genericVars):  {{ genericVars | default({}) | json_query(test_var) | default('undefined') }}
+            Layer 4 (hostVars):     {{ hostVars | default({}) | json_query(test_var) | default('undefined') }}
+          --------------------------------------------------------------
+          Final value (allVars):  {{ test_var }} = {{ allVars | default({}) | json_query(test_var) | default('undefined') }}
+          === SUMMARY END ===
+
+    - name: Write summary to file
+      copy:
+        content: "{{ summary_content }}"
+        dest: "{{ summary_file }}"
+      delegate_to: localhost
+      changed_when: false
+
+    - name: Display summary
+      command: cat {{ summary_file }}
+      register: cat_output
+      delegate_to: localhost
+      changed_when: false
+
+    - name: Show summary (ensure output)
+      debug:
+        msg: "{{ cat_output.stdout_lines }}"
+
+    - name: Clean up summary file
+      file:
+        path: "{{ summary_file }}"
+        state: absent
+      delegate_to: localhost
+      changed_when: false
