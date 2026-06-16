@@ -21,10 +21,10 @@
 ## Generated: {{ ansible_date_time.date }} {{ ansible_date_time.time }}
 
 # Load required modules
-LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
+# LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
 LoadModule rewrite_module modules/mod_rewrite.so
-LoadModule expires_module modules/mod_expires.so
-LoadModule headers_module modules/mod_headers.so
+# LoadModule expires_module modules/mod_expires.so
+# LoadModule headers_module modules/mod_headers.so
 
 # Trick 01: Force HTTPS detection when behind a reverse proxy
 SetEnvIf X-Forwarded-Proto "https" HTTPS=on
@@ -39,7 +39,7 @@ SetEnvIf X-Forwarded-Proto "https" REQUEST_SCHEME=https
     AcceptPathInfo On
 
     # Trick 02: Rewrite any Location header from http to https
-    Header edit Location "^http://(.*)$" "https://$1"
+    # Header edit Location "^http://(.*)$" "https://$1"
 
     DocumentRoot /var/www/html
 
