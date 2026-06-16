@@ -67,10 +67,9 @@
   set_fact:
     allVars: >-
       {{ dojoVars | default({})
-         | combine(baseHostVars | default({}),
-                   genericVars  | default({}),
-                   hostVars     | default({}),
-                   recursive=True) }}
+         | combine(baseHostVars | default({}), recursive=True)
+         | combine(genericVars  | default({}), recursive=True)
+         | combine(hostVars     | default({}), recursive=True) }}
 
 - name: "SITE - Inject vault secrets into allVars"
   set_fact:
@@ -101,3 +100,10 @@
            })
          }, recursive=True) }}
   when: mode == 'site' and allVars.dojo.versionFamily is defined
+
+- name: "Export layer variables as facts"
+  set_fact:
+    dojoVars: "{{ dojoVars | default({}) }}"
+    baseHostVars: "{{ baseHostVars | default({}) }}"
+    genericVars: "{{ genericVars | default({}) }}"
+    hostVars: "{{ hostVars | default({}) }}"
