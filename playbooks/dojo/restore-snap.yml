@@ -9,15 +9,19 @@
 # It rsyncs from the read-only snapshot mount:
 #   <dataset>/.zfs/snapshot/<snap>/<relative-path>/<site>/
 #
-# Standard per-site paths (db, files/config, files/private, files/public, logs)
-# are restored under <site>/. Extra datasets (`zfs_extra_datasets`) are
-# restored as WHOLE-DATASET snapshots — use only for datasets dedicated to
-# this site, otherwise you may overwrite other sites' data.
+# IMPORTANT: this playbook restores DATA only. The site definition files
+# (docker-compose.yml, docker-compose.override.yml, .env) live in
+# /home/docker/sites/<site>/ and are NOT part of any ZFS snapshot — they are
+# regenerable from inventory + vault (GitOps principle). If they are missing,
+# this playbook fails before touching anything and tells you to run
+# `just dojo-create <site> <host>` first.
+#
+# Full recovery procedure when the site directory is gone:
+#   just dojo-create <site> <host>
+#   just dojo-restore-snap <site> <host> <tag> confirm=RESTORE-<site>
 #
 # Usage:
 #   just dojo-restore-snap <site> <host> <tag> confirm=RESTORE-<site>
-#   just dojo-restore-snap <site> <host> <tag> confirm=RESTORE-<site> \
-#       zfs_extra_datasets='["srv/volumes/all"]'
 #
 # The <tag> may be either the bare tag ("20241005-143022") or the full
 # snapshot name ("backup-20241005-143022"); both are accepted.
@@ -51,7 +55,7 @@
         zfsDb:      "{{ zfs_dataset_db    | default(allVars.path.volumes.db    | regex_replace('^/', '')) }}"
         zfsFiles:   "{{ zfs_dataset_files | default(allVars.path.volumes.files | regex_replace('^/', '')) }}"
         zfsLogs:    "{{ zfs_dataset_logs  | default(allVars.path.volumes.logs  | regex_replace('^/', '')) }}"
-        zfsExtra:   "{{ zfs_extra_datasets | default([]) }}"
+        siteDir:       "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
         dbTarget:      "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id }}"
         configTarget:  "{{ allVars.path.files.config }}/{{ allVars.dojo.id }}"
         privateTarget: "{{ allVars.path.files.private }}/{{ allVars.dojo.id }}"
@@ -71,16 +75,45 @@
       when: snapshotTagRaw | length == 0
 
     - name: "CHECK - Site directory exists"
-      stat: { path: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}" }
-      register: siteDir
+      stat: { path: "{{ siteDir }}" }
+      register: siteDirStat
 
     - name: "FAIL - Site not found"
-      fail: { msg: "Site not found: {{ allVars.path.base.sites }}/{{ allVars.dojo.id }}" }
-      when: not siteDir.stat.exists
+      fail: { msg: "Site not found: {{ siteDir }}" }
+      when: not siteDirStat.stat.exists
+
+    - name: "CHECK - Site definition files exist (docker-compose*.yml, .env)"
+      stat:
+        path: "{{ siteDir }}/{{ item }}"
+      loop:
+        - docker-compose.yml
+        - docker-compose.override.yml
+        - .env
+      register: siteDefFiles
+
+    - name: "FAIL - Missing site definition files"
+      fail:
+        msg: |
+          Missing site definition file(s) in {{ siteDir }}/:
+          {% for r in siteDefFiles.results if not r.stat.exists %}
+            - {{ r.item }}
+          {% endfor %}
+
+          These files are NOT covered by ZFS snapshots. They are regenerated
+          from inventory + vault (dojo GitOps principle).
+
+          Full recovery procedure:
+            1) just dojo-create {{ site }} {{ host }}
+            2) just dojo-restore-snap {{ site }} {{ host }} {{ snapshotTagRaw }} confirm=RESTORE-{{ allVars.dojo.id }}
+
+          Note: dojo-create also rewrites /srv/volumes/files/config/{{ allVars.dojo.id }}/*
+          (config.inc.php, db.custom.cnf, php.custom.ini, apache.conf). Those will
+          be re-restored from the snapshot by this playbook right after.
+      when: siteDefFiles.results | selectattr('stat.exists', 'equalto', false) | list | length > 0
 
     - name: "CHECK - Snapshot exists on every dataset"
       command: "zfs list -H -t snapshot -o name {{ item }}@{{ snapshotName }}"
-      loop: "{{ [zfsDb, zfsFiles, zfsLogs] + zfsExtra }}"
+      loop: ["{{ zfsDb }}", "{{ zfsFiles }}", "{{ zfsLogs }}"]
       register: snapCheck
       changed_when: false
       failed_when: false
@@ -111,7 +144,7 @@
     - name: "STOP - Bring site containers down"
       shell:
         cmd: docker compose down
-        chdir: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
+        chdir: "{{ siteDir }}"
       register: stopResult
       changed_when: true
 
@@ -152,23 +185,6 @@
       loop_control:
         label: "{{ item.dst }}"
 
-    # ---------- Restore extras (whole-dataset) ----------------------------
-    - name: "RESTORE - Extra datasets (whole-dataset restore)"
-      shell: |
-        set -e
-        ds="{{ item }}"
-        mount="/${ds}"
-        snap="${mount}/.zfs/snapshot/{{ snapshotName }}"
-        if [ ! -d "$snap" ]; then
-          echo "Missing snapshot: $snap"
-          exit 1
-        fi
-        rsync -aHAX --delete "${snap}/" "${mount}/"
-      loop: "{{ zfsExtra }}"
-      changed_when: true
-      loop_control:
-        label: "{{ item }}"
-
     # ---------- Fix ownership / permissions -------------------------------
     - name: "FIX - DB ownership / mode"
       file:
@@ -204,7 +220,7 @@
     - name: "START - Bring site containers up"
       shell:
         cmd: docker compose up -d
-        chdir: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
+        chdir: "{{ siteDir }}"
       register: startResult
 
     - name: "REPORT - Restore finished"
@@ -212,6 +228,7 @@
         msg:
           - "Site:      {{ allVars.dojo.id }}"
           - "Snapshot:  {{ snapshotName }}"
-          - "Extras:    {{ zfsExtra | join(', ') if zfsExtra else 'none' }}"
-          - "Rollback:  stop the containers and rename .{{ backupSuffix }} back (standard paths only)."
+          - "Data:      db, files/{config,private,public}, logs"
+          - "Note:      docker-compose*.yml and .env are NOT part of the snapshot"
+          - "Rollback:  stop the containers and rename .{{ backupSuffix }} back."
           - "Cleanup:   rm -rf {{ dbTarget }}.{{ backupSuffix }} (and siblings) once verified."
