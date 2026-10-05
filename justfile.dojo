@@ -27,11 +27,11 @@ dojo-tldr:
     # $ just dojo-restore-snap $JOURNAL $SERVER <snap> confirm=RESTORE-$JOURNAL
 
     # Backup & restore (rsync — for hosts without ZFS)
-    # $ just dojo-backup-rsync-snap $JOURNAL $SERVER                     # Full backup.
-    # $ just dojo-backup-rsync-snap $JOURNAL $SERVER skip_files=true     # Skip private+public (fast).
-    # $ just dojo-backup-rsync-list $JOURNAL $SERVER                     # List snapshots.
-    # $ just dojo-backup-rsync-prune $JOURNAL $SERVER keep=7             # Prune old ones.
-    # $ just dojo-restore-rsync-snap $JOURNAL $SERVER <ts> confirm=RESTORE-$JOURNAL
+    # $ just dojo-backup-rsync-snap $JOURNAL $SERVER                 # Full backup (auto tag).
+    # $ just dojo-backup-rsync-snap $JOURNAL $SERVER true            # Fast backup (skip private+public).
+    # $ just dojo-backup-rsync-list $JOURNAL $SERVER                 # List snapshots.
+    # $ just dojo-backup-rsync-prune $JOURNAL $SERVER 7              # Prune (keep last 7).
+    # $ just dojo-restore-rsync-snap $JOURNAL $SERVER <ts> RESTORE-$JOURNAL
 
     @ echo ""
     # > To get a commented list of actions use "just dojo"
@@ -234,49 +234,48 @@ dojo-restore-snap site host snapshot_tag *args:
 
 # ----------------------------------------------------------------------------
 # RSYNC BACKEND — for hosts without ZFS (test/staging)
+#
+# Arguments are positional, in the order shown in each recipe signature.
+# `snapshot_tag` is NOT exposed on the CLI: the playbook auto-generates it
+# from the UTC timestamp when omitted. To pass a specific tag, call the
+# playbook directly with `-e snapshot_tag=<tag>`.
 # ----------------------------------------------------------------------------
 
 # Creates a filesystem snapshot for a site under /srv/backup/<site>/<timestamp>.
 # Includes site definition files (docker-compose*.yml, .env).
-dojo-backup-rsync-snap site host snapshot_tag='' skip_files='false' skip_private='' skip_public='' consistency_mode='stop' backup_root='/srv/backup':
+#   skip_files=true    → skip both private/ and public/
+#   skip_files=false   → full backup (default)
+dojo-backup-rsync-snap site host skip_files='false':
     ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
       --vault-password-file {{ vaultKey }} \
       {{ dojoPath }}/backup-rsync-snap.yml \
       -e "host={{ host }}" \
       -e "site={{ site }}" \
-      -e "snapshot_tag={{ snapshot_tag }}" \
-      -e "skip_files={{ skip_files }}" \
-      -e "skip_private={{ skip_private }}" \
-      -e "skip_public={{ skip_public }}" \
-      -e "consistency_mode={{ consistency_mode }}" \
-      -e "backup_root={{ backup_root }}"
+      -e "skip_files={{ skip_files }}"
 
 # Lists available rsync snapshots for a site.
-dojo-backup-rsync-list site host backup_root='/srv/backup':
+dojo-backup-rsync-list site host:
     ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
       --vault-password-file {{ vaultKey }} \
       {{ dojoPath }}/backup-rsync-list.yml \
       -e "host={{ host }}" \
-      -e "site={{ site }}" \
-      -e "backup_root={{ backup_root }}"
+      -e "site={{ site }}"
 
-# Prunes old rsync snapshots (keep=N, default 7, must be >= 1).
-dojo-backup-rsync-prune site host keep='7' backup_root='/srv/backup':
+# Prunes old rsync snapshots (keep=N, must be >= 1).
+dojo-backup-rsync-prune site host keep='7':
     ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
       --vault-password-file {{ vaultKey }} \
       {{ dojoPath }}/backup-rsync-prune.yml \
       -e "host={{ host }}" \
       -e "site={{ site }}" \
-      -e "keep={{ keep }}" \
-      -e "backup_root={{ backup_root }}"
+      -e "keep={{ keep }}"
 
 # Restores a site from an rsync snapshot. DESTRUCTIVE — requires confirm=RESTORE-<site>.
-dojo-restore-rsync-snap site host snapshot_tag confirm='' backup_root='/srv/backup':
+dojo-restore-rsync-snap site host snapshot_tag confirm:
     ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
       --vault-password-file {{ vaultKey }} \
       {{ dojoPath }}/restore-rsync-snap.yml \
       -e "host={{ host }}" \
       -e "site={{ site }}" \
       -e "snapshot_tag={{ snapshot_tag }}" \
-      -e "confirm={{ confirm }}" \
-      -e "backup_root={{ backup_root }}"
+      -e "confirm={{ confirm }}"
