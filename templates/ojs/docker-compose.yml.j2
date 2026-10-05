@@ -24,6 +24,7 @@ services:
       MYSQL_DATABASE: "${MYSQL_DATABASE:-ojs}"
       MYSQL_USER: "${MYSQL_USER:-ojs}"
       MYSQL_PASSWORD: "${MYSQL_PASSWORD:-ojsPwd}"
+      MARIADB_AUTO_UPGRADE: 1
     volumes:
       - ./volumes/db:/var/lib/mysql
       - ./volumes/db_import:/docker-entrypoint-initdb.d
