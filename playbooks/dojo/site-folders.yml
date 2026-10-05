@@ -112,7 +112,7 @@
       tags:
         - volumes_www
 
-    - name: Create required symbolic links
+    - name: Create required symbolic links (with tolerance for existing directories)
       file:
         src: "{{ item.target }}"
         dest: "{{ item.link }}"
@@ -124,3 +124,4 @@
         - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/config", target: "{{ allVars.path.files.config }}/{{ allVars.dojo.id }}" }
         - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/public", target: "{{ allVars.path.files.public }}/{{ allVars.dojo.id }}" }
         - { link: "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}/private", target: "{{ allVars.path.files.private }}/{{ allVars.dojo.id }}" }
+      ignore_errors: yes
