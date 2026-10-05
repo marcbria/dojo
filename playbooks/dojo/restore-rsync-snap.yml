@@ -86,7 +86,6 @@
         src: "{{ snapshotDir }}/SNAPSHOT.info"
       register: snapInfo
       failed_when: false
-      when: (snapshotDir ~ '/SNAPSHOT.info') is exists
 
     - name: "REPORT - Snapshot metadata"
       debug:
@@ -143,15 +142,23 @@
       shell: "rsync -aHAX --delete '{{ snapshotDir }}/logs/' '{{ logsTarget }}/'"
       changed_when: true
 
+    - name: "CHECK - Private folder in snapshot"
+      stat: { path: "{{ snapshotDir }}/private" }
+      register: privateInSnap
+
+    - name: "CHECK - Public folder in snapshot"
+      stat: { path: "{{ snapshotDir }}/public" }
+      register: publicInSnap
+
     - name: "RESTORE - Private files"
       shell: "rsync -aHAX --delete '{{ snapshotDir }}/private/' '{{ privateTarget }}/'"
       changed_when: true
-      when: (snapshotDir ~ '/private') is exists
+      when: privateInSnap.stat.exists
 
     - name: "RESTORE - Public files"
       shell: "rsync -aHAX --delete '{{ snapshotDir }}/public/' '{{ publicTarget }}/'"
       changed_when: true
-      when: (snapshotDir ~ '/public') is exists
+      when: publicInSnap.stat.exists
 
     # ---------- Fix ownership / permissions -------------------------------
     - name: "FIX - DB ownership / mode"
@@ -197,7 +204,7 @@
           - "Site:      {{ allVars.dojo.id }}"
           - "Snapshot:  {{ snapshotTagRaw }}"
           - "Source:    {{ snapshotDir }}"
-          - "Data:      db, config, logs {% if (snapshotDir ~ '/private') is exists %}, private{% endif %}{% if (snapshotDir ~ '/public') is exists %}, public{% endif %}"
+          - "Data:      db, config, logs{% if privateInSnap.stat.exists %}, private{% endif %}{% if publicInSnap.stat.exists %}, public{% endif %}"
           - "Definition: restored from snapshot (docker-compose*.yml, .env)"
           - "Rollback:  stop the containers and rename .{{ backupSuffix }} back."
           - "Cleanup:   rm -rf {{ dbTarget }}.{{ backupSuffix }} (and siblings) once verified."
