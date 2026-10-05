@@ -18,6 +18,13 @@
 #   ├── public/           ← omitted when skip_public=true
 #   └── SNAPSHOT.info
 #
+# Snapshot tag convention:
+#   When snapshot_tag is not provided, the tag is auto-generated as:
+#     <UTC-timestamp>-quick   when skip_files=true
+#     <UTC-timestamp>-full    otherwise
+#   The suffix makes the folder name self-descriptive, so operators can tell
+#   at a glance what a snapshot contains.
+#
 # Unlike backup-snap.yml (ZFS), this backup DOES include the site definition
 # files (docker-compose*.yml, .env). That breaks the strict GitOps principle
 # but makes test restores self-contained.
@@ -66,7 +73,8 @@
         snapshotTag: >-
           {{ snapshotTagOverride
              if snapshotTagOverride | length > 0
-             else lookup('pipe', 'date -u +%Y%m%d-%H%M%S') }}
+             else (lookup('pipe', 'date -u +%Y%m%d-%H%M%S')
+                   ~ ('-quick' if skipFiles else '-full')) }}
 
     - name: "INIT - Resolve snapshot directory"
       set_fact:
