@@ -232,7 +232,6 @@ dojo-restore-snap site host snapshot_tag *args:
       -e "host={{ host }}" -e "site={{ site }}" \
       -e "snapshot_tag={{ snapshot_tag }}" {{ args }}
 
-
 # ----------------------------------------------------------------------------
 # RSYNC BACKEND — for hosts without ZFS (test/staging)
 # ----------------------------------------------------------------------------
