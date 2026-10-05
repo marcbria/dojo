@@ -11,7 +11,9 @@
 # rsync snapshots are self-contained.
 #
 # If the snapshot has been created with skip_files / skip_private / skip_public,
-# those folders are skipped during restore and left as-is on the live site.
+# those folders are skipped during restore AND left as-is on the live site.
+# The move-aside step only touches folders that are going to be overwritten,
+# so partial snapshots (e.g. -quick) never wipe out private/ or public/.
 #
 # Usage:
 #   just dojo-restore-rsync-snap <site> <host> <timestamp> confirm=RESTORE-<site>
@@ -81,6 +83,22 @@
       loop: "{{ snapSub.results }}"
       when: not item.stat.exists
 
+    # ---------- Detect optional folders in the snapshot -------------------
+    - name: "CHECK - Private folder in snapshot"
+      stat: { path: "{{ snapshotDir }}/private" }
+      register: privateInSnap
+
+    - name: "CHECK - Public folder in snapshot"
+      stat: { path: "{{ snapshotDir }}/public" }
+      register: publicInSnap
+
+    - name: "REPORT - Snapshot content"
+      debug:
+        msg:
+          - "Snapshot:    {{ snapshotTagRaw }}"
+          - "Has private: {{ privateInSnap.stat.exists }}"
+          - "Has public:  {{ publicInSnap.stat.exists }}"
+
     - name: "READ - Snapshot metadata"
       slurp:
         src: "{{ snapshotDir }}/SNAPSHOT.info"
@@ -113,17 +131,21 @@
         - .env
 
     # ---------- Move current data aside -----------------------------------
+    # Only the folders that WILL be overwritten are moved aside. Folders
+    # that the snapshot does not contain (e.g. private/public in a -quick
+    # snapshot) are left intact on the live site.
     - name: "SAFETY - Move current data aside (.{{ backupSuffix }})"
       shell: |
         set -e
         ts="{{ backupSuffix }}"
-        for p in \
-          "{{ dbTarget }}" \
-          "{{ configTarget }}" \
-          "{{ privateTarget }}" \
-          "{{ publicTarget }}" \
-          "{{ logsTarget }}"
-        do
+        targets="{{ dbTarget }} {{ configTarget }} {{ logsTarget }}"
+        {% if privateInSnap.stat.exists %}
+        targets="$targets {{ privateTarget }}"
+        {% endif %}
+        {% if publicInSnap.stat.exists %}
+        targets="$targets {{ publicTarget }}"
+        {% endif %}
+        for p in $targets; do
           if [ -e "$p" ]; then mv "$p" "${p}.${ts}"; fi
           mkdir -p "$p"
         done
@@ -141,14 +163,6 @@
     - name: "RESTORE - Logs"
       shell: "rsync -aHAX --delete '{{ snapshotDir }}/logs/' '{{ logsTarget }}/'"
       changed_when: true
-
-    - name: "CHECK - Private folder in snapshot"
-      stat: { path: "{{ snapshotDir }}/private" }
-      register: privateInSnap
-
-    - name: "CHECK - Public folder in snapshot"
-      stat: { path: "{{ snapshotDir }}/public" }
-      register: publicInSnap
 
     - name: "RESTORE - Private files"
       shell: "rsync -aHAX --delete '{{ snapshotDir }}/private/' '{{ privateTarget }}/'"
@@ -170,18 +184,34 @@
         group: "{{ allVars.volumes.db.group | default(allVars.user.group) }}"
         mode: "{{ allVars.volumes.db.mode | default('0744') }}"
 
-    - name: "FIX - App files ownership / mode"
+    - name: "FIX - Config ownership / mode"
       file:
-        path: "{{ item }}"
+        path: "{{ configTarget }}"
         state: directory
         recurse: yes
         owner: "{{ allVars.volumes.app.owner | default(allVars.user.run) }}"
         group: "{{ allVars.volumes.app.group | default(allVars.user.group) }}"
         mode: "{{ allVars.volumes.app.mode | default('0744') }}"
-      loop:
-        - "{{ configTarget }}"
-        - "{{ publicTarget }}"
-        - "{{ privateTarget }}"
+
+    - name: "FIX - Private ownership / mode"
+      file:
+        path: "{{ privateTarget }}"
+        state: directory
+        recurse: yes
+        owner: "{{ allVars.volumes.app.owner | default(allVars.user.run) }}"
+        group: "{{ allVars.volumes.app.group | default(allVars.user.group) }}"
+        mode: "{{ allVars.volumes.app.mode | default('0744') }}"
+      when: privateInSnap.stat.exists
+
+    - name: "FIX - Public ownership / mode"
+      file:
+        path: "{{ publicTarget }}"
+        state: directory
+        recurse: yes
+        owner: "{{ allVars.volumes.app.owner | default(allVars.user.run) }}"
+        group: "{{ allVars.volumes.app.group | default(allVars.user.group) }}"
+        mode: "{{ allVars.volumes.app.mode | default('0744') }}"
+      when: publicInSnap.stat.exists
 
     - name: "FIX - Logs ownership / mode"
       file:
@@ -205,6 +235,7 @@
           - "Snapshot:  {{ snapshotTagRaw }}"
           - "Source:    {{ snapshotDir }}"
           - "Data:      db, config, logs{% if privateInSnap.stat.exists %}, private{% endif %}{% if publicInSnap.stat.exists %}, public{% endif %}"
+          - "Preserved: {% if not privateInSnap.stat.exists %}private {% endif %}{% if not publicInSnap.stat.exists %}public{% endif %} (left untouched)"
           - "Definition: restored from snapshot (docker-compose*.yml, .env)"
           - "Rollback:  stop the containers and rename .{{ backupSuffix }} back."
           - "Cleanup:   rm -rf {{ dbTarget }}.{{ backupSuffix }} (and siblings) once verified."
