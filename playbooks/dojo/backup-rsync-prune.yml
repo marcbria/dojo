@@ -55,8 +55,8 @@
     - name: "COMPUTE - Snapshots to delete"
       set_fact:
         toDelete: >-
-          {{ (snapList.stdout_lines | default([]))[:-(keepCount)]
-             if (snapList.stdout_lines | default([]) | length) > keepCount
+          {{ (snapList.stdout_lines | default([]))[:-(keepCount | int)]
+             if (snapList.stdout_lines | default([]) | length) > (keepCount | int)
              else [] }}
       when: snapBaseStat.stat.exists
 
