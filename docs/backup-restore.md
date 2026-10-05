@@ -192,25 +192,6 @@ just dojo-restore-snap myjournal $SERVER backup-20241005-143022 \
 `dojo-create` also rewrites `/srv/volumes/files/config/<site>/*` (`config.inc.php`, `db.custom.cnf`, `php.custom.ini`, `apache.conf`). Those files are re-restored from the snapshot by the restore playbook immediately afterwards.
 :::
 
-### Extending to other datasets
-
-If your site uses `plugins.type: volume-plugins` or `volume-themes`, those volumes live under `/srv/volumes/all/<site>/...` and are **not** covered by the default snapshot set. Include them explicitly:
-
-```bash
-just dojo-backup-snap myjournal $SERVER \
-    zfs_extra_datasets='["srv/volumes"]'
-```
-
-:::warning
-**Extra datasets are handled as whole-dataset snapshots/restores:**
-
-- Backup creates `srv/volumes@backup-<tag>` (the entire dataset).
-- Restore runs `rsync --delete` from `srv/volumes/.zfs/snapshot/<tag>/` to `/srv/volumes/` — i.e., it restores **every site's data** in that dataset, not just the one you asked for.
-- Therefore use `zfs_extra_datasets` **only** for datasets dedicated to a single site. If a dataset holds multiple sites, do not include it here — restore manually with a per-site path.
-:::
-
-The same variable is honoured by `backup-snap.yml`, `backup-list.yml`, `backup-prune.yml` and `restore-snap.yml`.
-
 ### Off-site backup
 
 :::tip
@@ -230,7 +211,6 @@ zfs send srv/volumes/db@backup-20241005-143022 \
 | `snapshot_tag` | UTC timestamp | Specific snapshot tag |
 | `consistency` | `none` | Consistency mode: `none`, `pause`, `stop` |
 | `keep` | `7` | Number of snapshots to keep on prune |
-| `zfs_extra_datasets` | `[]` | Additional datasets to include |
 | `zfs_dataset_db` | derived | Override the DB dataset |
 | `zfs_dataset_files` | derived | Override the files dataset |
 | `zfs_dataset_logs` | derived | Override the logs dataset |
@@ -296,6 +276,10 @@ Hosts without ZFS (typically test/staging such as `cory`) use an alternative bac
 | Location | `.zfs/snapshot/<tag>/` | `/srv/backup/<site>/<tag>/` |
 | Restore requires prior `dojo-create` | Yes | No |
 | Space cost | Instant (COW) | Full copy |
+
+:::info
+The rsync backend uses `/srv/backup/<site>/` (singular), which is independent from the ZFS backend's `/srv/backups/<site>/` (plural) referenced in `configs/dojo.yml`. Both can coexist on the same host.
+:::
 
 ### Snapshot layout
 
