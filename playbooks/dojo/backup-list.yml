@@ -29,7 +29,6 @@
           db:    "{{ zfs_dataset_db    | default(allVars.path.volumes.db    | regex_replace('^/', '')) }}"
           files: "{{ zfs_dataset_files | default(allVars.path.volumes.files | regex_replace('^/', '')) }}"
           logs:  "{{ zfs_dataset_logs  | default(allVars.path.volumes.logs  | regex_replace('^/', '')) }}"
-        zfsExtra: "{{ zfs_extra_datasets | default([]) }}"
 
     - name: "READ - List snapshots per dataset"
       shell: |
@@ -39,7 +38,7 @@
         {% else %}
         zfs list -H -t snapshot -o name,creation,used -s creation {{ item }} || true
         {% endif %}
-      loop: "{{ zfsDatasets.values() | list + zfsExtra }}"
+      loop: "{{ zfsDatasets.values() | list }}"
       register: snapList
       changed_when: false
 

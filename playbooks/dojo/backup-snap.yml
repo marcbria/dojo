@@ -13,6 +13,10 @@
 # captures the whole dataset. A per-site restore only extracts the <site>/
 # subfolder, so other sites are never affected.
 #
+# NOT covered by this snapshot:
+#   /home/docker/sites/<site>/{docker-compose.yml,docker-compose.override.yml,.env}
+#   → regenerable from inventory + vault (GitOps principle).
+#
 # Consistency levels (`consistency`):
 #   none   → no intervention (relies on InnoDB crash recovery)         [default]
 #   pause  → docker pause the app container during the snapshot
@@ -49,7 +53,6 @@
           db:    "{{ zfs_dataset_db    | default(allVars.path.volumes.db    | regex_replace('^/', '')) }}"
           files: "{{ zfs_dataset_files | default(allVars.path.volumes.files | regex_replace('^/', '')) }}"
           logs:  "{{ zfs_dataset_logs  | default(allVars.path.volumes.logs  | regex_replace('^/', '')) }}"
-        zfsExtra: "{{ zfs_extra_datasets | default([]) }}"
 
     - name: "CHECK - Site directory exists"
       stat: { path: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}" }
@@ -71,7 +74,7 @@
 
     - name: "CHECK - Datasets exist and are mounted"
       command: "zfs get -H -o value mounted {{ item }}"
-      loop: "{{ zfsDatasets.values() | list + zfsExtra }}"
+      loop: "{{ zfsDatasets.values() | list }}"
       register: datasetCheck
       changed_when: false
       failed_when: false
@@ -86,7 +89,7 @@
 
     - name: "CHECK - Snapshot does not already exist"
       command: "zfs list -H -t snapshot -o name {{ item }}@{{ snapshotName }}"
-      loop: "{{ zfsDatasets.values() | list + zfsExtra }}"
+      loop: "{{ zfsDatasets.values() | list }}"
       register: snapExists
       changed_when: false
       failed_when: false
@@ -129,7 +132,7 @@
     # ---------- Snapshot --------------------------------------------------
     - name: "SNAP - Create snapshot on every dataset"
       command: "zfs snapshot {{ item }}@{{ snapshotName }}"
-      loop: "{{ zfsDatasets.values() | list + zfsExtra }}"
+      loop: "{{ zfsDatasets.values() | list }}"
       register: snapResults
       changed_when: true
 
@@ -154,6 +157,6 @@
         msg:
           - "Site:      {{ allVars.dojo.id }}"
           - "Snapshot:  {{ snapshotName }}"
-          - "Datasets:  {{ (zfsDatasets.values() | list + zfsExtra) | join(', ') }}"
+          - "Datasets:  {{ zfsDatasets.values() | list | join(', ') }}"
           - "Mode:      {{ consistency }}"
           - "Restore:   just dojo-restore-snap {{ site }} {{ host }} {{ snapshotTag }} confirm=RESTORE-{{ allVars.dojo.id }}"

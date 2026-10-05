@@ -5,6 +5,10 @@
 # Only snapshots matching '@<prefix>-' are considered. Older sets are removed
 # in creation order (oldest first).
 #
+# Note: since snapshots are per-dataset (not per-site), the count is shared
+# across all sites on the same host. `just dojo-backup-prune <site>` counts
+# and destroys the same snapshot pool that any other site would see.
+#
 # Usage:
 #   just dojo-backup-prune <site> <host>
 #   just dojo-backup-prune <site> <host> keep=14
@@ -33,7 +37,6 @@
           db:    "{{ zfs_dataset_db    | default(allVars.path.volumes.db    | regex_replace('^/', '')) }}"
           files: "{{ zfs_dataset_files | default(allVars.path.volumes.files | regex_replace('^/', '')) }}"
           logs:  "{{ zfs_dataset_logs  | default(allVars.path.volumes.logs  | regex_replace('^/', '')) }}"
-        zfsExtra: "{{ zfs_extra_datasets | default([]) }}"
 
     - name: "SAFETY - keep must be >= 1"
       fail:
@@ -44,7 +47,7 @@
 
     - name: "READ - Snapshots matching prefix (oldest first)"
       shell: "zfs list -H -t snapshot -o name -s creation {{ item }} | grep -E '@{{ snapshotPrefix }}-' || true"
-      loop: "{{ zfsDatasets.values() | list + zfsExtra }}"
+      loop: "{{ zfsDatasets.values() | list }}"
       register: snapList
       changed_when: false
 
