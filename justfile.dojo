@@ -236,9 +236,10 @@ dojo-restore-snap site host snapshot_tag *args:
 # RSYNC BACKEND — for hosts without ZFS (test/staging)
 #
 # Arguments are positional, in the order shown in each recipe signature.
-# `snapshot_tag` is NOT exposed on the CLI: the playbook auto-generates it
-# from the UTC timestamp when omitted. To pass a specific tag, call the
-# playbook directly with `-e snapshot_tag=<tag>`.
+# `snapshot_tag` is NOT exposed on the CLI for backup-snap: the playbook
+# auto-generates it as <timestamp>-full or <timestamp>-quick depending on
+# skip_files. To pass a specific tag, call the playbook directly with
+# `-e snapshot_tag=<tag>`.
 # ----------------------------------------------------------------------------
 
 # Creates a filesystem snapshot for a site under /srv/backup/<site>/<timestamp>.
@@ -271,7 +272,8 @@ dojo-backup-rsync-prune site host keep='7':
       -e "keep={{ keep }}"
 
 # Restores a site from an rsync snapshot. DESTRUCTIVE — requires confirm=RESTORE-<site>.
-dojo-restore-rsync-snap site host snapshot_tag confirm:
+# If `confirm` is empty, the playbook fails with a clear message asking for the token.
+dojo-restore-rsync-snap site host snapshot_tag confirm='':
     ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
       --vault-password-file {{ vaultKey }} \
       {{ dojoPath }}/restore-rsync-snap.yml \
