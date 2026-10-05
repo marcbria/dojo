@@ -35,7 +35,7 @@
     hostName: "{{ host }}"
     siteParam: "{{ site }}"
     snapshotPrefix: "{{ snapshot_prefix | default('backup') }}"
-    snapshotTag:    "{{ snapshot_tag | default(lookup('pipe', 'date -u +%Y%m%d-%H%M%S')) }}"
+    snapshotTag:    "{{ snapshot_tag | default(now(utc=true, fmt='%Y%m%d-%H%M%S')) }}"
     snapshotName:   "{{ snapshotPrefix }}-{{ snapshotTag }}"
     consistency:    "{{ consistency_mode | default('none') }}"
   vars_files:

@@ -39,7 +39,7 @@
       {{ snapshotTagRaw
          if snapshotTagRaw.startswith(snapshotPrefix ~ '-')
          else (snapshotPrefix ~ '-' ~ snapshotTagRaw) }}
-    backupSuffix: "pre-restore-{{ lookup('pipe','date -u +%Y%m%d-%H%M%S') }}"
+    backupSuffix: "pre-restore-{{ now(utc=true, fmt='%Y%m%d-%H%M%S') }}"
     confirmToken: "{{ confirm | default('') }}"
   vars_files:
     - ./configs/dojo.yml
