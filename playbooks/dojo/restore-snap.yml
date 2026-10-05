@@ -1,0 +1,217 @@
+---
+# ============================================================================
+# RESTORE - Restore a site from a ZFS snapshot set.
+#
+# DESTRUCTIVE: current data is moved to <path>.pre-restore-<timestamp>/ before
+# restoring. Verify, then delete the .pre-restore-* folders manually.
+#
+# Restore never uses `zfs rollback` (that would revert other sites).
+# It rsyncs from the read-only snapshot mount:
+#   <dataset>/.zfs/snapshot/<snap>/<relative-path>/<site>/
+#
+# Standard per-site paths (db, files/config, files/private, files/public, logs)
+# are restored under <site>/. Extra datasets (`zfs_extra_datasets`) are
+# restored as WHOLE-DATASET snapshots — use only for datasets dedicated to
+# this site, otherwise you may overwrite other sites' data.
+#
+# Usage:
+#   just dojo-restore-snap <site> <host> <tag> confirm=RESTORE-<site>
+#   just dojo-restore-snap <site> <host> <tag> confirm=RESTORE-<site> \
+#       zfs_extra_datasets='["srv/volumes/all"]'
+#
+# The <tag> may be either the bare tag ("20241005-143022") or the full
+# snapshot name ("backup-20241005-143022"); both are accepted.
+# ============================================================================
+- name: "RESTORE - Restore a site from a ZFS snapshot"
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    hostName: "{{ host }}"
+    siteParam: "{{ site }}"
+    snapshotPrefix: "{{ snapshot_prefix | default('backup') }}"
+    snapshotTagRaw: "{{ snapshot_tag | default('') }}"
+    snapshotName: >-
+      {{ snapshotTagRaw
+         if snapshotTagRaw.startswith(snapshotPrefix ~ '-')
+         else (snapshotPrefix ~ '-' ~ snapshotTagRaw) }}
+    backupSuffix: "pre-restore-{{ lookup('pipe','date -u +%Y%m%d-%H%M%S') }}"
+    confirmToken: "{{ confirm | default('') }}"
+  vars_files:
+    - ./configs/dojo.yml
+    - ./configs/secret.yml
+    - ./inventory/sites/base-{{ hostName }}.yml
+  tasks:
+    - name: "INIT - Load allVars"
+      include_tasks: ../setAllVars.yml
+      vars: { mode: site, param: "{{ siteParam }}" }
+
+    - name: "INIT - Resolve datasets, targets and .zfs paths"
+      set_fact:
+        zfsDb:      "{{ zfs_dataset_db    | default(allVars.path.volumes.db    | regex_replace('^/', '')) }}"
+        zfsFiles:   "{{ zfs_dataset_files | default(allVars.path.volumes.files | regex_replace('^/', '')) }}"
+        zfsLogs:    "{{ zfs_dataset_logs  | default(allVars.path.volumes.logs  | regex_replace('^/', '')) }}"
+        zfsExtra:   "{{ zfs_extra_datasets | default([]) }}"
+        dbTarget:      "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id }}"
+        configTarget:  "{{ allVars.path.files.config }}/{{ allVars.dojo.id }}"
+        privateTarget: "{{ allVars.path.files.private }}/{{ allVars.dojo.id }}"
+        publicTarget:  "{{ allVars.path.files.public }}/{{ allVars.dojo.id }}"
+        logsTarget:    "{{ allVars.path.volumes.logs }}/{{ allVars.dojo.id }}"
+
+    - name: "SAFETY - Require explicit confirmation"
+      fail:
+        msg: |
+          Restore is DESTRUCTIVE.
+          Pass:  confirm=RESTORE-{{ allVars.dojo.id }}
+          Run:   just dojo-restore-snap {{ site }} {{ host }} {{ snapshotTagRaw }} confirm=RESTORE-{{ allVars.dojo.id }}
+      when: confirmToken != ('RESTORE-' ~ allVars.dojo.id)
+
+    - name: "CHECK - snapshot_tag provided"
+      fail: { msg: "snapshot_tag is required" }
+      when: snapshotTagRaw | length == 0
+
+    - name: "CHECK - Site directory exists"
+      stat: { path: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}" }
+      register: siteDir
+
+    - name: "FAIL - Site not found"
+      fail: { msg: "Site not found: {{ allVars.path.base.sites }}/{{ allVars.dojo.id }}" }
+      when: not siteDir.stat.exists
+
+    - name: "CHECK - Snapshot exists on every dataset"
+      command: "zfs list -H -t snapshot -o name {{ item }}@{{ snapshotName }}"
+      loop: "{{ [zfsDb, zfsFiles, zfsLogs] + zfsExtra }}"
+      register: snapCheck
+      changed_when: false
+      failed_when: false
+
+    - name: "FAIL - Missing snapshot"
+      fail:
+        msg: "Snapshot {{ snapshotName }} missing on {{ item.item }}"
+      loop: "{{ snapCheck.results }}"
+      when: item.rc != 0
+
+    - name: "CHECK - Site data present inside the snapshot"
+      stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ allVars.path.volumes.db }}/.zfs/snapshot/{{ snapshotName }}/{{ allVars.dojo.id }}"
+        - "{{ allVars.path.volumes.files }}/.zfs/snapshot/{{ snapshotName }}/config/{{ allVars.dojo.id }}"
+        - "{{ allVars.path.volumes.files }}/.zfs/snapshot/{{ snapshotName }}/private/{{ allVars.dojo.id }}"
+        - "{{ allVars.path.volumes.files }}/.zfs/snapshot/{{ snapshotName }}/public/{{ allVars.dojo.id }}"
+      register: snapAccess
+
+    - name: "FAIL - Snapshot does not contain this site"
+      fail:
+        msg: "Missing in snapshot: {{ item.item }}"
+      loop: "{{ snapAccess.results }}"
+      when: not item.stat.exists
+
+    # ---------- Stop containers -------------------------------------------
+    - name: "STOP - Bring site containers down"
+      shell:
+        cmd: docker compose down
+        chdir: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
+      register: stopResult
+      changed_when: true
+
+    # ---------- Move current data aside -----------------------------------
+    - name: "SAFETY - Move current data aside (.{{ backupSuffix }})"
+      shell: |
+        set -e
+        ts="{{ backupSuffix }}"
+        for p in \
+          "{{ dbTarget }}" \
+          "{{ configTarget }}" \
+          "{{ privateTarget }}" \
+          "{{ publicTarget }}" \
+          "{{ logsTarget }}"
+        do
+          if [ -e "$p" ]; then mv "$p" "${p}.${ts}"; fi
+          mkdir -p "$p"
+        done
+      changed_when: true
+
+    # ---------- Restore standard per-site paths ---------------------------
+    - name: "RESTORE - Standard per-site paths"
+      shell: |
+        set -e
+        rsync -aHAX --delete "{{ item.src }}/" "{{ item.dst }}/"
+      loop:
+        - { src: "{{ allVars.path.volumes.db }}/.zfs/snapshot/{{ snapshotName }}/{{ allVars.dojo.id }}",
+            dst: "{{ dbTarget }}" }
+        - { src: "{{ allVars.path.volumes.files }}/.zfs/snapshot/{{ snapshotName }}/config/{{ allVars.dojo.id }}",
+            dst: "{{ configTarget }}" }
+        - { src: "{{ allVars.path.volumes.files }}/.zfs/snapshot/{{ snapshotName }}/private/{{ allVars.dojo.id }}",
+            dst: "{{ privateTarget }}" }
+        - { src: "{{ allVars.path.volumes.files }}/.zfs/snapshot/{{ snapshotName }}/public/{{ allVars.dojo.id }}",
+            dst: "{{ publicTarget }}" }
+        - { src: "{{ allVars.path.volumes.logs }}/.zfs/snapshot/{{ snapshotName }}/{{ allVars.dojo.id }}",
+            dst: "{{ logsTarget }}" }
+      changed_when: true
+      loop_control:
+        label: "{{ item.dst }}"
+
+    # ---------- Restore extras (whole-dataset) ----------------------------
+    - name: "RESTORE - Extra datasets (whole-dataset restore)"
+      shell: |
+        set -e
+        ds="{{ item }}"
+        mount="/${ds}"
+        snap="${mount}/.zfs/snapshot/{{ snapshotName }}"
+        if [ ! -d "$snap" ]; then
+          echo "Missing snapshot: $snap"
+          exit 1
+        fi
+        rsync -aHAX --delete "${snap}/" "${mount}/"
+      loop: "{{ zfsExtra }}"
+      changed_when: true
+      loop_control:
+        label: "{{ item }}"
+
+    # ---------- Fix ownership / permissions -------------------------------
+    - name: "FIX - DB ownership / mode"
+      file:
+        path: "{{ dbTarget }}"
+        state: directory
+        recurse: yes
+        owner: "{{ allVars.volumes.db.owner | default(allVars.user.run) }}"
+        group: "{{ allVars.volumes.db.group | default(allVars.user.group) }}"
+        mode: "{{ allVars.volumes.db.mode | default('0744') }}"
+
+    - name: "FIX - App files ownership / mode"
+      file:
+        path: "{{ item }}"
+        state: directory
+        recurse: yes
+        owner: "{{ allVars.volumes.app.owner | default(allVars.user.run) }}"
+        group: "{{ allVars.volumes.app.group | default(allVars.user.group) }}"
+        mode: "{{ allVars.volumes.app.mode | default('0744') }}"
+      loop:
+        - "{{ configTarget }}"
+        - "{{ publicTarget }}"
+        - "{{ privateTarget }}"
+
+    - name: "FIX - Logs ownership / mode"
+      file:
+        path: "{{ logsTarget }}"
+        state: directory
+        recurse: yes
+        owner: "{{ allVars.volumes.app.owner | default(allVars.user.run) }}"
+        group: "{{ allVars.volumes.app.group | default(allVars.user.group) }}"
+
+    # ---------- Start -----------------------------------------------------
+    - name: "START - Bring site containers up"
+      shell:
+        cmd: docker compose up -d
+        chdir: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
+      register: startResult
+
+    - name: "REPORT - Restore finished"
+      debug:
+        msg:
+          - "Site:      {{ allVars.dojo.id }}"
+          - "Snapshot:  {{ snapshotName }}"
+          - "Extras:    {{ zfsExtra | join(', ') if zfsExtra else 'none' }}"
+          - "Rollback:  stop the containers and rename .{{ backupSuffix }} back (standard paths only)."
+          - "Cleanup:   rm -rf {{ dbTarget }}.{{ backupSuffix }} (and siblings) once verified."

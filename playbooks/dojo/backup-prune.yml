@@ -1,0 +1,71 @@
+---
+# ============================================================================
+# BACKUP - Prune old ZFS snapshots for a site (keep N most recent per dataset).
+#
+# Only snapshots matching '@<prefix>-' are considered. Older sets are removed
+# in creation order (oldest first).
+#
+# Usage:
+#   just dojo-backup-prune <site> <host>
+#   just dojo-backup-prune <site> <host> keep=14
+# ============================================================================
+- name: "BACKUP - Prune old ZFS snapshots for a site"
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    hostName: "{{ host }}"
+    siteParam: "{{ site }}"
+    snapshotPrefix: "{{ snapshot_prefix | default('backup') }}"
+    keepCount: "{{ keep | default(7) | int }}"
+  vars_files:
+    - ./configs/dojo.yml
+    - ./configs/secret.yml
+    - ./inventory/sites/base-{{ hostName }}.yml
+  tasks:
+    - name: "INIT - Load allVars"
+      include_tasks: ../setAllVars.yml
+      vars: { mode: site, param: "{{ siteParam }}" }
+
+    - name: "INIT - Resolve ZFS datasets"
+      set_fact:
+        zfsDatasets:
+          db:    "{{ zfs_dataset_db    | default(allVars.path.volumes.db    | regex_replace('^/', '')) }}"
+          files: "{{ zfs_dataset_files | default(allVars.path.volumes.files | regex_replace('^/', '')) }}"
+          logs:  "{{ zfs_dataset_logs  | default(allVars.path.volumes.logs  | regex_replace('^/', '')) }}"
+        zfsExtra: "{{ zfs_extra_datasets | default([]) }}"
+
+    - name: "SAFETY - keep must be >= 1"
+      fail:
+        msg: >-
+          keep={{ keepCount }} — refusing to prune with keep<1
+          (this would delete every snapshot matching '@{{ snapshotPrefix }}-*').
+      when: keepCount | int < 1
+
+    - name: "READ - Snapshots matching prefix (oldest first)"
+      shell: "zfs list -H -t snapshot -o name -s creation {{ item }} | grep -E '@{{ snapshotPrefix }}-' || true"
+      loop: "{{ zfsDatasets.values() | list + zfsExtra }}"
+      register: snapList
+      changed_when: false
+
+    - name: "COMPUTE - Snapshots to delete"
+      set_fact:
+        toDelete: >-
+          {{ (toDelete | default([]))
+             + ((item.stdout_lines | default([]))[:-(keepCount)]
+                if (item.stdout_lines | default([]) | length) > keepCount
+                else []) }}
+      loop: "{{ snapList.results }}"
+      loop_control: { label: "{{ item.item }}" }
+
+    - name: "REPORT - Candidate list"
+      debug: { msg: "{{ toDelete | default([]) }}" }
+
+    - name: "DESTROY - Remove old snapshots"
+      command: "zfs destroy {{ item }}"
+      loop: "{{ toDelete | default([]) }}"
+      changed_when: true
+
+    - name: "REPORT - Summary"
+      debug:
+        msg: "Deleted {{ toDelete | default([]) | length }} snapshot(s) — kept last {{ keepCount }} per dataset"

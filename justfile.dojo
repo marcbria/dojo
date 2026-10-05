@@ -4,7 +4,6 @@
 dojo:
     @ just -l --unsorted | grep dojo
 
-
 # Sample calls
 dojo-tldr:
     # Sample of calls:
@@ -19,6 +18,13 @@ dojo-tldr:
     # $ just dojo-batch-run <siteList> $SERVER restart      # Restarts ALL the journals in the siteList file path.
     # $ just dojo-batch-create-upgrade <siteList> $SERVER   # Creates all files and folders and upgrades.
     # $ just dojo-vault edit                                # Edit your vault.
+
+    # Backup & restore (ZFS)                                # See 'just dojo-help' for consistency modes.
+    # $ just dojo-backup-snap $JOURNAL $SERVER              # Snapshot db + files + logs.
+    # $ just dojo-backup-list $JOURNAL $SERVER              # List available snapshots.
+    # $ just dojo-backup-snap $JOURNAL $SERVER consistency=pause   # Snap with app container paused (safer).
+    # $ just dojo-restore-snap $JOURNAL $SERVER <snap> confirm=RESTORE-$JOURNAL
+
     @ echo ""
     # > To get a commented list of actions use "just dojo"
 
@@ -184,3 +190,32 @@ dojo-manage site host command *args:
 # Ejecuta un comando arbitrario en el host remoto (como root mediante sudo)
 dojo-exec site host cmd:
     ansible -i {{ inventoryPath }}/hosts.yml {{ host }} -b -m shell -a "{{ cmd }}"
+
+# Creates a ZFS snapshot set (db, files, logs) for a site.
+dojo-backup-snap site host *args:
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+      --vault-password-file {{ vaultKey }} \
+      {{ dojoPath }}/backup-snap.yml \
+      -e "host={{ host }}" -e "site={{ site }}" {{ args }}
+
+# Lists ZFS snapshots for a site.
+dojo-backup-list site host *args:
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+      --vault-password-file {{ vaultKey }} \
+      {{ dojoPath }}/backup-list.yml \
+      -e "host={{ host }}" -e "site={{ site }}" {{ args }}
+
+# Prunes old ZFS snapshots for a site.
+dojo-backup-prune site host *args:
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+      --vault-password-file {{ vaultKey }} \
+      {{ dojoPath }}/backup-prune.yml \
+      -e "host={{ host }}" -e "site={{ site }}" {{ args }}
+
+# Restores a site from a ZFS snapshot. DESTRUCTIVE — requires confirm=RESTORE-<site>.
+dojo-restore-snap site host snapshot_tag *args:
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+      --vault-password-file {{ vaultKey }} \
+      {{ dojoPath }}/restore-snap.yml \
+      -e "host={{ host }}" -e "site={{ site }}" \
+      -e "snapshot_tag={{ snapshot_tag }}" {{ args }}

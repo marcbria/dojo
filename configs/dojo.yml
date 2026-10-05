@@ -5,7 +5,7 @@
 #
 # Description:
 # Global variables for dojo.
-# 
+#
 # Documentation:
 # https://github.com/marcbria/dojo
 #
@@ -21,7 +21,7 @@ path:
     root:       "/home/docker"
     sites:      "/home/docker/sites"
     services:   "/home/docker/service"
-  storage:  
+  storage:
     root:       "/srv"
     backups:    "/srv/backups"
     volumes:    "/srv/volumes"
@@ -29,6 +29,7 @@ path:
     all:        "/srv/volumes/all"
     db:         "/srv/volumes/db"
     db_import:  "/srv/volumes/db_import"
+    files:      "/srv/volumes/files"
     logs:       "/srv/volumes/logs"
   files:
     public:     "/srv/volumes/files/public"

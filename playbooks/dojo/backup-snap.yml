@@ -1,0 +1,159 @@
+---
+# ============================================================================
+# BACKUP - Create a ZFS snapshot set for a single site.
+#
+# A "snapshot set" is the combination of three ZFS snapshots with the same tag
+# on the datasets that hold this site's persistent data:
+#
+#   srv/volumes/db@<snap>      →  /srv/volumes/db/<site>/
+#   srv/volumes/files@<snap>   →  /srv/volumes/files/{config,private,public}/<site>/
+#   srv/volumes/logs@<snap>    →  /srv/volumes/logs/<site>/
+#
+# Because these datasets are shared by every site on the host, the snapshot
+# captures the whole dataset. A per-site restore only extracts the <site>/
+# subfolder, so other sites are never affected.
+#
+# Consistency levels (`consistency`):
+#   none   → no intervention (relies on InnoDB crash recovery)         [default]
+#   pause  → docker pause the app container during the snapshot
+#   stop   → docker compose stop (app + db) during the snapshot
+#
+# Usage:
+#   just dojo-backup-snap <site> <host>
+#   just dojo-backup-snap <site> <host> consistency=stop
+#   just dojo-backup-snap <site> <host> snapshot_tag=pre-upgrade-3_5
+# ============================================================================
+- name: "BACKUP - Create ZFS snapshots for a site"
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    hostName: "{{ host }}"
+    siteParam: "{{ site }}"
+    snapshotPrefix: "{{ snapshot_prefix | default('backup') }}"
+    snapshotTag:    "{{ snapshot_tag | default(lookup('pipe', 'date -u +%Y%m%d-%H%M%S')) }}"
+    snapshotName:   "{{ snapshotPrefix }}-{{ snapshotTag }}"
+    consistency:    "{{ consistency_mode | default('none') }}"
+  vars_files:
+    - ./configs/dojo.yml
+    - ./configs/secret.yml
+    - ./inventory/sites/base-{{ hostName }}.yml
+  tasks:
+    - name: "INIT - Load allVars"
+      include_tasks: ../setAllVars.yml
+      vars: { mode: site, param: "{{ siteParam }}" }
+
+    - name: "INIT - Resolve ZFS datasets"
+      set_fact:
+        zfsDatasets:
+          db:    "{{ zfs_dataset_db    | default(allVars.path.volumes.db    | regex_replace('^/', '')) }}"
+          files: "{{ zfs_dataset_files | default(allVars.path.volumes.files | regex_replace('^/', '')) }}"
+          logs:  "{{ zfs_dataset_logs  | default(allVars.path.volumes.logs  | regex_replace('^/', '')) }}"
+        zfsExtra: "{{ zfs_extra_datasets | default([]) }}"
+
+    - name: "CHECK - Site directory exists"
+      stat: { path: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}" }
+      register: siteDir
+
+    - name: "FAIL - Site not found"
+      fail: { msg: "Site directory not found: {{ allVars.path.base.sites }}/{{ allVars.dojo.id }}" }
+      when: not siteDir.stat.exists
+
+    - name: "CHECK - zfs binary is available"
+      command: which zfs
+      register: zfsBin
+      changed_when: false
+      failed_when: false
+
+    - name: "FAIL - zfs not installed"
+      fail: { msg: "zfs is not installed on {{ inventory_hostname }}" }
+      when: zfsBin.rc != 0
+
+    - name: "CHECK - Datasets exist and are mounted"
+      command: "zfs get -H -o value mounted {{ item }}"
+      loop: "{{ zfsDatasets.values() | list + zfsExtra }}"
+      register: datasetCheck
+      changed_when: false
+      failed_when: false
+
+    - name: "FAIL - Missing or unmounted dataset"
+      fail:
+        msg: >-
+          Dataset {{ item.item }} is missing or not mounted
+          (rc={{ item.rc }}, mounted={{ item.stdout | default('') | trim }})
+      loop: "{{ datasetCheck.results }}"
+      when: item.rc != 0 or (item.stdout | default('') | trim) != 'yes'
+
+    - name: "CHECK - Snapshot does not already exist"
+      command: "zfs list -H -t snapshot -o name {{ item }}@{{ snapshotName }}"
+      loop: "{{ zfsDatasets.values() | list + zfsExtra }}"
+      register: snapExists
+      changed_when: false
+      failed_when: false
+
+    - name: "FAIL - Snapshot already exists on at least one dataset"
+      fail:
+        msg: "Snapshot {{ snapshotName }} already exists on {{ item.item }}"
+      loop: "{{ snapExists.results }}"
+      when: item.rc == 0
+
+    # ---------- Optional consistency --------------------------------------
+    - name: "PAUSE - Pause app container (consistency=pause)"
+      shell: |
+        set -e
+        name="{{ allVars.dojo.tool }}_app_{{ allVars.dojo.id }}"
+        if docker ps --format '{{ '{{' }}.Names{{ '}}' }}' | grep -qx "$name"; then
+          docker pause "$name"
+          echo paused
+        else
+          echo skipped
+        fi
+      register: pauseResult
+      changed_when: "'paused' in pauseResult.stdout"
+      when: consistency == 'pause'
+
+    - name: "STOP - Stop app + db containers (consistency=stop)"
+      shell: |
+        set -e
+        cd "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
+        if docker compose ps --quiet | grep -q .; then
+          docker compose stop
+          echo stopped
+        else
+          echo skipped
+        fi
+      register: stopResult
+      changed_when: "'stopped' in stopResult.stdout"
+      when: consistency == 'stop'
+
+    # ---------- Snapshot --------------------------------------------------
+    - name: "SNAP - Create snapshot on every dataset"
+      command: "zfs snapshot {{ item }}@{{ snapshotName }}"
+      loop: "{{ zfsDatasets.values() | list + zfsExtra }}"
+      register: snapResults
+      changed_when: true
+
+    # ---------- Restore service -------------------------------------------
+    - name: "UNPAUSE - Resume app container"
+      shell: |
+        set -e
+        name="{{ allVars.dojo.tool }}_app_{{ allVars.dojo.id }}"
+        if docker ps --format '{{ '{{' }}.Names{{ '}}' }}' | grep -qx "$name"; then
+          docker unpause "$name"
+        fi
+      when: consistency == 'pause'
+
+    - name: "RESUME - Bring app + db up"
+      shell:
+        cmd: docker compose up -d
+        chdir: "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
+      when: consistency == 'stop'
+
+    - name: "REPORT - Backup created"
+      debug:
+        msg:
+          - "Site:      {{ allVars.dojo.id }}"
+          - "Snapshot:  {{ snapshotName }}"
+          - "Datasets:  {{ (zfsDatasets.values() | list + zfsExtra) | join(', ') }}"
+          - "Mode:      {{ consistency }}"
+          - "Restore:   just dojo-restore-snap {{ site }} {{ host }} {{ snapshotTag }} confirm=RESTORE-{{ allVars.dojo.id }}"

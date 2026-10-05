@@ -1,0 +1,57 @@
+---
+# ============================================================================
+# BACKUP - List ZFS snapshots related to a site.
+#
+# Usage:
+#   just dojo-backup-list <site> <host>
+#   just dojo-backup-list <site> <host> snapshot_prefix=backup
+# ============================================================================
+- name: "BACKUP - List ZFS snapshots for a site"
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    hostName: "{{ host }}"
+    siteParam: "{{ site }}"
+    snapshotPrefix: "{{ snapshot_prefix | default('') }}"
+  vars_files:
+    - ./configs/dojo.yml
+    - ./configs/secret.yml
+    - ./inventory/sites/base-{{ hostName }}.yml
+  tasks:
+    - name: "INIT - Load allVars"
+      include_tasks: ../setAllVars.yml
+      vars: { mode: site, param: "{{ siteParam }}" }
+
+    - name: "INIT - Resolve ZFS datasets"
+      set_fact:
+        zfsDatasets:
+          db:    "{{ zfs_dataset_db    | default(allVars.path.volumes.db    | regex_replace('^/', '')) }}"
+          files: "{{ zfs_dataset_files | default(allVars.path.volumes.files | regex_replace('^/', '')) }}"
+          logs:  "{{ zfs_dataset_logs  | default(allVars.path.volumes.logs  | regex_replace('^/', '')) }}"
+        zfsExtra: "{{ zfs_extra_datasets | default([]) }}"
+
+    - name: "READ - List snapshots per dataset"
+      shell: |
+        {% if snapshotPrefix %}
+        zfs list -H -t snapshot -o name,creation,used -s creation {{ item }} \
+          | grep -E '@{{ snapshotPrefix }}-' || true
+        {% else %}
+        zfs list -H -t snapshot -o name,creation,used -s creation {{ item }} || true
+        {% endif %}
+      loop: "{{ zfsDatasets.values() | list + zfsExtra }}"
+      register: snapList
+      changed_when: false
+
+    - name: "REPORT - Snapshots"
+      debug:
+        msg: |
+          Dataset: {{ item.item }}
+          {% if item.stdout_lines | length == 0 %}
+            (no snapshots)
+          {% else %}
+          {% for line in item.stdout_lines %}  {{ line }}
+          {% endfor %}
+          {% endif %}
+      loop: "{{ snapList.results }}"
+      loop_control: { label: "{{ item.item }}" }

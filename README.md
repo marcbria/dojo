@@ -160,8 +160,8 @@ Project is modular: use it as a whole, or use only the parts useful to you. You 
 | Journals       | OJS                                  | Container | Optional |
 | Books          | OMP                                  | Container | Optional |
 | Monitor        | UptimeKuma                           | Container | Optional |
-| Backup         | Duplicati                            | Container | Optional |
-| Statistics     | Plausible                            | Container | Optional |
+| Backup         | Kopia, Backrest, Pluto               | Container | Optional |
+| Statistics     | Plausible, Matomo                    | Container | Optional |
 | Snapshots      | zfs + sanoid                         | Host      | Optional |
 | Extras         | just, tldr, zsh                      | Host      | Optional |
 
@@ -309,8 +309,8 @@ just dojo-run install $JOURNAL $SERVER          # Runs OJS installer via HTTP.
 
 10. Add optional tooling as needed:
 
+- [ ] Backup: sanoid (host-level snapshots) + `just dojo-backup-snap` (per-site).
 - [ ] Monitoring: uptimekuma.
-- [ ] Backup: sanoid, duplicati.
 - [ ] Management: portainer.
 
 See the [Tooling](#tooling) table for the full list.
@@ -325,7 +325,7 @@ See the [Tooling](#tooling) table for the full list.
 - [ ] Automate journal setup from dictionary (API or DB injection).
 - [ ] Review infrastructure and extra playbooks.
 - [ ] Install and configure monitoring tooling.
-- [ ] Install and configure backup tooling.
+- [x] Install and configure backup tooling.
 
 
 ## Why dojo?
