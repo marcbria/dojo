@@ -1,34 +1,49 @@
 ---
-title: Backup & Restore (ZFS)
-description: Guía de copias de seguridad y restauración con ZFS para sitios PKP en dojo
-tags: dojo, zfs, backup, restore, ojs, omp, ansible
+title: Backup & Restore
+description: Backup and restore strategies for PKP sites in dojo — ZFS and rsync backends
+tags: dojo, backup, restore, zfs, rsync, ojs, omp, ansible
 ---
 
-# Backup & Restore (ZFS)
+# Backup & Restore
 
 :::info
-Esta guía documenta el sistema de backup y restauración basado en ZFS implementado en los playbooks `backup-snap.yml`, `backup-list.yml`, `backup-prune.yml` y `restore-snap.yml` del proyecto **dojo**.
+This guide documents the two backup backends implemented in dojo:
+
+- **ZFS** — for production hosts with ZFS pools (`backup-snap.yml`, `backup-list.yml`, `backup-prune.yml`, `restore-snap.yml`).
+- **rsync** — for hosts without ZFS, typically test/staging (`backup-rsync-snap.yml`, `backup-rsync-list.yml`, `backup-rsync-prune.yml`, `restore-rsync-snap.yml`).
+
+Both backends share the same philosophy: a per-site snapshot set, identified by a timestamp/tag, with consistency modes and safety guards.
 :::
 
-## Arquitectura de datos
+---
 
-Todos los datos persistentes de cada sitio viven en tres datasets ZFS independientes:
+## Data architecture
 
-| Dataset | Contenido | Ruta en el host |
-|:--|:--|:--|
-| `srv/volumes/db` | Datos de MariaDB/PostgreSQL por sitio | `/srv/volumes/db/<site>/` |
-| `srv/volumes/files` | `config/`, `private/`, `public/` (ficheros OJS/OMP) | `/srv/volumes/files/{config,private,public}/<site>/` |
-| `srv/volumes/logs` | Logs de Apache/PHP por sitio | `/srv/volumes/logs/<site>/` |
+All persistent site data lives under two roots:
+
+| Path | Contents |
+|:--|:--|
+| `/srv/volumes/db/<site>/` | MariaDB/PostgreSQL data files |
+| `/srv/volumes/files/config/<site>/` | `config.inc.php`, `db.custom.cnf`, `php.custom.ini`, `apache.conf` |
+| `/srv/volumes/files/private/<site>/` | Private uploads (submissions, revisions) |
+| `/srv/volumes/files/public/<site>/` | Public files (published articles, issues) |
+| `/srv/volumes/logs/<site>/` | Apache/PHP logs |
+
+On ZFS hosts these paths live on three shared datasets (`srv/volumes/db`, `srv/volumes/files`, `srv/volumes/logs`). On rsync hosts they are plain directories under `/srv`.
 
 :::warning
-Estos datasets son **compartidos por todos los sitios del host**. Un snapshot captura el dataset completo, no solo un sitio. La restauración extrae únicamente la subcarpeta `<site>/`, por lo que el resto de sitios nunca se ven afectados.
+On ZFS hosts, these datasets are **shared by every site on the host**. A snapshot captures the whole dataset, not a single site. Restoration extracts only the `<site>/` subfolder, so other sites are never affected.
 :::
 
-## Conceptos clave
+---
 
-### Snapshot set
+## ZFS backend
 
-Un **snapshot set** es el conjunto de tres snapshots ZFS que comparten la misma etiqueta (`backup-<UTC-timestamp>`) en los tres datasets. Se crean de forma coordinada para que la restauración sea coherente.
+### Key concepts
+
+#### Snapshot set
+
+A **snapshot set** is three ZFS snapshots sharing the same tag (`backup-<UTC-timestamp>`) on the three datasets. They are created together so that a restore is coherent.
 
 ```
 srv/volumes/db@backup-20241005-143022
@@ -36,150 +51,150 @@ srv/volumes/files@backup-20241005-143022
 srv/volumes/logs@backup-20241005-143022
 ```
 
-### Qué NO se incluye en el snapshot
+#### What is NOT included
 
 :::danger
-Los ficheros de definición del sitio **no están cubiertos** por ningún snapshot:
+Site definition files are **not covered** by any ZFS snapshot:
 
 - `/home/docker/sites/<site>/docker-compose.yml`
 - `/home/docker/sites/<site>/docker-compose.override.yml`
 - `/home/docker/sites/<site>/.env`
 
-Estos ficheros son **regenerables** desde el inventario + vault (principio GitOps). Si faltan, el playbook de restauración **falla antes de tocar nada** e indica que ejecutes `just dojo-create` primero.
+These files are **regenerable** from inventory + vault (GitOps principle). If they are missing, the restore playbook **fails before touching anything** and tells you to run `just dojo-create` first.
 :::
 
-## Comandos disponibles
+### Commands
 
-### Crear un backup
+#### Create a backup
 
 ```bash
-# Snapshot rápido, consistencia best-effort (InnoDB crash recovery)
+# Fast snapshot, best-effort consistency (InnoDB crash recovery)
 just dojo-backup-snap myjournal $SERVER
 
-# Pausa el contenedor de la app durante el snapshot (más seguro para OJS)
+# Pause the app container during the snapshot (safer for OJS)
 just dojo-backup-snap myjournal $SERVER consistency=pause
 
-# Detiene app + db completamente (más limpio, con downtime)
+# Stop app + db completely (cleanest, has downtime)
 just dojo-backup-snap myjournal $SERVER consistency=stop
 
-# Snapshot con etiqueta personalizada (útil antes de un upgrade)
+# Tagged snapshot (useful before an upgrade)
 just dojo-backup-snap myjournal $SERVER snapshot_tag=pre-upgrade-3_5
 
-# Prefijo de snapshot personalizado (por defecto: backup)
+# Custom snapshot prefix (default: backup)
 just dojo-backup-snap myjournal $SERVER snapshot_prefix=manual
 ```
 
-### Listar snapshots
+#### List snapshots
 
 ```bash
-# Lista todos los snapshots de los datasets del sitio
+# List all snapshots on the datasets for this site
 just dojo-backup-list myjournal $SERVER
 
-# Filtra por prefijo
+# Filter by prefix
 just dojo-backup-list myjournal $SERVER snapshot_prefix=backup
 ```
 
-### Purgar snapshots antiguos
+#### Prune old snapshots
 
 ```bash
-# Mantiene los últimos 7 por dataset (por defecto)
+# Keep the last 7 per dataset (default)
 just dojo-backup-prune myjournal $SERVER
 
-# Mantiene los últimos 14
+# Keep the last 14
 just dojo-backup-prune myjournal $SERVER keep=14
 ```
 
 :::warning
-El parámetro `keep` debe ser **mayor o igual a 1**. El playbook rechaza `keep=0` o valores negativos para evitar borrar todos los snapshots.
+`keep` must be **greater than or equal to 1**. The playbook refuses `keep=0` or negative values to avoid deleting every snapshot.
 
-Además, como los snapshots son **por dataset** (no por sitio), el conteo es compartido entre todos los sitios del mismo host. `just dojo-backup-prune <site>` cuenta y destruye el mismo pool de snapshots que vería cualquier otro sitio.
+Also, since snapshots are **per dataset** (not per site), the count is shared across all sites on the same host. `just dojo-backup-prune <site>` counts and destroys the same snapshot pool that any other site would see.
 :::
 
-### Restaurar desde un snapshot
+#### Restore from a snapshot
 
 ```bash
-# 1. Localiza la etiqueta del snapshot a restaurar
+# 1. Locate the snapshot tag to restore
 just dojo-backup-list myjournal $SERVER
 
-# 2. Restaura (el token de confirmación es obligatorio)
+# 2. Restore (the confirm token is mandatory)
 just dojo-restore-snap myjournal $SERVER backup-20241005-143022 \
     confirm=RESTORE-myjournal
 ```
 
-El token `confirm=RESTORE-<site>` protege contra restauraciones accidentales. El playbook falla si no coincide exactamente.
+The `confirm=RESTORE-<site>` token protects against accidental restores. The playbook fails if it does not match exactly.
 
-## Modos de consistencia
+### Consistency modes
 
-| Modo | Acción | Uso recomendado |
+| Mode | Action | Recommended use |
 |:--|:--|:--|
-| `none` (default) | Sin intervención. Confía en InnoDB crash recovery | Backups rutinarios, mínima interrupción |
-| `pause` | `docker pause` del contenedor de la app durante el snapshot | Backups importantes sin downtime |
-| `stop` | `docker compose stop` (app + db) durante el snapshot | Backups críticos, pre-upgrade, migraciones |
+| `none` (default) | No intervention. Relies on InnoDB crash recovery | Routine backups, minimal disruption |
+| `pause` | `docker pause` the app container during the snapshot | Important backups without downtime |
+| `stop` | `docker compose stop` (app + db) during the snapshot | Critical backups, pre-upgrade, migrations |
 
 :::tip
-**MariaDB/InnoDB** es crash-consistent: un snapshot `none` se recupera al arrancar. Usa `pause` o `stop` si necesitas un estado byte-a-byte consistente.
+**MariaDB/InnoDB** is crash-consistent: a `none` snapshot recovers on next start. Use `pause` or `stop` if you need a byte-for-byte consistent state.
 
-**PostgreSQL** (Plausible): `none` suele ser suficiente; `stop` para restauraciones críticas.
+**PostgreSQL** (Plausible): `none` is usually fine; `stop` for critical restores.
 
-El modo `stop` levanta los contenedores de nuevo con `docker compose up -d`, pero **no espera** a que MySQL esté listo. Verifica después con `just dojo-manage <site> <host> ps`.
+`stop` mode brings containers down and back up, but **does not wait** for MySQL readiness. Verify with `just dojo-manage <site> <host> ps` afterwards.
 :::
 
-## Procedimiento de restauración
+### Restoration procedure
 
-El playbook `restore-snap.yml` ejecuta los siguientes pasos en orden:
+The `restore-snap.yml` playbook runs the following steps in order:
 
-1. **Validación** — Comprueba que el snapshot existe en cada dataset y contiene `<site>/`.
-2. **Parada** — `docker compose down` en el sitio (otros sitios siguen corriendo).
-3. **Movimiento** — Mueve los datos actuales a `<path>.pre-restore-<ts>/`.
-4. **Restauración** — `rsync -aHAX --delete` desde `.zfs/snapshot/<tag>/...` a la ruta viva.
-5. **Permisos** — Corrige ownership/mode usando `volumes.db.*` y `volumes.app.*` (fallback a `user.run`/`user.group`).
-6. **Arranque** — `docker compose up -d`.
+1. **Validation** — Confirms the snapshot exists on every dataset and contains `<site>/`.
+2. **Stop** — `docker compose down` on the site (other sites keep running).
+3. **Move aside** — Moves current data to `<path>.pre-restore-<ts>/`.
+4. **Restore** — `rsync -aHAX --delete` from `.zfs/snapshot/<tag>/...` to the live path.
+5. **Permissions** — Fixes ownership/mode using `volumes.db.*` and `volumes.app.*` (fallback to `user.run`/`user.group`).
+6. **Start** — `docker compose up -d`.
 
 :::danger
-**Los directorios `.pre-restore-*` son tu única red de seguridad.**
+**The `.pre-restore-*` folders are your only safety net.**
 
-Los datos movidos en el paso 3 se crean **después** de tomar el snapshot, por lo que **no están respaldados en ningún sitio**. Si el `rsync` posterior falla y alguien limpia esas carpetas para liberar espacio, **no hay vuelta atrás**.
+The data moved aside in step 3 is **created after the snapshot**, so it is **not backed up anywhere**. If the subsequent `rsync` fails and someone cleans those folders to free space, there is **no way back**.
 
-- Nunca los borres automáticamente.
-- Bórralos solo después de verificar que el sitio funciona correctamente.
-- En caso de duda, consérvalos; el `files/config` de un sitio suele ser minúsculo.
+- Never delete them automatically.
+- Delete them only after verifying the site is healthy.
+- If in doubt, keep them; a single site's `files/config` is usually tiny.
 :::
 
-### Rollback tras una restauración fallida
+### Rollback after a failed restore
 
 ```bash
-# 1. Detén los contenedores del sitio
+# 1. Stop the site containers
 just dojo-manage myjournal $SERVER down
 
-# 2. Renombra las carpetas .pre-restore-* de vuelta a sus nombres originales
-#    (hazlo manualmente en el servidor o vía ansible)
+# 2. Rename the .pre-restore-* folders back to their original names
+#    (do it manually on the server or via ansible)
 
-# 3. Arranca de nuevo
+# 3. Start again
 just dojo-manage myjournal $SERVER up
 ```
 
-Borra las carpetas `.pre-restore-*` una vez verificada la restauración.
+Delete the `.pre-restore-*` folders once the restore has been verified.
 
-## Recuperación completa cuando falta el directorio del sitio
+### Full recovery when the site directory is missing
 
-Si el directorio `/home/docker/sites/<site>/` ha desaparecido por completo:
+If `/home/docker/sites/<site>/` has disappeared entirely:
 
 ```bash
-# 1. Regenera la definición del sitio desde inventario + vault
+# 1. Regenerate the site definition from inventory + vault
 just dojo-create myjournal $SERVER
 
-# 2. Restaura los datos desde el snapshot
+# 2. Restore the data from the snapshot
 just dojo-restore-snap myjournal $SERVER backup-20241005-143022 \
     confirm=RESTORE-myjournal
 ```
 
 :::info
-`dojo-create` también reescribe `/srv/volumes/files/config/<site>/*` (`config.inc.php`, `db.custom.cnf`, `php.custom.ini`, `apache.conf`). Esos ficheros serán re-restaurados desde el snapshot por el playbook de restore inmediatamente después.
+`dojo-create` also rewrites `/srv/volumes/files/config/<site>/*` (`config.inc.php`, `db.custom.cnf`, `php.custom.ini`, `apache.conf`). Those files are re-restored from the snapshot by the restore playbook immediately afterwards.
 :::
 
-## Extender a otros datasets
+### Extending to other datasets
 
-Si tu sitio usa `plugins.type: volume-plugins` o `volume-themes`, esos volúmenes viven bajo `/srv/volumes/all/<site>/...` y **no** están cubiertos por el snapshot set por defecto. Inclúyelos explícitamente:
+If your site uses `plugins.type: volume-plugins` or `volume-themes`, those volumes live under `/srv/volumes/all/<site>/...` and are **not** covered by the default snapshot set. Include them explicitly:
 
 ```bash
 just dojo-backup-snap myjournal $SERVER \
@@ -187,19 +202,19 @@ just dojo-backup-snap myjournal $SERVER \
 ```
 
 :::warning
-**Los datasets extra se tratan como snapshots/restauraciones de dataset completo:**
+**Extra datasets are handled as whole-dataset snapshots/restores:**
 
-- El backup crea `srv/volumes@backup-<tag>` (el dataset entero).
-- La restauración ejecuta `rsync --delete` desde `srv/volumes/.zfs/snapshot/<tag>/` a `/srv/volumes/` — es decir, restaura **los datos de todos los sitios** en ese dataset, no solo el que pediste.
-- Por tanto, usa `zfs_extra_datasets` **solo** para datasets dedicados a un único sitio. Si un dataset aloja varios sitios, no lo incluyas aquí — restaura manualmente con una ruta por sitio.
+- Backup creates `srv/volumes@backup-<tag>` (the entire dataset).
+- Restore runs `rsync --delete` from `srv/volumes/.zfs/snapshot/<tag>/` to `/srv/volumes/` — i.e., it restores **every site's data** in that dataset, not just the one you asked for.
+- Therefore use `zfs_extra_datasets` **only** for datasets dedicated to a single site. If a dataset holds multiple sites, do not include it here — restore manually with a per-site path.
 :::
 
-La misma variable es respetada por `backup-snap.yml`, `backup-list.yml`, `backup-prune.yml` y `restore-snap.yml`.
+The same variable is honoured by `backup-snap.yml`, `backup-list.yml`, `backup-prune.yml` and `restore-snap.yml`.
 
-## Backup off-site
+### Off-site backup
 
 :::tip
-Los snapshots ZFS viven en el mismo pool. Para backups off-site o cross-pool usa `zfs send | zfs receive` hacia `/srv/backups` o un host remoto:
+ZFS snapshots live on the same pool. For off-site or cross-pool backups use `zfs send | zfs receive` to `/srv/backups` or a remote host:
 
 ```bash
 zfs send srv/volumes/db@backup-20241005-143022 \
@@ -207,55 +222,55 @@ zfs send srv/volumes/db@backup-20241005-143022 \
 ```
 :::
 
-## Referencia de variables
+### Variable reference
 
-| Variable | Default | Descripción |
+| Variable | Default | Description |
 |:--|:--|:--|
-| `snapshot_prefix` | `backup` | Prefijo de la etiqueta del snapshot |
-| `snapshot_tag` | timestamp UTC | Etiqueta específica del snapshot |
-| `consistency` | `none` | Modo de consistencia: `none`, `pause`, `stop` |
-| `keep` | `7` | Número de snapshots a conservar en prune |
-| `zfs_extra_datasets` | `[]` | Datasets adicionales a incluir |
-| `zfs_dataset_db` | derivado | Override del dataset de DB |
-| `zfs_dataset_files` | derivado | Override del dataset de files |
-| `zfs_dataset_logs` | derivado | Override del dataset de logs |
-| `confirm` | — | Token obligatorio para restore: `RESTORE-<site>` |
+| `snapshot_prefix` | `backup` | Snapshot tag prefix |
+| `snapshot_tag` | UTC timestamp | Specific snapshot tag |
+| `consistency` | `none` | Consistency mode: `none`, `pause`, `stop` |
+| `keep` | `7` | Number of snapshots to keep on prune |
+| `zfs_extra_datasets` | `[]` | Additional datasets to include |
+| `zfs_dataset_db` | derived | Override the DB dataset |
+| `zfs_dataset_files` | derived | Override the files dataset |
+| `zfs_dataset_logs` | derived | Override the logs dataset |
+| `confirm` | — | Mandatory token for restore: `RESTORE-<site>` |
 
-## Troubleshooting
+### Troubleshooting (ZFS)
 
-### El snapshot ya existe
+#### Snapshot already exists
 
 ```
 Snapshot backup-20241005-143022 already exists on srv/volumes/db
 ```
 
-Usa una etiqueta distinta con `snapshot_tag=<nueva-etiqueta>`.
+Use a different tag with `snapshot_tag=<new-tag>`.
 
-### Dataset no montado
+#### Dataset not mounted
 
 ```
 Dataset srv/volumes/db is missing or not mounted
 ```
 
-Verifica con `zfs get mounted srv/volumes/db` y móntalo con `zfs mount srv/volumes/db`.
+Check with `zfs get mounted srv/volumes/db` and mount it with `zfs mount srv/volumes/db`.
 
-### zfs no instalado
+#### zfs not installed
 
 ```
 zfs is not installed on <host>
 ```
 
-Instala ZFS en el servidor: `just infra-run install-zfstools $SERVER`.
+Install ZFS on the server: `just infra-run install-zfstools $SERVER`.
 
-### El snapshot no contiene el sitio
+#### Snapshot does not contain the site
 
 ```
 Missing in snapshot: /srv/volumes/db/.zfs/snapshot/<tag>/<site>
 ```
 
-El snapshot fue tomado antes de que el sitio existiera, o pertenece a otro dataset. Lista los snapshots disponibles con `just dojo-backup-list <site> <host>`.
+The snapshot was taken before the site existed, or belongs to another dataset. List available snapshots with `just dojo-backup-list <site> <host>`.
 
-### Faltan ficheros de definición del sitio
+#### Missing site definition files
 
 ```
 Missing site definition file(s) in /home/docker/sites/<site>/:
@@ -264,4 +279,159 @@ Missing site definition file(s) in /home/docker/sites/<site>/:
   - .env
 ```
 
-Estos ficheros no están cubiertos por ZFS. Ejecuta primero `just dojo-create <site> <host>` y luego repite la restauración.
+These files are not covered by ZFS. Run `just dojo-create <site> <host>` first, then retry the restore.
+
+---
+
+## rsync backend (hosts without ZFS)
+
+Hosts without ZFS (typically test/staging such as `cory`) use an alternative backend based on `rsync` that replicates the same philosophy: one snapshot per site, identified by a timestamp, with equivalent consistency modes and safety guards.
+
+### Differences from ZFS
+
+| Aspect | ZFS | rsync |
+|:--|:--|:--|
+| Atomicity | Yes (per dataset) | No — `stop` mode recommended |
+| Includes `docker-compose*.yml` and `.env` | No (GitOps) | Yes (self-contained) |
+| Location | `.zfs/snapshot/<tag>/` | `/srv/backup/<site>/<tag>/` |
+| Restore requires prior `dojo-create` | Yes | No |
+| Space cost | Instant (COW) | Full copy |
+
+### Snapshot layout
+
+```
+/srv/backup/<site>/<timestamp>/
+├── definition/
+│   ├── docker-compose.yml
+│   ├── docker-compose.override.yml
+│   └── .env
+├── db/
+├── config/
+├── logs/
+├── private/          ← omitted when skip_private=true
+├── public/           ← omitted when skip_public=true
+└── SNAPSHOT.info
+```
+
+### Commands
+
+```bash
+# Full backup (stop mode by default)
+just dojo-backup-rsync-snap myjournal $SERVER
+
+# Fast backup: skip private/ and public/ (the biggest folders)
+just dojo-backup-rsync-snap myjournal $SERVER skip_files=true
+
+# Skip only private/
+just dojo-backup-rsync-snap myjournal $SERVER skip_private=true
+
+# Skip only public/
+just dojo-backup-rsync-snap myjournal $SERVER skip_public=true
+
+# Explicit consistency
+just dojo-backup-rsync-snap myjournal $SERVER consistency=pause
+
+# Custom tag
+just dojo-backup-rsync-snap myjournal $SERVER snapshot_tag=pre-upgrade-3_5
+
+# List snapshots
+just dojo-backup-rsync-list myjournal $SERVER
+
+# Prune (keep >= 1)
+just dojo-backup-rsync-prune myjournal $SERVER keep=7
+
+# Restore (confirm token mandatory)
+just dojo-restore-rsync-snap myjournal $SERVER 20241005-143022 \
+    confirm=RESTORE-myjournal
+```
+
+### Consistency modes
+
+| Mode | Action | Recommendation |
+|:--|:--|:--|
+| `none` | No intervention | **Not recommended** on rsync (no atomicity) |
+| `pause` | `docker pause` the app container | Backups without downtime |
+| `stop` (default) | `docker compose stop` (app + db) | Critical backups |
+
+:::warning
+Unlike ZFS, `rsync` does not provide atomic filesystem snapshots. If you copy `db/` while MariaDB is writing, the backup may end up inconsistent. That is why the default is `stop`.
+:::
+
+### Restoration
+
+The rsync restore playbook **also restores the definition files** from `definition/`, since the snapshot includes them. This means:
+
+- If `docker-compose*.yml` or `.env` get corrupted on the server, you can recover them directly from the snapshot.
+- There is no need to run `dojo-create` before the restore.
+
+If the snapshot was created with `skip_files=true` (or `skip_private`/`skip_public`), those folders are not touched on the live site during the restore. The host's `private/` and `public/` folders keep their previous contents.
+
+### `.pre-restore-*` folders
+
+As with the ZFS backend, the restore moves the current data to `<path>.pre-restore-<ts>/` before overwriting. **Do not delete these folders until the restore has been verified.**
+
+### Variable reference (rsync)
+
+| Variable | Default | Description |
+|:--|:--|:--|
+| `snapshot_tag` | UTC timestamp | Snapshot folder name |
+| `backup_root` | `/srv/backup` | Root folder for rsync backups |
+| `skip_files` | `false` | Skip both `private/` and `public/` |
+| `skip_private` | inherits `skip_files` | Skip `private/` only |
+| `skip_public` | inherits `skip_files` | Skip `public/` only |
+| `consistency` | `stop` | Consistency mode: `none`, `pause`, `stop` |
+| `keep` | `7` | Number of snapshots to keep on prune (must be >= 1) |
+| `confirm` | — | Mandatory token for restore: `RESTORE-<site>` |
+
+### Troubleshooting (rsync)
+
+#### Snapshot already exists
+
+```
+Snapshot directory already exists: /srv/backup/<site>/<tag>
+```
+
+Use a different tag with `snapshot_tag=<new-tag>`.
+
+#### rsync not installed
+
+```
+rsync is not installed on <host>
+```
+
+Install it via `just infra-run install-basic $SERVER`.
+
+#### Missing definition files on backup
+
+```
+Missing definition file(s) in /home/docker/sites/<site>/:
+  - docker-compose.yml
+  - docker-compose.override.yml
+  - .env
+```
+
+Unlike the ZFS backend, rsync backups include these files, so they must exist at backup time. Run `just dojo-create <site> <host>` first.
+
+#### Snapshot incomplete on restore
+
+```
+Missing in snapshot: definition
+```
+
+The snapshot folder is corrupted or was created by an older dojo version. Use another snapshot from `just dojo-backup-rsync-list`.
+
+---
+
+## Choosing a backend
+
+| Situation | Backend |
+|:--|:--|
+| Production host with ZFS pool | ZFS |
+| Test/staging host without ZFS | rsync |
+| Need atomic, instant, space-efficient snapshots | ZFS |
+| Need self-contained snapshots including site definition files | rsync |
+| Cross-pool / off-site backup | `zfs send` (ZFS) or `rsync` to remote (both) |
+
+:::tip
+Both backends are fully independent. They can coexist on the same dojo installation: use `dojo-backup-*` (ZFS) for production and `dojo-backup-rsync-*` for test servers.
+:::
