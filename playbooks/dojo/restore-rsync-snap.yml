@@ -1,0 +1,203 @@
+---
+# ============================================================================
+# RESTORE (rsync) - Restore a site from a filesystem snapshot set.
+#
+# DESTRUCTIVE: current data is moved to <path>.pre-restore-<timestamp>/ before
+# restoring. Verify, then delete the .pre-restore-* folders manually.
+#
+# This playbook also restores the site definition files (docker-compose*.yml
+# and .env) from the snapshot's definition/ folder, since rsync backups
+# include them by design. This is a conscious difference from the ZFS version:
+# rsync snapshots are self-contained.
+#
+# If the snapshot has been created with skip_files / skip_private / skip_public,
+# those folders are skipped during restore and left as-is on the live site.
+#
+# Usage:
+#   just dojo-restore-rsync-snap <site> <host> <timestamp> confirm=RESTORE-<site>
+# ============================================================================
+- name: "RESTORE (rsync) - Restore a site from a filesystem snapshot"
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    hostName: "{{ host }}"
+    siteParam: "{{ site }}"
+    backupRoot: "{{ backup_root | default('/srv/backup') }}"
+    snapshotTagRaw: "{{ snapshot_tag | default('') }}"
+    backupSuffix: "pre-restore-{{ lookup('pipe','date -u +%Y%m%d-%H%M%S') }}"
+    confirmToken: "{{ confirm | default('') }}"
+  vars_files:
+    - ./configs/dojo.yml
+    - ./configs/secret.yml
+    - ./inventory/sites/base-{{ hostName }}.yml
+  tasks:
+    - name: "INIT - Load allVars"
+      include_tasks: ../setAllVars.yml
+      vars: { mode: site, param: "{{ siteParam }}" }
+
+    - name: "INIT - Resolve paths"
+      set_fact:
+        siteDir:       "{{ allVars.path.base.sites }}/{{ allVars.dojo.id }}"
+        snapshotDir:   "{{ backupRoot }}/{{ allVars.dojo.id }}/{{ snapshotTagRaw }}"
+        dbTarget:      "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id }}"
+        configTarget:  "{{ allVars.path.files.config }}/{{ allVars.dojo.id }}"
+        privateTarget: "{{ allVars.path.files.private }}/{{ allVars.dojo.id }}"
+        publicTarget:  "{{ allVars.path.files.public }}/{{ allVars.dojo.id }}"
+        logsTarget:    "{{ allVars.path.volumes.logs }}/{{ allVars.dojo.id }}"
+
+    - name: "SAFETY - Require explicit confirmation"
+      fail:
+        msg: |
+          Restore is DESTRUCTIVE.
+          Pass:  confirm=RESTORE-{{ allVars.dojo.id }}
+          Run:   just dojo-restore-rsync-snap {{ site }} {{ host }} {{ snapshotTagRaw }} confirm=RESTORE-{{ allVars.dojo.id }}
+      when: confirmToken != ('RESTORE-' ~ allVars.dojo.id)
+
+    - name: "CHECK - snapshot_tag provided"
+      fail: { msg: "snapshot_tag is required" }
+      when: snapshotTagRaw | length == 0
+
+    - name: "CHECK - Snapshot directory exists"
+      stat: { path: "{{ snapshotDir }}" }
+      register: snapStat
+
+    - name: "FAIL - Snapshot not found"
+      fail: { msg: "Snapshot not found: {{ snapshotDir }}" }
+      when: not snapStat.stat.exists
+
+    - name: "CHECK - Snapshot contains required subfolders"
+      stat:
+        path: "{{ snapshotDir }}/{{ item }}"
+      loop:
+        - definition
+        - db
+        - config
+      register: snapSub
+
+    - name: "FAIL - Snapshot incomplete"
+      fail:
+        msg: "Missing in snapshot: {{ item.item }}"
+      loop: "{{ snapSub.results }}"
+      when: not item.stat.exists
+
+    - name: "READ - Snapshot metadata"
+      slurp:
+        src: "{{ snapshotDir }}/SNAPSHOT.info"
+      register: snapInfo
+      failed_when: false
+      when: (snapshotDir ~ '/SNAPSHOT.info') is exists
+
+    - name: "REPORT - Snapshot metadata"
+      debug:
+        msg: "{{ (snapInfo.content | default('') | b64decode).splitlines() }}"
+      when: snapInfo.content is defined
+
+    # ---------- Stop containers -------------------------------------------
+    - name: "STOP - Bring site containers down"
+      shell:
+        cmd: docker compose down
+        chdir: "{{ siteDir }}"
+      register: stopResult
+      changed_when: true
+
+    # ---------- Restore definition files ----------------------------------
+    - name: "RESTORE - Site definition files"
+      copy:
+        src: "{{ snapshotDir }}/definition/{{ item }}"
+        dest: "{{ siteDir }}/{{ item }}"
+        remote_src: yes
+        mode: "0600"
+      loop:
+        - docker-compose.yml
+        - docker-compose.override.yml
+        - .env
+
+    # ---------- Move current data aside -----------------------------------
+    - name: "SAFETY - Move current data aside (.{{ backupSuffix }})"
+      shell: |
+        set -e
+        ts="{{ backupSuffix }}"
+        for p in \
+          "{{ dbTarget }}" \
+          "{{ configTarget }}" \
+          "{{ privateTarget }}" \
+          "{{ publicTarget }}" \
+          "{{ logsTarget }}"
+        do
+          if [ -e "$p" ]; then mv "$p" "${p}.${ts}"; fi
+          mkdir -p "$p"
+        done
+      changed_when: true
+
+    # ---------- Restore data ----------------------------------------------
+    - name: "RESTORE - Database"
+      shell: "rsync -aHAX --delete '{{ snapshotDir }}/db/' '{{ dbTarget }}/'"
+      changed_when: true
+
+    - name: "RESTORE - Config"
+      shell: "rsync -aHAX --delete '{{ snapshotDir }}/config/' '{{ configTarget }}/'"
+      changed_when: true
+
+    - name: "RESTORE - Logs"
+      shell: "rsync -aHAX --delete '{{ snapshotDir }}/logs/' '{{ logsTarget }}/'"
+      changed_when: true
+
+    - name: "RESTORE - Private files"
+      shell: "rsync -aHAX --delete '{{ snapshotDir }}/private/' '{{ privateTarget }}/'"
+      changed_when: true
+      when: (snapshotDir ~ '/private') is exists
+
+    - name: "RESTORE - Public files"
+      shell: "rsync -aHAX --delete '{{ snapshotDir }}/public/' '{{ publicTarget }}/'"
+      changed_when: true
+      when: (snapshotDir ~ '/public') is exists
+
+    # ---------- Fix ownership / permissions -------------------------------
+    - name: "FIX - DB ownership / mode"
+      file:
+        path: "{{ dbTarget }}"
+        state: directory
+        recurse: yes
+        owner: "{{ allVars.volumes.db.owner | default(allVars.user.run) }}"
+        group: "{{ allVars.volumes.db.group | default(allVars.user.group) }}"
+        mode: "{{ allVars.volumes.db.mode | default('0744') }}"
+
+    - name: "FIX - App files ownership / mode"
+      file:
+        path: "{{ item }}"
+        state: directory
+        recurse: yes
+        owner: "{{ allVars.volumes.app.owner | default(allVars.user.run) }}"
+        group: "{{ allVars.volumes.app.group | default(allVars.user.group) }}"
+        mode: "{{ allVars.volumes.app.mode | default('0744') }}"
+      loop:
+        - "{{ configTarget }}"
+        - "{{ publicTarget }}"
+        - "{{ privateTarget }}"
+
+    - name: "FIX - Logs ownership / mode"
+      file:
+        path: "{{ logsTarget }}"
+        state: directory
+        recurse: yes
+        owner: "{{ allVars.volumes.app.owner | default(allVars.user.run) }}"
+        group: "{{ allVars.volumes.app.group | default(allVars.user.group) }}"
+
+    # ---------- Start -----------------------------------------------------
+    - name: "START - Bring site containers up"
+      shell:
+        cmd: docker compose up -d
+        chdir: "{{ siteDir }}"
+      register: startResult
+
+    - name: "REPORT - Restore finished"
+      debug:
+        msg:
+          - "Site:      {{ allVars.dojo.id }}"
+          - "Snapshot:  {{ snapshotTagRaw }}"
+          - "Source:    {{ snapshotDir }}"
+          - "Data:      db, config, logs {% if (snapshotDir ~ '/private') is exists %}, private{% endif %}{% if (snapshotDir ~ '/public') is exists %}, public{% endif %}"
+          - "Definition: restored from snapshot (docker-compose*.yml, .env)"
+          - "Rollback:  stop the containers and rename .{{ backupSuffix }} back."
+          - "Cleanup:   rm -rf {{ dbTarget }}.{{ backupSuffix }} (and siblings) once verified."
