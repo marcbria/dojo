@@ -11,6 +11,7 @@ dojo-tldr:
     # $ just dojo-help                                      # Just in case you like to read
     # $ just dojo-list                                      # For a detailed list of actions
 
+    # General usage
     # $ just dojo-create $JOURNAL $SERVER                   # Get a full OJS/OMP installed (define vars first)
     # $ just dojo-run config $JOURNAL $SERVER               # Creates a config.inc.php for journalName.
     # $ just dojo-run config.php $JOURNAL $SERVER           # Creates a php.custom.ini for journalName.
@@ -24,6 +25,13 @@ dojo-tldr:
     # $ just dojo-backup-list $JOURNAL $SERVER              # List available snapshots.
     # $ just dojo-backup-snap $JOURNAL $SERVER consistency=pause   # Snap with app container paused (safer).
     # $ just dojo-restore-snap $JOURNAL $SERVER <snap> confirm=RESTORE-$JOURNAL
+
+    # Backup & restore (rsync — for hosts without ZFS)
+    # $ just dojo-backup-rsync-snap $JOURNAL $SERVER                     # Full backup.
+    # $ just dojo-backup-rsync-snap $JOURNAL $SERVER skip_files=true     # Skip private+public (fast).
+    # $ just dojo-backup-rsync-list $JOURNAL $SERVER                     # List snapshots.
+    # $ just dojo-backup-rsync-prune $JOURNAL $SERVER keep=7             # Prune old ones.
+    # $ just dojo-restore-rsync-snap $JOURNAL $SERVER <ts> confirm=RESTORE-$JOURNAL
 
     @ echo ""
     # > To get a commented list of actions use "just dojo"
@@ -191,6 +199,10 @@ dojo-manage site host command *args:
 dojo-exec site host cmd:
     ansible -i {{ inventoryPath }}/hosts.yml {{ host }} -b -m shell -a "{{ cmd }}"
 
+# ----------------------------------------------------------------------------
+# ZFS SNAPSHOTS — for production servers without ZFS 
+# ----------------------------------------------------------------------------
+
 # Creates a ZFS snapshot set (db, files, logs) for a site.
 dojo-backup-snap site host *args:
     ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
@@ -217,5 +229,41 @@ dojo-restore-snap site host snapshot_tag *args:
     ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
       --vault-password-file {{ vaultKey }} \
       {{ dojoPath }}/restore-snap.yml \
+      -e "host={{ host }}" -e "site={{ site }}" \
+      -e "snapshot_tag={{ snapshot_tag }}" {{ args }}
+
+
+# ----------------------------------------------------------------------------
+# RSYNC BACKEND — for hosts without ZFS (test/staging)
+# ----------------------------------------------------------------------------
+
+# Creates a filesystem snapshot for a site under /srv/backup/<site>/<timestamp>.
+# Includes site definition files (docker-compose*.yml, .env).
+# Params: snapshot_tag, skip_files, skip_private, skip_public, consistency_mode, backup_root
+dojo-backup-rsync-snap site host *args:
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+      --vault-password-file {{ vaultKey }} \
+      {{ dojoPath }}/backup-rsync-snap.yml \
+      -e "host={{ host }}" -e "site={{ site }}" {{ args }}
+
+# Lists available rsync snapshots for a site.
+dojo-backup-rsync-list site host *args:
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+      --vault-password-file {{ vaultKey }} \
+      {{ dojoPath }}/backup-rsync-list.yml \
+      -e "host={{ host }}" -e "site={{ site }}" {{ args }}
+
+# Prunes old rsync snapshots (keep=N, default 7, must be >= 1).
+dojo-backup-rsync-prune site host *args:
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+      --vault-password-file {{ vaultKey }} \
+      {{ dojoPath }}/backup-rsync-prune.yml \
+      -e "host={{ host }}" -e "site={{ site }}" {{ args }}
+
+# Restores a site from an rsync snapshot. DESTRUCTIVE — requires confirm=RESTORE-<site>.
+dojo-restore-rsync-snap site host snapshot_tag *args:
+    ansible-playbook -i {{ inventoryPath }}/hosts.yml --limit {{ host }} \
+      --vault-password-file {{ vaultKey }} \
+      {{ dojoPath }}/restore-rsync-snap.yml \
       -e "host={{ host }}" -e "site={{ site }}" \
       -e "snapshot_tag={{ snapshot_tag }}" {{ args }}
