@@ -1,0 +1,76 @@
+---
+# ============================================================================
+# BACKUP (rsync) - Prune old filesystem snapshots for a site.
+#
+# Keeps the N most recent timestamp folders under /srv/backup/<site>/,
+# removes the rest. Refuses to run with keep < 1.
+#
+# Usage:
+#   just dojo-backup-rsync-prune <site> <host>
+#   just dojo-backup-rsync-prune <site> <host> keep=14
+# ============================================================================
+- name: "BACKUP (rsync) - Prune old snapshots for a site"
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    hostName: "{{ host }}"
+    siteParam: "{{ site }}"
+    backupRoot: "{{ backup_root | default('/srv/backup') }}"
+    keepCount:  "{{ keep | default(7) | int }}"
+  vars_files:
+    - ./configs/dojo.yml
+    - ./configs/secret.yml
+    - ./inventory/sites/base-{{ hostName }}.yml
+  tasks:
+    - name: "INIT - Load allVars"
+      include_tasks: ../setAllVars.yml
+      vars: { mode: site, param: "{{ siteParam }}" }
+
+    - name: "INIT - Resolve snapshot directory"
+      set_fact:
+        snapshotBase: "{{ backupRoot }}/{{ allVars.dojo.id }}"
+
+    - name: "SAFETY - keep must be >= 1"
+      fail:
+        msg: >-
+          keep={{ keepCount }} — refusing to prune with keep<1
+          (this would delete every snapshot for {{ allVars.dojo.id }}).
+      when: keepCount | int < 1
+
+    - name: "CHECK - Snapshot root exists"
+      stat: { path: "{{ snapshotBase }}" }
+      register: snapBaseStat
+
+    - name: "SKIP - No snapshots to prune"
+      debug: { msg: "No snapshots found under {{ snapshotBase }} — nothing to do." }
+      when: not snapBaseStat.stat.exists
+
+    - name: "READ - List snapshots (oldest first)"
+      shell: "ls -1 '{{ snapshotBase }}' | sort"
+      register: snapList
+      changed_when: false
+      when: snapBaseStat.stat.exists
+
+    - name: "COMPUTE - Snapshots to delete"
+      set_fact:
+        toDelete: >-
+          {{ (snapList.stdout_lines | default([]))[:-(keepCount)]
+             if (snapList.stdout_lines | default([]) | length) > keepCount
+             else [] }}
+      when: snapBaseStat.stat.exists
+
+    - name: "REPORT - Candidate list"
+      debug: { msg: "{{ toDelete | default([]) }}" }
+      when: snapBaseStat.stat.exists
+
+    - name: "DESTROY - Remove old snapshots"
+      file:
+        path: "{{ snapshotBase }}/{{ item }}"
+        state: absent
+      loop: "{{ toDelete | default([]) }}"
+
+    - name: "REPORT - Summary"
+      debug:
+        msg: "Deleted {{ toDelete | default([]) | length }} snapshot(s) — kept last {{ keepCount }}"
+      when: snapBaseStat.stat.exists

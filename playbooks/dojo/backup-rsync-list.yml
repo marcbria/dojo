@@ -1,0 +1,61 @@
+---
+# ============================================================================
+# BACKUP (rsync) - List filesystem snapshots for a site.
+#
+# Usage:
+#   just dojo-backup-rsync-list <site> <host>
+# ============================================================================
+- name: "BACKUP (rsync) - List snapshots for a site"
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    hostName: "{{ host }}"
+    siteParam: "{{ site }}"
+    backupRoot: "{{ backup_root | default('/srv/backup') }}"
+  vars_files:
+    - ./configs/dojo.yml
+    - ./configs/secret.yml
+    - ./inventory/sites/base-{{ hostName }}.yml
+  tasks:
+    - name: "INIT - Load allVars"
+      include_tasks: ../setAllVars.yml
+      vars: { mode: site, param: "{{ siteParam }}" }
+
+    - name: "INIT - Resolve snapshot directory"
+      set_fact:
+        snapshotBase: "{{ backupRoot }}/{{ allVars.dojo.id }}"
+
+    - name: "CHECK - Snapshot root exists"
+      stat: { path: "{{ snapshotBase }}" }
+      register: snapBaseStat
+
+    - name: "READ - List snapshots"
+      shell: |
+        if [ -d '{{ snapshotBase }}' ]; then
+          for d in '{{ snapshotBase }}'/*/; do
+            [ -d "$d" ] || continue
+            tag=$(basename "$d")
+            size=$(du -sh "$d" 2>/dev/null | awk '{print $1}')
+            files=""
+            [ -d "$d/private" ] && files="${files}private "
+            [ -d "$d/public" ]  && files="${files}public "
+            printf "%-24s %-8s %s\n" "$tag" "$size" "${files:-—}"
+          done
+        fi
+      register: snapList
+      changed_when: false
+
+    - name: "REPORT - Snapshots"
+      debug:
+        msg: |
+          Site:     {{ allVars.dojo.id }}
+          Root:     {{ snapshotBase }}
+          {% if snapList.stdout_lines | length == 0 %}
+            (no snapshots)
+          {% else %}
+          TAG                      SIZE     INCLUDES
+          ----------------------   ------   ---------------------
+          {% for line in snapList.stdout_lines %}  {{ line }}
+          {% endfor %}
+          {% endif %}
