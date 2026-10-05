@@ -61,12 +61,15 @@
       include_tasks: ../setAllVars.yml
       vars: { mode: site, param: "{{ siteParam }}" }
 
-    - name: "INIT - Freeze snapshot tag and resolve snapshot directory"
+    - name: "INIT - Freeze snapshot tag"
       set_fact:
         snapshotTag: >-
           {{ snapshotTagOverride
              if snapshotTagOverride | length > 0
              else lookup('pipe', 'date -u +%Y%m%d-%H%M%S') }}
+
+    - name: "INIT - Resolve snapshot directory"
+      set_fact:
         snapshotDir: "{{ backupRoot }}/{{ allVars.dojo.id }}/{{ snapshotTag }}"
 
     - name: "INIT - Resolve source paths"
