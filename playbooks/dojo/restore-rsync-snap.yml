@@ -228,22 +228,22 @@
     # Only the folders that WILL be overwritten are moved aside. Folders
     # that the snapshot does not contain (e.g. private/public in a -quick
     # snapshot) are left intact on the live site.
+    #
+    # Uses a portable /bin/sh construct (dash-compatible): a here-string
+    # with "src|dst" pairs consumed by a while-read loop. Avoids bash-only
+    # features that fail under /bin/sh.
     - name: "SAFETY - Move current data aside ({{ backupSuffix }})"
       shell: |
         set -e
-        declare -A map=(
-          ["{{ dbTarget }}"]="{{ dbPreRestore }}"
-          ["{{ configTarget }}"]="{{ configPreRestore }}"
-          ["{{ logsTarget }}"]="{{ logsPreRestore }}"
-        )
-        {% if privateInSnap.stat.exists %}
-        map["{{ privateTarget }}"]="{{ privatePreRestore }}"
-        {% endif %}
-        {% if publicInSnap.stat.exists %}
-        map["{{ publicTarget }}"]="{{ publicPreRestore }}"
-        {% endif %}
-        for src in "${!map[@]}"; do
-          dst="${map[$src]}"
+        pairs="
+          {{ dbTarget }}|{{ dbPreRestore }}
+          {{ configTarget }}|{{ configPreRestore }}
+          {{ logsTarget }}|{{ logsPreRestore }}
+{% if privateInSnap.stat.exists %}          {{ privateTarget }}|{{ privatePreRestore }}
+{% endif %}{% if publicInSnap.stat.exists %}          {{ publicTarget }}|{{ publicPreRestore }}
+{% endif %}        "
+        echo "$pairs" | while IFS='|' read -r src dst; do
+          [ -z "$src" ] && continue
           if [ -e "$src" ]; then mv "$src" "$dst"; fi
           mkdir -p "$src"
         done

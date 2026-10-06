@@ -175,18 +175,21 @@
         - "{{ allVars.path.volumes.logs }}/_pre-restore"
 
     # ---------- Move current data aside -----------------------------------
+    # Uses a portable /bin/sh construct (dash-compatible): a here-string
+    # with "src|dst" pairs consumed by a while-read loop. Avoids bash-only
+    # features (declare -A, arrays) that fail under /bin/sh.
     - name: "SAFETY - Move current data aside ({{ backupSuffix }})"
       shell: |
         set -e
-        declare -A map=(
-          ["{{ dbTarget }}"]="{{ dbPreRestore }}"
-          ["{{ configTarget }}"]="{{ configPreRestore }}"
-          ["{{ privateTarget }}"]="{{ privatePreRestore }}"
-          ["{{ publicTarget }}"]="{{ publicPreRestore }}"
-          ["{{ logsTarget }}"]="{{ logsPreRestore }}"
-        )
-        for src in "${!map[@]}"; do
-          dst="${map[$src]}"
+        pairs="
+          {{ dbTarget }}|{{ dbPreRestore }}
+          {{ configTarget }}|{{ configPreRestore }}
+          {{ privateTarget }}|{{ privatePreRestore }}
+          {{ publicTarget }}|{{ publicPreRestore }}
+          {{ logsTarget }}|{{ logsPreRestore }}
+        "
+        echo "$pairs" | while IFS='|' read -r src dst; do
+          [ -z "$src" ] && continue
           if [ -e "$src" ]; then mv "$src" "$dst"; fi
           mkdir -p "$src"
         done
