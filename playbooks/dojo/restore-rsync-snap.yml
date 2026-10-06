@@ -15,6 +15,11 @@
 # The move-aside step only touches folders that are going to be overwritten,
 # so partial snapshots (e.g. -quick) never wipe out private/ or public/.
 #
+# Recovery when the site directory is missing:
+#   The STOP phase falls back to 'docker stop' by container name if the
+#   site directory no longer exists, so a restore from a self-contained
+#   rsync snapshot works even after /home/docker/sites/<site>/ is gone.
+#
 # Usage:
 #   just dojo-restore-rsync-snap <site> <host> <timestamp> confirm=RESTORE-<site>
 # ============================================================================
@@ -47,6 +52,8 @@
         privateTarget: "{{ allVars.path.files.private }}/{{ allVars.dojo.id }}"
         publicTarget:  "{{ allVars.path.files.public }}/{{ allVars.dojo.id }}"
         logsTarget:    "{{ allVars.path.volumes.logs }}/{{ allVars.dojo.id }}"
+        dbContainer:   "{{ allVars.dojo.tool }}_db_{{ allVars.dojo.id }}"
+        appContainer:  "{{ allVars.dojo.tool }}_app_{{ allVars.dojo.id }}"
 
     - name: "SAFETY - Require explicit confirmation"
       fail:
@@ -111,14 +118,43 @@
       when: snapInfo.content is defined
 
     # ---------- Stop containers -------------------------------------------
-    - name: "STOP - Bring site containers down"
+    # Two paths:
+    #   - siteDir exists  → docker compose down (normal case)
+    #   - siteDir missing → docker stop by container name (self-contained
+    #                       recovery after the site directory was lost)
+    - name: "CHECK - Site directory exists"
+      stat: { path: "{{ siteDir }}" }
+      register: siteDirStat
+
+    - name: "STOP - Bring site containers down (site directory present)"
       shell:
         cmd: docker compose down
         chdir: "{{ siteDir }}"
       register: stopResult
       changed_when: true
+      when: siteDirStat.stat.exists
 
-    # ---------- Restore definition files ----------------------------------
+    - name: "STOP - Fallback: stop containers by name (site directory missing)"
+      shell: |
+        set -e
+        for c in "{{ dbContainer }}" "{{ appContainer }}"; do
+          if docker ps --format '{{ '{{' }}.Names{{ '}}' }}' | grep -qx "$c"; then
+            docker stop "$c"
+          fi
+        done
+      register: stopFallbackResult
+      changed_when: "'\n' in (stopFallbackResult.stdout | default('')) or stopFallbackResult.stdout | length > 0"
+      when: not siteDirStat.stat.exists
+
+    # ---------- Recreate site directory + definition files ----------------
+    - name: "RESTORE - Ensure site directory exists"
+      file:
+        path: "{{ siteDir }}"
+        state: directory
+        mode: "0744"
+        owner: "{{ allVars.user.run }}"
+        group: "{{ allVars.user.group }}"
+
     - name: "RESTORE - Site definition files"
       copy:
         src: "{{ snapshotDir }}/definition/{{ item }}"
