@@ -35,6 +35,40 @@ On ZFS hosts these paths live on three shared datasets (`srv/volumes/db`, `srv/v
 On ZFS hosts, these datasets are **shared by every site on the host**. A snapshot captures the whole dataset, not a single site. Restoration extracts only the `<site>/` subfolder, so other sites are never affected.
 :::
 
+### Pre-restore backups (`_pre-restore/`)
+
+Both backends move the live data aside **before** overwriting it during a restore. Instead of scattering `<site>.pre-restore-<ts>` folders at the top of each dataset (which pollutes listings and complicates bulk cleanup), the pre-restore data is stored in a dedicated subfolder:
+
+```
+/srv/volumes/db/
+├── anuarioiet/                                 ← live data
+├── othersite/
+└── _pre-restore/
+    └── anuarioiet-<timestamp>/                 ← previous data
+```
+
+- The `_pre-restore/` folder name starts with `_` so it sorts first and never collides with a site name.
+- Inside, each entry is `<site>-<timestamp>`, matching the naming convention used by the rsync snapshots.
+- Bulk cleanup becomes a single command:
+
+  ```bash
+  rm -rf /srv/volumes/db/_pre-restore/anuarioiet-* \
+         /srv/volumes/files/config/_pre-restore/anuarioiet-* \
+         /srv/volumes/files/private/_pre-restore/anuarioiet-* \
+         /srv/volumes/files/public/_pre-restore/anuarioiet-* \
+         /srv/volumes/logs/_pre-restore/anuarioiet-*
+  ```
+
+:::danger
+**The `_pre-restore/` folders are your only safety net during a restore.**
+
+The data moved aside is **created after the snapshot is taken**, so it is **not backed up anywhere**. If a subsequent restore step fails and someone cleans those folders to free space, there is **no way back**.
+
+- Never delete them automatically.
+- Delete them only after verifying the site is healthy.
+- If in doubt, keep them; a single site's `files/config` is usually tiny.
+:::
+
 ---
 
 ## ZFS backend
@@ -145,20 +179,10 @@ The `restore-snap.yml` playbook runs the following steps in order:
 
 1. **Validation** — Confirms the snapshot exists on every dataset and contains `<site>/`.
 2. **Stop** — `docker compose down` on the site (other sites keep running).
-3. **Move aside** — Moves current data to `<path>.pre-restore-<ts>/`.
+3. **Move aside** — Moves current data to `<dataset>/_pre-restore/<site>-<ts>/`.
 4. **Restore** — `rsync -aHAX --delete` from `.zfs/snapshot/<tag>/...` to the live path.
 5. **Permissions** — Fixes ownership/mode using `volumes.db.*` and `volumes.app.*` (fallback to `user.run`/`user.group`).
 6. **Start** — `docker compose up -d`.
-
-:::danger
-**The `.pre-restore-*` folders are your only safety net.**
-
-The data moved aside in step 3 is **created after the snapshot**, so it is **not backed up anywhere**. If the subsequent `rsync` fails and someone cleans those folders to free space, there is **no way back**.
-
-- Never delete them automatically.
-- Delete them only after verifying the site is healthy.
-- If in doubt, keep them; a single site's `files/config` is usually tiny.
-:::
 
 ### Rollback after a failed restore
 
@@ -166,14 +190,14 @@ The data moved aside in step 3 is **created after the snapshot**, so it is **not
 # 1. Stop the site containers
 just dojo-manage myjournal $SERVER down
 
-# 2. Rename the .pre-restore-* folders back to their original names
-#    (do it manually on the server or via ansible)
+# 2. Rename the _pre-restore folders back to their original names
+#    (do it manually on the server)
 
 # 3. Start again
 just dojo-manage myjournal $SERVER up
 ```
 
-Delete the `.pre-restore-*` folders once the restore has been verified.
+Delete the `_pre-restore/<site>-<ts>/` folders once the restore has been verified.
 
 ### Full recovery when the site directory is missing
 
@@ -300,33 +324,20 @@ The rsync backend uses `/srv/backup/<site>/` (singular), which is independent fr
 ### Commands
 
 ```bash
-# Full backup (stop mode by default)
+# Full backup (stop mode by default, tag ends with -full)
 just dojo-backup-rsync-snap myjournal $SERVER
 
-# Fast backup: skip private/ and public/ (the biggest folders)
-just dojo-backup-rsync-snap myjournal $SERVER skip_files=true
-
-# Skip only private/
-just dojo-backup-rsync-snap myjournal $SERVER skip_private=true
-
-# Skip only public/
-just dojo-backup-rsync-snap myjournal $SERVER skip_public=true
-
-# Explicit consistency
-just dojo-backup-rsync-snap myjournal $SERVER consistency=pause
-
-# Custom tag
-just dojo-backup-rsync-snap myjournal $SERVER snapshot_tag=pre-upgrade-3_5
+# Fast backup: skip private/ and public/ (tag ends with -quick)
+just dojo-backup-rsync-snap myjournal $SERVER true
 
 # List snapshots
 just dojo-backup-rsync-list myjournal $SERVER
 
 # Prune (keep >= 1)
-just dojo-backup-rsync-prune myjournal $SERVER keep=7
+just dojo-backup-rsync-prune myjournal $SERVER 7
 
 # Restore (confirm token mandatory)
-just dojo-restore-rsync-snap myjournal $SERVER 20241005-143022 \
-    confirm=RESTORE-myjournal
+just dojo-restore-rsync-snap myjournal $SERVER <tag> RESTORE-myjournal
 ```
 
 ### Consistency modes
@@ -350,9 +361,9 @@ The rsync restore playbook **also restores the definition files** from `definiti
 
 If the snapshot was created with `skip_files=true` (or `skip_private`/`skip_public`), those folders are not touched on the live site during the restore. The host's `private/` and `public/` folders keep their previous contents.
 
-### `.pre-restore-*` folders
+### `_pre-restore/` folders
 
-As with the ZFS backend, the restore moves the current data to `<path>.pre-restore-<ts>/` before overwriting. **Do not delete these folders until the restore has been verified.**
+As with the ZFS backend, the restore moves the current data to `<dataset>/_pre-restore/<site>-<ts>/` before overwriting. **Do not delete these folders until the restore has been verified.**
 
 ### Variable reference (rsync)
 

@@ -2,8 +2,14 @@
 # ============================================================================
 # RESTORE (rsync) - Restore a site from a filesystem snapshot set.
 #
-# DESTRUCTIVE: current data is moved to <path>.pre-restore-<timestamp>/ before
-# restoring. Verify, then delete the .pre-restore-* folders manually.
+# DESTRUCTIVE: current data is moved to <dataset>/_pre-restore/<site>-<ts>/
+# before restoring. Verify, then delete the _pre-restore tree manually.
+#
+# The pre-restore backups live in a dedicated subfolder of each dataset so
+# the top level stays clean:
+#
+#   /srv/volumes/db/anuarioiet/                       ← live data
+#   /srv/volumes/db/_pre-restore/anuarioiet-<ts>/     ← previous data
 #
 # This playbook also restores the site definition files (docker-compose*.yml
 # and .env) from the snapshot's definition/ folder, since rsync backups
@@ -35,7 +41,7 @@
     siteParam: "{{ site }}"
     backupRoot: "{{ backup_root | default('/srv/backup') }}"
     snapshotTagRaw: "{{ snapshot_tag | default('') }}"
-    backupSuffix: "pre-restore-{{ lookup('pipe','date -u +%Y%m%d-%H%M%S') }}"
+    backupSuffix: "{{ lookup('pipe','date -u +%Y%m%d-%H%M%S') }}"
     confirmToken: "{{ confirm | default('') }}"
   vars_files:
     - ./configs/dojo.yml
@@ -58,6 +64,14 @@
         volumesAll:    "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}"
         dbContainer:   "{{ allVars.dojo.tool }}_db_{{ allVars.dojo.id }}"
         appContainer:  "{{ allVars.dojo.tool }}_app_{{ allVars.dojo.id }}"
+
+    - name: "INIT - Resolve pre-restore targets"
+      set_fact:
+        dbPreRestore:      "{{ allVars.path.volumes.db }}/_pre-restore/{{ allVars.dojo.id }}-{{ backupSuffix }}"
+        configPreRestore:  "{{ allVars.path.files.config }}/_pre-restore/{{ allVars.dojo.id }}-{{ backupSuffix }}"
+        privatePreRestore: "{{ allVars.path.files.private }}/_pre-restore/{{ allVars.dojo.id }}-{{ backupSuffix }}"
+        publicPreRestore:  "{{ allVars.path.files.public }}/_pre-restore/{{ allVars.dojo.id }}-{{ backupSuffix }}"
+        logsPreRestore:    "{{ allVars.path.volumes.logs }}/_pre-restore/{{ allVars.dojo.id }}-{{ backupSuffix }}"
 
     - name: "SAFETY - Require explicit confirmation"
       fail:
@@ -122,10 +136,6 @@
       when: snapInfo.content is defined
 
     # ---------- Stop containers -------------------------------------------
-    # Two paths:
-    #   - siteDir exists  → docker compose down (normal case)
-    #   - siteDir missing → docker stop by container name (self-contained
-    #                       recovery after the site directory was lost)
     - name: "CHECK - Site directory exists"
       stat: { path: "{{ siteDir }}" }
       register: siteDirStat
@@ -171,10 +181,6 @@
         - .env
 
     # ---------- Ensure the volume symlink tree exists ---------------------
-    # Normally created by dojo-create (site-folders.yml). Recreated here so
-    # the rsync restore is self-contained even when the whole site directory
-    # was lost. Without this, docker compose would fail to mount files like
-    # volumes/config/db.custom.cnf.
     - name: "RESTORE - Ensure volumes/all/<site> directory exists"
       file:
         path: "{{ volumesAll }}"
@@ -203,24 +209,43 @@
         state: link
         force: yes
 
+    # ---------- Ensure _pre-restore directories exist ---------------------
+    - name: "RESTORE - Ensure _pre-restore directories exist"
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0744"
+        owner: "{{ allVars.user.run }}"
+        group: "{{ allVars.user.group }}"
+      loop:
+        - "{{ allVars.path.volumes.db }}/_pre-restore"
+        - "{{ allVars.path.files.config }}/_pre-restore"
+        - "{{ allVars.path.files.private }}/_pre-restore"
+        - "{{ allVars.path.files.public }}/_pre-restore"
+        - "{{ allVars.path.volumes.logs }}/_pre-restore"
+
     # ---------- Move current data aside -----------------------------------
     # Only the folders that WILL be overwritten are moved aside. Folders
     # that the snapshot does not contain (e.g. private/public in a -quick
     # snapshot) are left intact on the live site.
-    - name: "SAFETY - Move current data aside (.{{ backupSuffix }})"
+    - name: "SAFETY - Move current data aside ({{ backupSuffix }})"
       shell: |
         set -e
-        ts="{{ backupSuffix }}"
-        targets="{{ dbTarget }} {{ configTarget }} {{ logsTarget }}"
+        declare -A map=(
+          ["{{ dbTarget }}"]="{{ dbPreRestore }}"
+          ["{{ configTarget }}"]="{{ configPreRestore }}"
+          ["{{ logsTarget }}"]="{{ logsPreRestore }}"
+        )
         {% if privateInSnap.stat.exists %}
-        targets="$targets {{ privateTarget }}"
+        map["{{ privateTarget }}"]="{{ privatePreRestore }}"
         {% endif %}
         {% if publicInSnap.stat.exists %}
-        targets="$targets {{ publicTarget }}"
+        map["{{ publicTarget }}"]="{{ publicPreRestore }}"
         {% endif %}
-        for p in $targets; do
-          if [ -e "$p" ]; then mv "$p" "${p}.${ts}"; fi
-          mkdir -p "$p"
+        for src in "${!map[@]}"; do
+          dst="${map[$src]}"
+          if [ -e "$src" ]; then mv "$src" "$dst"; fi
+          mkdir -p "$src"
         done
       changed_when: true
 
@@ -310,5 +335,5 @@
           - "Data:      db, config, logs{% if privateInSnap.stat.exists %}, private{% endif %}{% if publicInSnap.stat.exists %}, public{% endif %}"
           - "Preserved: {% if not privateInSnap.stat.exists %}private {% endif %}{% if not publicInSnap.stat.exists %}public{% endif %} (left untouched)"
           - "Definition: restored from snapshot (docker-compose*.yml, .env)"
-          - "Rollback:  stop the containers and rename .{{ backupSuffix }} back."
-          - "Cleanup:   rm -rf {{ dbTarget }}.{{ backupSuffix }} (and siblings) once verified."
+          - "Rollback:  move /srv/volumes/<dataset>/_pre-restore/{{ allVars.dojo.id }}-{{ backupSuffix }} back to its original path"
+          - "Cleanup:   rm -rf /srv/volumes/db/_pre-restore/{{ allVars.dojo.id }}-{{ backupSuffix }} (and siblings under *_pre-restore/) once verified."

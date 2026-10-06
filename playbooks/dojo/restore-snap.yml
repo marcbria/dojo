@@ -2,8 +2,14 @@
 # ============================================================================
 # RESTORE - Restore a site from a ZFS snapshot set.
 #
-# DESTRUCTIVE: current data is moved to <path>.pre-restore-<timestamp>/ before
-# restoring. Verify, then delete the .pre-restore-* folders manually.
+# DESTRUCTIVE: current data is moved to <dataset>/_pre-restore/<site>-<ts>/
+# before restoring. Verify, then delete the _pre-restore tree manually.
+#
+# The pre-restore backups live in a dedicated subfolder of each dataset so
+# the top level stays clean:
+#
+#   /srv/volumes/db/anuarioiet/                       ← live data
+#   /srv/volumes/db/_pre-restore/anuarioiet-<ts>/     ← previous data
 #
 # Restore never uses `zfs rollback` (that would revert other sites).
 # It rsyncs from the read-only snapshot mount:
@@ -39,7 +45,7 @@
       {{ snapshotTagRaw
          if snapshotTagRaw.startswith(snapshotPrefix ~ '-')
          else (snapshotPrefix ~ '-' ~ snapshotTagRaw) }}
-    backupSuffix: "pre-restore-{{ now(utc=true, fmt='%Y%m%d-%H%M%S') }}"
+    backupSuffix: "{{ now(utc=true, fmt='%Y%m%d-%H%M%S') }}"
     confirmToken: "{{ confirm | default('') }}"
   vars_files:
     - ./configs/dojo.yml
@@ -50,7 +56,7 @@
       include_tasks: ../setAllVars.yml
       vars: { mode: site, param: "{{ siteParam }}" }
 
-    - name: "INIT - Resolve datasets, targets and .zfs paths"
+    - name: "INIT - Resolve datasets, targets and _pre-restore paths"
       set_fact:
         zfsDb:      "{{ zfs_dataset_db    | default(allVars.path.volumes.db    | regex_replace('^/', '')) }}"
         zfsFiles:   "{{ zfs_dataset_files | default(allVars.path.volumes.files | regex_replace('^/', '')) }}"
@@ -61,6 +67,11 @@
         privateTarget: "{{ allVars.path.files.private }}/{{ allVars.dojo.id }}"
         publicTarget:  "{{ allVars.path.files.public }}/{{ allVars.dojo.id }}"
         logsTarget:    "{{ allVars.path.volumes.logs }}/{{ allVars.dojo.id }}"
+        dbPreRestore:      "{{ allVars.path.volumes.db }}/_pre-restore/{{ allVars.dojo.id }}-{{ backupSuffix }}"
+        configPreRestore:  "{{ allVars.path.files.config }}/_pre-restore/{{ allVars.dojo.id }}-{{ backupSuffix }}"
+        privatePreRestore: "{{ allVars.path.files.private }}/_pre-restore/{{ allVars.dojo.id }}-{{ backupSuffix }}"
+        publicPreRestore:  "{{ allVars.path.files.public }}/_pre-restore/{{ allVars.dojo.id }}-{{ backupSuffix }}"
+        logsPreRestore:    "{{ allVars.path.volumes.logs }}/_pre-restore/{{ allVars.dojo.id }}-{{ backupSuffix }}"
 
     - name: "SAFETY - Require explicit confirmation"
       fail:
@@ -148,20 +159,36 @@
       register: stopResult
       changed_when: true
 
+    # ---------- Ensure _pre-restore directories exist ---------------------
+    - name: "RESTORE - Ensure _pre-restore directories exist"
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0744"
+        owner: "{{ allVars.user.run }}"
+        group: "{{ allVars.user.group }}"
+      loop:
+        - "{{ allVars.path.volumes.db }}/_pre-restore"
+        - "{{ allVars.path.files.config }}/_pre-restore"
+        - "{{ allVars.path.files.private }}/_pre-restore"
+        - "{{ allVars.path.files.public }}/_pre-restore"
+        - "{{ allVars.path.volumes.logs }}/_pre-restore"
+
     # ---------- Move current data aside -----------------------------------
-    - name: "SAFETY - Move current data aside (.{{ backupSuffix }})"
+    - name: "SAFETY - Move current data aside ({{ backupSuffix }})"
       shell: |
         set -e
-        ts="{{ backupSuffix }}"
-        for p in \
-          "{{ dbTarget }}" \
-          "{{ configTarget }}" \
-          "{{ privateTarget }}" \
-          "{{ publicTarget }}" \
-          "{{ logsTarget }}"
-        do
-          if [ -e "$p" ]; then mv "$p" "${p}.${ts}"; fi
-          mkdir -p "$p"
+        declare -A map=(
+          ["{{ dbTarget }}"]="{{ dbPreRestore }}"
+          ["{{ configTarget }}"]="{{ configPreRestore }}"
+          ["{{ privateTarget }}"]="{{ privatePreRestore }}"
+          ["{{ publicTarget }}"]="{{ publicPreRestore }}"
+          ["{{ logsTarget }}"]="{{ logsPreRestore }}"
+        )
+        for src in "${!map[@]}"; do
+          dst="${map[$src]}"
+          if [ -e "$src" ]; then mv "$src" "$dst"; fi
+          mkdir -p "$src"
         done
       changed_when: true
 
@@ -230,5 +257,5 @@
           - "Snapshot:  {{ snapshotName }}"
           - "Data:      db, files/{config,private,public}, logs"
           - "Note:      docker-compose*.yml and .env are NOT part of the snapshot"
-          - "Rollback:  stop the containers and rename .{{ backupSuffix }} back."
-          - "Cleanup:   rm -rf {{ dbTarget }}.{{ backupSuffix }} (and siblings) once verified."
+          - "Rollback:  move /srv/volumes/<dataset>/_pre-restore/{{ allVars.dojo.id }}-{{ backupSuffix }} back to its original path"
+          - "Cleanup:   rm -rf /srv/volumes/db/_pre-restore/{{ allVars.dojo.id }}-{{ backupSuffix }} (and siblings under *_pre-restore/) once verified."
