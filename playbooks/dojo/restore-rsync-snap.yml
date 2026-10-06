@@ -19,6 +19,9 @@
 #   The STOP phase falls back to 'docker stop' by container name if the
 #   site directory no longer exists, so a restore from a self-contained
 #   rsync snapshot works even after /home/docker/sites/<site>/ is gone.
+#   The 'RESTORE - Ensure symlinks' tasks rebuild the symlink tree that
+#   normally comes from dojo-create (site-folders.yml), so docker compose
+#   can resolve volumes/config/*.cnf, volumes/db, etc.
 #
 # Usage:
 #   just dojo-restore-rsync-snap <site> <host> <timestamp> confirm=RESTORE-<site>
@@ -52,6 +55,7 @@
         privateTarget: "{{ allVars.path.files.private }}/{{ allVars.dojo.id }}"
         publicTarget:  "{{ allVars.path.files.public }}/{{ allVars.dojo.id }}"
         logsTarget:    "{{ allVars.path.volumes.logs }}/{{ allVars.dojo.id }}"
+        volumesAll:    "{{ allVars.path.volumes.all }}/{{ allVars.dojo.id }}"
         dbContainer:   "{{ allVars.dojo.tool }}_db_{{ allVars.dojo.id }}"
         appContainer:  "{{ allVars.dojo.tool }}_app_{{ allVars.dojo.id }}"
 
@@ -143,7 +147,7 @@
           fi
         done
       register: stopFallbackResult
-      changed_when: "'\n' in (stopFallbackResult.stdout | default('')) or stopFallbackResult.stdout | length > 0"
+      changed_when: stopFallbackResult.stdout | default('') | length > 0
       when: not siteDirStat.stat.exists
 
     # ---------- Recreate site directory + definition files ----------------
@@ -165,6 +169,39 @@
         - docker-compose.yml
         - docker-compose.override.yml
         - .env
+
+    # ---------- Ensure the volume symlink tree exists ---------------------
+    # Normally created by dojo-create (site-folders.yml). Recreated here so
+    # the rsync restore is self-contained even when the whole site directory
+    # was lost. Without this, docker compose would fail to mount files like
+    # volumes/config/db.custom.cnf.
+    - name: "RESTORE - Ensure volumes/all/<site> directory exists"
+      file:
+        path: "{{ volumesAll }}"
+        state: directory
+        mode: "0744"
+        owner: "{{ allVars.user.run }}"
+        group: "{{ allVars.user.group }}"
+
+    - name: "RESTORE - Ensure internal symlinks in volumes/all/<site>"
+      file:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        state: link
+        force: yes
+      loop:
+        - { src: "{{ allVars.path.files.config }}/{{ allVars.dojo.id }}",  dest: "{{ volumesAll }}/config" }
+        - { src: "{{ allVars.path.volumes.db }}/{{ allVars.dojo.id }}",    dest: "{{ volumesAll }}/db" }
+        - { src: "{{ allVars.path.volumes.logs }}/{{ allVars.dojo.id }}",  dest: "{{ volumesAll }}/logs" }
+        - { src: "{{ allVars.path.files.private }}/{{ allVars.dojo.id }}", dest: "{{ volumesAll }}/private" }
+        - { src: "{{ allVars.path.files.public }}/{{ allVars.dojo.id }}",  dest: "{{ volumesAll }}/public" }
+
+    - name: "RESTORE - Ensure volumes symlink in site directory"
+      file:
+        src: "{{ volumesAll }}"
+        dest: "{{ siteDir }}/volumes"
+        state: link
+        force: yes
 
     # ---------- Move current data aside -----------------------------------
     # Only the folders that WILL be overwritten are moved aside. Folders
