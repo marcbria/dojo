@@ -28,3 +28,4 @@ tmp
 logs
 *batchSync-*
 *.log
+test/_test-runs/
