@@ -224,33 +224,36 @@
         - "{{ allVars.path.files.public }}/_pre-restore"
         - "{{ allVars.path.volumes.logs }}/_pre-restore"
 
+    # ---------- Build the move-aside list ---------------------------------
+    # The list is a Jinja list of dicts {src, dst}, one per folder that will
+    # be overwritten. private/ and public/ are included only if the snapshot
+    # actually contains them. The list is consumed by a shell task with
+    # `loop`, so each pair is processed in its own iteration. This avoids:
+    #   - {% %} block tags inside a shell: | literal (rejected by YAML),
+    #   - inline conditionals leaving whitespace-only lines,
+    #   - 'join("\n")' producing a literal backslash-n instead of a real
+    #     newline when the string round-trips through YAML/shell.
+    - name: "INIT - Build move-aside targets"
+      set_fact:
+        moveAsideTargets: >-
+          {{ [{'src': dbTarget,     'dst': dbPreRestore},
+              {'src': configTarget, 'dst': configPreRestore},
+              {'src': logsTarget,   'dst': logsPreRestore}]
+             + ([{'src': privateTarget, 'dst': privatePreRestore}] if privateInSnap.stat.exists else [])
+             + ([{'src': publicTarget,  'dst': publicPreRestore}]  if publicInSnap.stat.exists  else []) }}
+
     # ---------- Move current data aside -----------------------------------
     # Only the folders that WILL be overwritten are moved aside. Folders
     # that the snapshot does not contain (e.g. private/public in a -quick
     # snapshot) are left intact on the live site.
-    #
-    # Uses a portable /bin/sh construct (dash-compatible):
-    #   - No bash-only features (declare -A, arrays).
-    #   - No Jinja {% %} block tags inside the literal block: a line
-    #     starting with {% at inconsistent indentation is not valid YAML
-    #     and fails the parser before templating even runs.
-    #   - Conditional lines use inline expressions that resolve to the
-    #     value or an empty string; the shell loop skips empties.
     - name: "SAFETY - Move current data aside ({{ backupSuffix }})"
       shell: |
         set -e
-        pairs="
-          {{ dbTarget }}|{{ dbPreRestore }}
-          {{ configTarget }}|{{ configPreRestore }}
-          {{ logsTarget }}|{{ logsPreRestore }}
-          {{ (privateTarget ~ '|' ~ privatePreRestore) if privateInSnap.stat.exists else '' }}
-          {{ (publicTarget  ~ '|' ~ publicPreRestore)  if publicInSnap.stat.exists  else '' }}
-        "
-        echo "$pairs" | while IFS='|' read -r src dst; do
-          [ -z "$src" ] && continue
-          if [ -e "$src" ]; then mv "$src" "$dst"; fi
-          mkdir -p "$src"
-        done
+        if [ -e "{{ item.src }}" ]; then mv "{{ item.src }}" "{{ item.dst }}"; fi
+        mkdir -p "{{ item.src }}"
+      loop: "{{ moveAsideTargets }}"
+      loop_control:
+        label: "{{ item.src }}"
       changed_when: true
 
     # ---------- Restore data ----------------------------------------------
